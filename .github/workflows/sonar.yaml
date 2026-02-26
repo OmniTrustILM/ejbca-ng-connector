@@ -22,7 +22,7 @@ jobs:
       - run: mkdir -p ${{ runner.temp }}/artifacts/
       # Download the PR number artifact
       - name: Download PR number
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: pr-number
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -58,7 +58,7 @@ jobs:
           git clean -ffdx && git reset --hard HEAD
       # Download compiled classes
       - name: Download Compiled Classes
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: compiled-classes
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -66,7 +66,7 @@ jobs:
           path: target/classes
       # Download Jacoco XML coverage files
       - name: Download Coverage Reports
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: coverage-reports
           github-token: ${{ secrets.GITHUB_TOKEN }}
