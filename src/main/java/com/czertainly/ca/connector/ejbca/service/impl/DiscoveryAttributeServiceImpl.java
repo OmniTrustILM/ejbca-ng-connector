@@ -2,14 +2,24 @@ package com.czertainly.ca.connector.ejbca.service.impl;
 
 import com.czertainly.api.exception.ValidationError;
 import com.czertainly.api.exception.ValidationException;
-import com.czertainly.api.model.client.attribute.RequestAttributeDto;
-import com.czertainly.api.model.common.attribute.v2.*;
-import com.czertainly.api.model.common.attribute.v2.callback.AttributeCallback;
-import com.czertainly.api.model.common.attribute.v2.callback.AttributeCallbackMapping;
-import com.czertainly.api.model.common.attribute.v2.callback.AttributeValueTarget;
-import com.czertainly.api.model.common.attribute.v2.content.*;
-import com.czertainly.api.model.common.attribute.v2.properties.DataAttributeProperties;
-import com.czertainly.api.model.common.attribute.v2.properties.InfoAttributeProperties;
+import com.czertainly.api.model.client.attribute.RequestAttribute;
+import com.czertainly.api.model.common.attribute.common.AttributeType;
+import com.czertainly.api.model.common.attribute.common.BaseAttribute;
+import com.czertainly.api.model.common.attribute.common.DataAttribute;
+import com.czertainly.api.model.common.attribute.common.callback.AttributeCallback;
+import com.czertainly.api.model.common.attribute.common.callback.AttributeCallbackMapping;
+import com.czertainly.api.model.common.attribute.common.callback.AttributeValueTarget;
+import com.czertainly.api.model.common.attribute.common.content.AttributeContentType;
+import com.czertainly.api.model.common.attribute.common.properties.DataAttributeProperties;
+import com.czertainly.api.model.common.attribute.common.properties.InfoAttributeProperties;
+import com.czertainly.api.model.common.attribute.v2.DataAttributeV2;
+import com.czertainly.api.model.common.attribute.v2.GroupAttributeV2;
+import com.czertainly.api.model.common.attribute.v2.InfoAttributeV2;
+import com.czertainly.api.model.common.attribute.v2.content.BaseAttributeContentV2;
+import com.czertainly.api.model.common.attribute.v2.content.IntegerAttributeContentV2;
+import com.czertainly.api.model.common.attribute.v2.content.ObjectAttributeContentV2;
+import com.czertainly.api.model.common.attribute.v2.content.StringAttributeContentV2;
+import com.czertainly.api.model.common.attribute.v2.content.TextAttributeContentV2;
 import com.czertainly.ca.connector.ejbca.dao.AuthorityInstanceRepository;
 import com.czertainly.ca.connector.ejbca.dao.entity.AuthorityInstance;
 import com.czertainly.ca.connector.ejbca.dto.AuthorityInstanceNameAndUuidDto;
@@ -75,7 +85,7 @@ public class DiscoveryAttributeServiceImpl implements DiscoveryAttributeService 
     }
 
     @Override
-    public boolean validateAttributes(String kind, List<RequestAttributeDto> attributes) {
+    public boolean validateAttributes(String kind, List<RequestAttribute> attributes) {
         if (attributes == null) {
             return false;
         }
@@ -92,9 +102,9 @@ public class DiscoveryAttributeServiceImpl implements DiscoveryAttributeService 
     @Override
     public List<BaseAttribute> getInstanceAndKindAttributes(
             String kind,
-            List<BaseAttributeContent> eeProfilesContent,
-            List<BaseAttributeContent> casContent,
-            List<BaseAttributeContent> urlContent
+            List<BaseAttributeContentV2<?>> eeProfilesContent,
+            List<BaseAttributeContentV2<?>> casContent,
+            List<BaseAttributeContentV2<?>> urlContent
     ) {
         List<BaseAttribute> attributes = new ArrayList<>();
 
@@ -116,13 +126,13 @@ public class DiscoveryAttributeServiceImpl implements DiscoveryAttributeService 
 
     private DataAttribute prepareEjbcaInstanceAttribute() {
         List<AuthorityInstanceNameAndUuidDto> instanceNames = authorityInstanceRepository.findAll().stream().map(AuthorityInstance::mapToNameAndUuidDto).collect(Collectors.toList());
-        List<BaseAttributeContent> contentList = new ArrayList<>();
+        List<BaseAttributeContentV2<?>> contentList = new ArrayList<>();
         for (AuthorityInstanceNameAndUuidDto instance : instanceNames) {
-            ObjectAttributeContent content = new ObjectAttributeContent(instance.getName(), instance);
+            ObjectAttributeContentV2 content = new ObjectAttributeContentV2(instance.getName(), instance);
             contentList.add(content);
         }
 
-        DataAttribute attribute = new DataAttribute();
+        DataAttributeV2 attribute = new DataAttributeV2();
         attribute.setUuid("dce22e96-3335-4181-b90c-c7f887d8d109");
         attribute.setName(ATTRIBUTE_EJBCA_INSTANCE);
         attribute.setContentType(AttributeContentType.OBJECT);
@@ -141,10 +151,10 @@ public class DiscoveryAttributeServiceImpl implements DiscoveryAttributeService 
         return attribute;
     }
 
-    private GroupAttribute discoveryConfiguration(String kind) {
+    private GroupAttributeV2 discoveryConfiguration(String kind) {
         // create group attribute
-        GroupAttribute attribute = new GroupAttribute();
-        attribute.setUuid("dce22e96-3335-4181-b90c-c7f887d8d109");
+        GroupAttributeV2 attribute = new GroupAttributeV2();
+        attribute.setUuid("cff2d66d-2f5a-420b-a2ad-44754dac6195");
         attribute.setName(ATTRIBUTE_GROUP_DISCOVERY_CONF);
         attribute.setType(AttributeType.GROUP);
         attribute.setDescription(ATTRIBUTE_GROUP_DISCOVERY_CONF_LABEL);
@@ -167,7 +177,7 @@ public class DiscoveryAttributeServiceImpl implements DiscoveryAttributeService 
     }
 
     private DataAttribute listCasAttributeBase() {
-        DataAttribute attribute = new DataAttribute();
+        DataAttributeV2 attribute = new DataAttributeV2();
         attribute.setUuid("ffe7c27a-48e4-41fa-93de-8ddac65fec46");
         attribute.setName(ATTRIBUTE_EJBCA_CA);
         attribute.setDescription("Available certification authorities for Discovery");
@@ -187,7 +197,7 @@ public class DiscoveryAttributeServiceImpl implements DiscoveryAttributeService 
     }
 
     private DataAttribute listCas() {
-        DataAttribute attribute = listCasAttributeBase();
+        DataAttributeV2 attribute = (DataAttributeV2) listCasAttributeBase();
 
         Set<AttributeCallbackMapping> mappings = new HashSet<>();
         mappings.add(new AttributeCallbackMapping(ATTRIBUTE_EJBCA_INSTANCE + ".data.uuid", "ejbcaInstanceUuid", AttributeValueTarget.PATH_VARIABLE));
@@ -202,7 +212,7 @@ public class DiscoveryAttributeServiceImpl implements DiscoveryAttributeService 
         return attribute;
     }
 
-    private DataAttribute listCasWithContent(List<BaseAttributeContent> casContent) {
+    private DataAttribute listCasWithContent(List<BaseAttributeContentV2<?>> casContent) {
         DataAttribute attribute = listCasAttributeBase();
 
         attribute.setContent(casContent);
@@ -211,7 +221,7 @@ public class DiscoveryAttributeServiceImpl implements DiscoveryAttributeService 
     }
 
     private DataAttribute listEndEntityProfilesAttributeBase() {
-        DataAttribute attribute = new DataAttribute();
+        DataAttributeV2 attribute = new DataAttributeV2();
         attribute.setUuid("bbf2d142-f35a-437f-81c7-35c128881fc0");
         attribute.setName(ATTRIBUTE_END_ENTITY_PROFILE);
         attribute.setDescription("The End Entity Profile where Discovery process should search for Certificates");
@@ -231,7 +241,7 @@ public class DiscoveryAttributeServiceImpl implements DiscoveryAttributeService 
     }
 
     private DataAttribute listEndEntityProfiles() {
-        DataAttribute attribute = listEndEntityProfilesAttributeBase();
+        DataAttributeV2 attribute = (DataAttributeV2) listEndEntityProfilesAttributeBase();
 
         Set<AttributeCallbackMapping> mappings = new HashSet<>();
         mappings.add(new AttributeCallbackMapping(ATTRIBUTE_EJBCA_INSTANCE + ".data.uuid", "ejbcaInstanceUuid", AttributeValueTarget.PATH_VARIABLE));
@@ -246,7 +256,7 @@ public class DiscoveryAttributeServiceImpl implements DiscoveryAttributeService 
         return attribute;
     }
 
-    private DataAttribute listEndEntityProfilesWithContent(List<BaseAttributeContent> eeProfilesContent) {
+    private DataAttribute listEndEntityProfilesWithContent(List<BaseAttributeContentV2<?>> eeProfilesContent) {
         DataAttribute attribute = listEndEntityProfilesAttributeBase();
 
         attribute.setContent(eeProfilesContent);
@@ -255,13 +265,13 @@ public class DiscoveryAttributeServiceImpl implements DiscoveryAttributeService 
     }
 
     private DataAttribute listStatus() {
-        List<BaseAttributeContent> statuses = new ArrayList<>();
+        List<BaseAttributeContentV2<?>> statuses = new ArrayList<>();
         for (SearchCertificateCriteriaRestRequest.CertificateStatus status : SearchCertificateCriteriaRestRequest.CertificateStatus.values()) {
-            StringAttributeContent content = new StringAttributeContent(status.name());
+            StringAttributeContentV2 content = new StringAttributeContentV2(status.name());
             statuses.add(content);
         }
 
-        DataAttribute attribute = new DataAttribute();
+        DataAttributeV2 attribute = new DataAttributeV2();
         attribute.setUuid("2aba1544-abdf-46a0-ab56-ac79f9163018");
         attribute.setName(ATTRIBUTE_EJBCA_STATUS);
         attribute.setDescription("Filter certificate status");
@@ -281,7 +291,7 @@ public class DiscoveryAttributeServiceImpl implements DiscoveryAttributeService 
     }
 
     private DataAttribute ejbcaRestApiUrlAttributeBase() {
-        DataAttribute attribute = new DataAttribute();
+        DataAttributeV2 attribute = new DataAttributeV2();
         attribute.setUuid("c5b974dd-e00a-44b6-b9bc-0946e79730a2");
         attribute.setName(ATTRIBUTE_EJBCA_RESTAPI_URL);
         attribute.setDescription("Base URL of the EJBCA REST API to be used");
@@ -300,7 +310,7 @@ public class DiscoveryAttributeServiceImpl implements DiscoveryAttributeService 
     }
 
     private DataAttribute ejbcaRestApiUrl() {
-        DataAttribute attribute = ejbcaRestApiUrlAttributeBase();
+        DataAttributeV2 attribute = (DataAttributeV2) ejbcaRestApiUrlAttributeBase();
 
         Set<AttributeCallbackMapping> mappings = new HashSet<>();
         mappings.add(new AttributeCallbackMapping(ATTRIBUTE_EJBCA_INSTANCE + ".data.uuid", "ejbcaInstanceUuid", AttributeValueTarget.PATH_VARIABLE));
@@ -315,7 +325,7 @@ public class DiscoveryAttributeServiceImpl implements DiscoveryAttributeService 
         return attribute;
     }
 
-    private DataAttribute ejbcaRestApiUrlWithContent(List<BaseAttributeContent> urlContent) {
+    private DataAttribute ejbcaRestApiUrlWithContent(List<BaseAttributeContentV2<?>> urlContent) {
         DataAttribute attribute = ejbcaRestApiUrlAttributeBase();
 
         attribute.setContent(urlContent);
@@ -324,7 +334,7 @@ public class DiscoveryAttributeServiceImpl implements DiscoveryAttributeService 
     }
 
     private DataAttribute issuedAfter() {
-        DataAttribute attribute = new DataAttribute();
+        DataAttributeV2 attribute = new DataAttributeV2();
         attribute.setUuid("4954adc0-47f0-442d-9347-f270d9ac0074");
         attribute.setName(ATTRIBUTE_EJBCA_ISSUED_AFTER);
         attribute.setDescription("The date after the certificates were issued");
@@ -342,7 +352,7 @@ public class DiscoveryAttributeServiceImpl implements DiscoveryAttributeService 
     }
 
     private DataAttribute issuedDaysBefore() {
-        DataAttribute attribute = new DataAttribute();
+        DataAttributeV2 attribute = new DataAttributeV2();
         attribute.setUuid("4a92a6c5-38c0-4ebf-8297-594d39572c9c");
         attribute.setName(ATTRIBUTE_ISSUED_DAYS_BEFORE);
         attribute.setDescription("Maximum number of days before the certificate was issued, from running the discovery");
@@ -356,14 +366,14 @@ public class DiscoveryAttributeServiceImpl implements DiscoveryAttributeService 
         attributeProperties.setList(false);
         attributeProperties.setMultiSelect(false);
         attribute.setProperties(attributeProperties);
-        attribute.setContent(List.of(new IntegerAttributeContent(5)));
+        attribute.setContent(List.of(new IntegerAttributeContentV2(5)));
 
         return attribute;
     }
 
-    private InfoAttribute infoDiscoveryDescription() {
-        InfoAttribute attribute = new InfoAttribute();
-        attribute.setUuid("4a92a6c5-38c0-4ebf-8297-594d39572c9c");
+    private InfoAttributeV2 infoDiscoveryDescription() {
+        InfoAttributeV2 attribute = new InfoAttributeV2();
+        attribute.setUuid("a0bd9e99-7ee5-4e1c-bae1-4321209cf658");
         attribute.setName("info_discoveryProcess");
         attribute.setDescription("Discovery process information");
         attribute.setType(AttributeType.INFO);
@@ -384,7 +394,7 @@ public class DiscoveryAttributeServiceImpl implements DiscoveryAttributeService 
                 .append(new Text("Select EJBCA instance where Discovery process should search for Certificates and then you can optionally select:")).append("\n")
                 .append(new UnorderedList<>(items));
 
-        attribute.setContent(List.of(new TextAttributeContent(sb.toString())));
+        attribute.setContent(List.of(new TextAttributeContentV2(sb.toString())));
 
         return attribute;
     }

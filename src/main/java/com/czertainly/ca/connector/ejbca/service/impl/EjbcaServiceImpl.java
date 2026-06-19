@@ -2,11 +2,11 @@ package com.czertainly.ca.connector.ejbca.service.impl;
 
 import com.czertainly.api.exception.AlreadyExistException;
 import com.czertainly.api.exception.NotFoundException;
-import com.czertainly.api.model.client.attribute.RequestAttributeDto;
+import com.czertainly.api.model.client.attribute.RequestAttribute;
 import com.czertainly.api.model.common.NameAndIdDto;
-import com.czertainly.api.model.common.attribute.v2.MetadataAttribute;
-import com.czertainly.api.model.common.attribute.v2.content.BooleanAttributeContent;
-import com.czertainly.api.model.common.attribute.v2.content.StringAttributeContent;
+import com.czertainly.api.model.common.attribute.common.MetadataAttribute;
+import com.czertainly.api.model.common.attribute.v2.content.BooleanAttributeContentV2;
+import com.czertainly.api.model.common.attribute.v2.content.StringAttributeContentV2;
 import com.czertainly.api.model.connector.v2.CertificateDataResponseDto;
 import com.czertainly.api.model.core.enums.CertificateRequestFormat;
 import com.czertainly.ca.connector.ejbca.EjbcaException;
@@ -51,7 +51,7 @@ public class EjbcaServiceImpl implements EjbcaService {
     }
 
     @Override
-    public void createEndEntity(String authorityUuid, String username, String password, String subjectDn, String subjectAltName, List<RequestAttributeDto> raProfileAttributes, List<RequestAttributeDto> issueAttributes) throws NotFoundException, AlreadyExistException, EjbcaException {
+    public void createEndEntity(String authorityUuid, String username, String password, String subjectDn, String subjectAltName, List<RequestAttribute> raProfileAttributes, List<RequestAttribute> issueAttributes) throws NotFoundException, AlreadyExistException, EjbcaException {
         EjbcaWS ejbcaWS = authorityInstanceService.getConnection(authorityUuid);
 
         if (getUser(ejbcaWS, username) != null) {
@@ -80,7 +80,7 @@ public class EjbcaServiceImpl implements EjbcaService {
     }
 
     @Override
-    public void createEndEntityWithMeta(String authorityUuid, String username, String password, String subjectDn, String subjectAltName, List<RequestAttributeDto> raProfileAttributes, List<MetadataAttribute> metadata) throws NotFoundException, AlreadyExistException {
+    public void createEndEntityWithMeta(String authorityUuid, String username, String password, String subjectDn, String subjectAltName, List<RequestAttribute> raProfileAttributes, List<MetadataAttribute> metadata) throws NotFoundException, AlreadyExistException {
         EjbcaWS ejbcaWS = authorityInstanceService.getConnection(authorityUuid);
 
         if (getUser(ejbcaWS, username) != null) {
@@ -266,41 +266,41 @@ public class EjbcaServiceImpl implements EjbcaService {
         }
     }
 
-    private void prepareEndEntity(UserDataVOWS user, List<RequestAttributeDto> raProfileAttrs, List<RequestAttributeDto> issueAttrs) {
+    private void prepareEndEntity(UserDataVOWS user, List<RequestAttribute> raProfileAttrs, List<RequestAttribute> issueAttrs) {
         setUserProfiles(user, raProfileAttrs);
 
-        String email = AttributeDefinitionUtils.getSingleItemAttributeContentValue(CertificateControllerImpl.ATTRIBUTE_EMAIL, issueAttrs, StringAttributeContent.class).getData();
+        String email = AttributeDefinitionUtils.getSingleItemAttributeContentValue(CertificateControllerImpl.ATTRIBUTE_EMAIL, issueAttrs, StringAttributeContentV2.class).getData();
         if (StringUtils.isNotBlank(email)) {
             user.setEmail(email);
         }
 
-        String san = AttributeDefinitionUtils.getSingleItemAttributeContentValue(CertificateControllerImpl.ATTRIBUTE_SAN, issueAttrs, StringAttributeContent.class).getData();
+        String san = AttributeDefinitionUtils.getSingleItemAttributeContentValue(CertificateControllerImpl.ATTRIBUTE_SAN, issueAttrs, StringAttributeContentV2.class).getData();
         if (StringUtils.isNotBlank(san)) {
             user.setSubjectAltName(san);
         }
 
-        String extension = AttributeDefinitionUtils.getSingleItemAttributeContentValue(CertificateControllerImpl.ATTRIBUTE_EXTENSION, issueAttrs, StringAttributeContent.class).getData();
+        String extension = AttributeDefinitionUtils.getSingleItemAttributeContentValue(CertificateControllerImpl.ATTRIBUTE_EXTENSION, issueAttrs, StringAttributeContentV2.class).getData();
         EjbcaUtils.setUserExtensions(user, extension);
     }
 
-    private void prepareEndEntityWithMeta(UserDataVOWS user, List<RequestAttributeDto> raProfileAttrs, List<MetadataAttribute> metadata) {
+    private void prepareEndEntityWithMeta(UserDataVOWS user, List<RequestAttribute> raProfileAttrs, List<MetadataAttribute> metadata) {
         setUserProfiles(user, raProfileAttrs);
 
-        String email = AttributeDefinitionUtils.getSingleItemAttributeContentValue(CertificateEjbcaServiceImpl.META_EMAIL, metadata, StringAttributeContent.class).getData();
+        String email = AttributeDefinitionUtils.getSingleItemAttributeContentValue(CertificateEjbcaServiceImpl.META_EMAIL, metadata, StringAttributeContentV2.class).getData();
         if (StringUtils.isNotBlank(email)) {
             user.setEmail(email);
         }
 
-        String san = AttributeDefinitionUtils.getSingleItemAttributeContentValue(CertificateEjbcaServiceImpl.META_SAN, metadata, StringAttributeContent.class).getData();
+        String san = AttributeDefinitionUtils.getSingleItemAttributeContentValue(CertificateEjbcaServiceImpl.META_SAN, metadata, StringAttributeContentV2.class).getData();
         if (StringUtils.isNotBlank(san)) {
             user.setSubjectAltName(san);
         }
 
-        String extension = AttributeDefinitionUtils.getSingleItemAttributeContentValue(CertificateEjbcaServiceImpl.META_EXTENSION, metadata, StringAttributeContent.class).getData();
+        String extension = AttributeDefinitionUtils.getSingleItemAttributeContentValue(CertificateEjbcaServiceImpl.META_EXTENSION, metadata, StringAttributeContentV2.class).getData();
         EjbcaUtils.setUserExtensions(user, extension);
     }
 
-    private void setUserProfiles(UserDataVOWS user, List<RequestAttributeDto> raProfileAttrs) {
+    private void setUserProfiles(UserDataVOWS user, List<RequestAttribute> raProfileAttrs) {
         //String tokenType = AttributeDefinitionUtils.getAttributeValue(ATTRIBUTE_TOKEN_TYPE, raProfileAttrs);
         //user.setTokenType(tokenType);
         user.setTokenType("USERGENERATED");
@@ -315,14 +315,14 @@ public class EjbcaServiceImpl implements EjbcaService {
         user.setCaName(ca.getName());
 
         boolean sendNotifications = false;
-        Boolean value = AttributeDefinitionUtils.getSingleItemAttributeContentValue(ATTRIBUTE_SEND_NOTIFICATIONS, raProfileAttrs, BooleanAttributeContent.class).getData();
+        Boolean value = AttributeDefinitionUtils.getSingleItemAttributeContentValue(ATTRIBUTE_SEND_NOTIFICATIONS, raProfileAttrs, BooleanAttributeContentV2.class).getData();
         if (value != null) {
             sendNotifications = value;
         }
         user.setSendNotification(sendNotifications);
 
         boolean keyRecoverable = false;
-        value = AttributeDefinitionUtils.getSingleItemAttributeContentValue(ATTRIBUTE_KEY_RECOVERABLE, raProfileAttrs, BooleanAttributeContent.class).getData();
+        value = AttributeDefinitionUtils.getSingleItemAttributeContentValue(ATTRIBUTE_KEY_RECOVERABLE, raProfileAttrs, BooleanAttributeContentV2.class).getData();
         if (value != null) {
             keyRecoverable = value;
         }

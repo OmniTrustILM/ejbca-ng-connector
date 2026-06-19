@@ -2,14 +2,15 @@ package com.czertainly.ca.connector.ejbca.service.impl;
 
 import com.czertainly.api.exception.NotFoundException;
 import com.czertainly.api.model.common.NameAndIdDto;
-import com.czertainly.api.model.common.attribute.v2.AttributeType;
-import com.czertainly.api.model.common.attribute.v2.MetadataAttribute;
-import com.czertainly.api.model.common.attribute.v2.content.AttributeContentType;
-import com.czertainly.api.model.common.attribute.v2.content.BaseAttributeContent;
-import com.czertainly.api.model.common.attribute.v2.content.DateTimeAttributeContent;
-import com.czertainly.api.model.common.attribute.v2.content.IntegerAttributeContent;
-import com.czertainly.api.model.common.attribute.v2.content.StringAttributeContent;
-import com.czertainly.api.model.common.attribute.v2.properties.MetadataAttributeProperties;
+import com.czertainly.api.model.common.attribute.common.AttributeType;
+import com.czertainly.api.model.common.attribute.common.MetadataAttribute;
+import com.czertainly.api.model.common.attribute.common.content.AttributeContentType;
+import com.czertainly.api.model.common.attribute.v2.MetadataAttributeV2;
+import com.czertainly.api.model.common.attribute.v2.content.BaseAttributeContentV2;
+import com.czertainly.api.model.common.attribute.v2.content.DateTimeAttributeContentV2;
+import com.czertainly.api.model.common.attribute.v2.content.IntegerAttributeContentV2;
+import com.czertainly.api.model.common.attribute.v2.content.StringAttributeContentV2;
+import com.czertainly.api.model.common.attribute.common.properties.MetadataAttributeProperties;
 import com.czertainly.api.model.connector.discovery.DiscoveryDataRequestDto;
 import com.czertainly.api.model.connector.discovery.DiscoveryProviderDto;
 import com.czertainly.api.model.connector.discovery.DiscoveryRequestDto;
@@ -124,7 +125,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
         List<MetadataAttribute> attributes = new ArrayList<>();
 
         //Exception Reason
-        MetadataAttribute attribute = new MetadataAttribute();
+        MetadataAttributeV2 attribute = new MetadataAttributeV2();
         attribute.setName("reason");
         attribute.setUuid("abc0412a-60f6-11ed-9b6a-0242ac120002");
         attribute.setContentType(AttributeContentType.STRING);
@@ -136,7 +137,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
         attributeProperties.setVisible(true);
 
         attribute.setProperties(attributeProperties);
-        attribute.setContent(List.of(new StringAttributeContent(exception)));
+        attribute.setContent(List.of(new StringAttributeContentV2(exception)));
         attributes.add(attribute);
 
         return attributes;
@@ -147,17 +148,17 @@ public class DiscoveryServiceImpl implements DiscoveryService {
         int certificatesFound = 0;
 
         final AuthorityInstanceNameAndUuidDto instance = AttributeDefinitionUtils.getObjectAttributeContentData(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_INSTANCE, request.getAttributes(), AuthorityInstanceNameAndUuidDto.class).get(0);
-        final String restApiUrl = AttributeDefinitionUtils.getSingleItemAttributeContentValue(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_RESTAPI_URL, request.getAttributes(), StringAttributeContent.class).getData();
+        final String restApiUrl = AttributeDefinitionUtils.getSingleItemAttributeContentValue(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_RESTAPI_URL, request.getAttributes(), StringAttributeContentV2.class).getData();
         final List<NameAndIdDto> cas = AttributeDefinitionUtils.getObjectAttributeContentDataList(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_CA, request.getAttributes(), NameAndIdDto.class);
         final List<NameAndIdDto> eeProfiles = AttributeDefinitionUtils.getObjectAttributeContentDataList(DiscoveryAttributeServiceImpl.ATTRIBUTE_END_ENTITY_PROFILE, request.getAttributes(), NameAndIdDto.class);
-        final List<String> statuses = AttributeDefinitionUtils.getAttributeContentValueList(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_STATUS, request.getAttributes(), BaseAttributeContent.class);
+        final List<String> statuses = AttributeDefinitionUtils.getAttributeContentValueList(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_STATUS, request.getAttributes(), BaseAttributeContentV2.class);
 
         ZonedDateTime issuedAfter = null;
         if (request.getKind().equals("EJBCA")) {
-            issuedAfter = AttributeDefinitionUtils.getSingleItemAttributeContentValue(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_ISSUED_AFTER, request.getAttributes(), DateTimeAttributeContent.class).getData();
+            issuedAfter = AttributeDefinitionUtils.getSingleItemAttributeContentValue(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_ISSUED_AFTER, request.getAttributes(), DateTimeAttributeContentV2.class).getData();
         }
         if (request.getKind().equals("EJBCA-SCHEDULE")) {
-            Integer issuedDaysBefore = AttributeDefinitionUtils.getSingleItemAttributeContentValue(DiscoveryAttributeServiceImpl.ATTRIBUTE_ISSUED_DAYS_BEFORE, request.getAttributes(), IntegerAttributeContent.class).getData();
+            Integer issuedDaysBefore = AttributeDefinitionUtils.getSingleItemAttributeContentValue(DiscoveryAttributeServiceImpl.ATTRIBUTE_ISSUED_DAYS_BEFORE, request.getAttributes(), IntegerAttributeContentV2.class).getData();
             issuedAfter = ZonedDateTime.now();
             issuedAfter = issuedAfter.minusDays(issuedDaysBefore);
         }
@@ -223,7 +224,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
         List<MetadataAttribute> attributes = new ArrayList<>();
 
         //Total Certificates
-        MetadataAttribute attribute = new MetadataAttribute();
+        MetadataAttributeV2 attribute = new MetadataAttributeV2();
         attribute.setName("totalCertificates");
         attribute.setUuid("20add2d6-60f7-11ed-9b6a-0242ac120002");
         attribute.setContentType(AttributeContentType.INTEGER);
@@ -235,7 +236,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
         attributeProperties.setVisible(true);
 
         attribute.setProperties(attributeProperties);
-        attribute.setContent(List.of(new IntegerAttributeContent(totalCertificates.toString(), totalCertificates)));
+        attribute.setContent(List.of(new IntegerAttributeContentV2(totalCertificates.toString(), totalCertificates)));
         attributes.add(attribute);
         return attributes;
     }
@@ -333,7 +334,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
         List<MetadataAttribute> attributes = new ArrayList<>();
 
         //Certificate Profile ID
-        MetadataAttribute attribute = new MetadataAttribute();
+        MetadataAttributeV2 attribute = new MetadataAttributeV2();
         attribute.setName("certificateProfileId");
         attribute.setUuid("df2fb570-60fd-11ed-9b6a-0242ac120002");
         attribute.setContentType(AttributeContentType.STRING);
@@ -345,11 +346,11 @@ public class DiscoveryServiceImpl implements DiscoveryService {
         attributeProperties.setVisible(true);
 
         attribute.setProperties(attributeProperties);
-        attribute.setContent(List.of(new StringAttributeContent(certificateProfileId)));
+        attribute.setContent(List.of(new StringAttributeContentV2(certificateProfileId)));
         attributes.add(attribute);
 
         //End Entity Profile ID
-        MetadataAttribute endEntityProfileIdAttribute = new MetadataAttribute();
+        MetadataAttributeV2 endEntityProfileIdAttribute = new MetadataAttributeV2();
         endEntityProfileIdAttribute.setName("endEntityProfileId");
         endEntityProfileIdAttribute.setUuid("df2fb93a-60fd-11ed-9b6a-0242ac120002");
         endEntityProfileIdAttribute.setContentType(AttributeContentType.STRING);
@@ -361,11 +362,11 @@ public class DiscoveryServiceImpl implements DiscoveryService {
         endEntityProfileIdAttributeProperties.setVisible(true);
 
         endEntityProfileIdAttribute.setProperties(endEntityProfileIdAttributeProperties);
-        endEntityProfileIdAttribute.setContent(List.of(new StringAttributeContent(endEntityProfileId)));
+        endEntityProfileIdAttribute.setContent(List.of(new StringAttributeContentV2(endEntityProfileId)));
         attributes.add(endEntityProfileIdAttribute);
 
         //Username
-        MetadataAttribute usernameAttribute = new MetadataAttribute();
+        MetadataAttributeV2 usernameAttribute = new MetadataAttributeV2();
         usernameAttribute.setName("username");
         usernameAttribute.setUuid("df2fbaa2-60fd-11ed-9b6a-0242ac120002");
         usernameAttribute.setContentType(AttributeContentType.STRING);
@@ -377,11 +378,11 @@ public class DiscoveryServiceImpl implements DiscoveryService {
         usernameAttributeProperties.setVisible(true);
 
         usernameAttribute.setProperties(usernameAttributeProperties);
-        usernameAttribute.setContent(List.of(new StringAttributeContent(username)));
+        usernameAttribute.setContent(List.of(new StringAttributeContentV2(username)));
         attributes.add(usernameAttribute);
 
         //Discovery Source
-        MetadataAttribute discoverySourceAttribute = new MetadataAttribute();
+        MetadataAttributeV2 discoverySourceAttribute = new MetadataAttributeV2();
         discoverySourceAttribute.setName("discoverySource");
         discoverySourceAttribute.setUuid("df2fbebc-60fd-11ed-9b6a-0242ac120002");
         discoverySourceAttribute.setContentType(AttributeContentType.STRING);
@@ -393,11 +394,11 @@ public class DiscoveryServiceImpl implements DiscoveryService {
         discoverySourceAttributeProperties.setVisible(true);
 
         discoverySourceAttribute.setProperties(discoverySourceAttributeProperties);
-        discoverySourceAttribute.setContent(List.of(new StringAttributeContent("EJBCA-NG")));
+        discoverySourceAttribute.setContent(List.of(new StringAttributeContentV2("EJBCA-NG")));
         attributes.add(discoverySourceAttribute);
 
         //Discovery Name
-        MetadataAttribute discoveryNameAttribute = new MetadataAttribute();
+        MetadataAttributeV2 discoveryNameAttribute = new MetadataAttributeV2();
         discoveryNameAttribute.setName("discoveryName");
         discoveryNameAttribute.setUuid("df2fbffc-60fd-11ed-9b6a-0242ac120002");
         discoveryNameAttribute.setContentType(AttributeContentType.STRING);
@@ -409,7 +410,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
         discoveryNameAttributeProperties.setVisible(true);
 
         discoveryNameAttribute.setProperties(discoveryNameAttributeProperties);
-        discoveryNameAttribute.setContent(List.of(new StringAttributeContent(discoveryName)));
+        discoveryNameAttribute.setContent(List.of(new StringAttributeContentV2(discoveryName)));
         attributes.add(discoveryNameAttribute);
 
         return attributes;

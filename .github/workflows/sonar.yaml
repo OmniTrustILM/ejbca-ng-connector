@@ -22,7 +22,7 @@ jobs:
       - run: mkdir -p ${{ runner.temp }}/artifacts/
       # Download the PR number artifact
       - name: Download PR number
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: pr-number
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -35,14 +35,14 @@ jobs:
       # Request GitHub API for PR data
       - name: Request GitHub API for PR data
         if: github.event.workflow_run.event == 'pull_request'
-        uses: octokit/request-action@v2.x
+        uses: octokit/request-action@b91aabaa861c777dcdb14e2387e30eddf04619ae # v3.0.0
         id: get_pr_data
         with:
           route: GET /repos/${{ github.event.repository.full_name }}/pulls/${{ steps.pr_number.outputs.content }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       # Checkout the PR branch
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: ${{ github.event.workflow_run.head_repository.full_name }}
           ref: ${{ github.event.workflow_run.head_branch }}
@@ -58,7 +58,7 @@ jobs:
           git clean -ffdx && git reset --hard HEAD
       # Download compiled classes
       - name: Download Compiled Classes
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: compiled-classes
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -66,7 +66,7 @@ jobs:
           path: target/classes
       # Download Jacoco XML coverage files
       - name: Download Coverage Reports
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: coverage-reports
           github-token: ${{ secrets.GITHUB_TOKEN }}

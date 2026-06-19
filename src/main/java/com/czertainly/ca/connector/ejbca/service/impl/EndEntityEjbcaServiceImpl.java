@@ -2,9 +2,9 @@ package com.czertainly.ca.connector.ejbca.service.impl;
 
 import com.czertainly.api.exception.AlreadyExistException;
 import com.czertainly.api.exception.NotFoundException;
-import com.czertainly.api.model.client.attribute.ResponseAttributeDto;
+import com.czertainly.api.model.client.attribute.ResponseAttribute;
 import com.czertainly.api.model.common.NameAndIdDto;
-import com.czertainly.api.model.common.attribute.v2.content.BooleanAttributeContent;
+import com.czertainly.api.model.common.attribute.v2.content.BooleanAttributeContentV2;
 import com.czertainly.api.model.core.authority.*;
 import com.czertainly.ca.connector.ejbca.service.AuthorityInstanceService;
 import com.czertainly.ca.connector.ejbca.service.EndEntityEjbcaService;
@@ -178,7 +178,7 @@ public class EndEntityEjbcaServiceImpl implements EndEntityEjbcaService {
     }
 
     private void prepareEndEntity(UserDataVOWS user, BaseEndEntityRequestDto request, String username) {
-        List<ResponseAttributeDto> raProfileAttrs = request.getRaProfile().getAttributes();
+        List<ResponseAttribute> raProfileAttrs = request.getRaProfile().getAttributes();
 
         //String tokenType = AttributeDefinitionUtils.getAttributeValue(ATTRIBUTE_TOKEN_TYPE, raProfileAttrs);
         //user.setTokenType(tokenType);
@@ -192,12 +192,12 @@ public class EndEntityEjbcaServiceImpl implements EndEntityEjbcaService {
         NameAndIdDto ca = AttributeDefinitionUtils.getObjectAttributeContentData(ATTRIBUTE_CERTIFICATION_AUTHORITY, raProfileAttrs, NameAndIdDto.class).get(0);
         user.setCaName(ca.getName());
 
-        Boolean sendNotifications = AttributeDefinitionUtils.getSingleItemAttributeContentValue(ATTRIBUTE_SEND_NOTIFICATIONS, raProfileAttrs, BooleanAttributeContent.class).getData();
+        Boolean sendNotifications = AttributeDefinitionUtils.getSingleItemAttributeContentValue(ATTRIBUTE_SEND_NOTIFICATIONS, raProfileAttrs, BooleanAttributeContentV2.class).getData();
         if (sendNotifications != null) {
             user.setSendNotification(sendNotifications);
         }
 
-        Boolean keyRecoverable = AttributeDefinitionUtils.getSingleItemAttributeContentValue(ATTRIBUTE_KEY_RECOVERABLE, raProfileAttrs, BooleanAttributeContent.class).getData();
+        Boolean keyRecoverable = AttributeDefinitionUtils.getSingleItemAttributeContentValue(ATTRIBUTE_KEY_RECOVERABLE, raProfileAttrs, BooleanAttributeContentV2.class).getData();
         if (keyRecoverable != null) {
             user.setKeyRecoverable(keyRecoverable);
         }

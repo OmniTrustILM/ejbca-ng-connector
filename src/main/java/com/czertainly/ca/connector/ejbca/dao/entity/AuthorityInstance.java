@@ -1,6 +1,6 @@
 package com.czertainly.ca.connector.ejbca.dao.entity;
 
-import com.czertainly.api.model.common.attribute.v2.BaseAttribute;
+import com.czertainly.api.model.common.attribute.common.BaseAttribute;
 import com.czertainly.api.model.connector.authority.AuthorityProviderInstanceDto;
 import com.czertainly.ca.connector.ejbca.dto.AuthorityInstanceNameAndUuidDto;
 import com.czertainly.core.util.AttributeDefinitionUtils;

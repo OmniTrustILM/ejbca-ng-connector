@@ -1,10 +1,11 @@
 package com.czertainly.ca.connector.ejbca.config;
 
-import com.czertainly.api.model.common.attribute.v2.AttributeType;
-import com.czertainly.api.model.common.attribute.v2.MetadataAttribute;
-import com.czertainly.api.model.common.attribute.v2.content.AttributeContentType;
-import com.czertainly.api.model.common.attribute.v2.content.StringAttributeContent;
-import com.czertainly.api.model.common.attribute.v2.properties.MetadataAttributeProperties;
+import com.czertainly.api.model.common.attribute.common.AttributeType;
+import com.czertainly.api.model.common.attribute.common.MetadataAttribute;
+import com.czertainly.api.model.common.attribute.common.content.AttributeContentType;
+import com.czertainly.api.model.common.attribute.v2.MetadataAttributeV2;
+import com.czertainly.api.model.common.attribute.v2.content.StringAttributeContentV2;
+import com.czertainly.api.model.common.attribute.common.properties.MetadataAttributeProperties;
 import com.czertainly.api.model.core.discovery.DiscoveryStatus;
 import com.czertainly.ca.connector.ejbca.dao.entity.DiscoveryHistory;
 import com.czertainly.ca.connector.ejbca.service.DiscoveryHistoryService;
@@ -56,7 +57,7 @@ public class CustomAsyncConfigurer implements AsyncConfigurer {
         List<MetadataAttribute> attributes = new ArrayList<>();
 
         //Exception Reason
-        MetadataAttribute attribute = new MetadataAttribute();
+        MetadataAttributeV2 attribute = new MetadataAttributeV2();
         attribute.setName("reason");
         attribute.setUuid("abc0412a-60f6-11ed-9b6a-0242ac120002");
         attribute.setContentType(AttributeContentType.STRING);
@@ -68,7 +69,7 @@ public class CustomAsyncConfigurer implements AsyncConfigurer {
         attributeProperties.setVisible(true);
 
         attribute.setProperties(attributeProperties);
-        attribute.setContent(List.of(new StringAttributeContent(exception)));
+        attribute.setContent(List.of(new StringAttributeContentV2(exception)));
         attributes.add(attribute);
 
         return attributes;

@@ -1,7 +1,7 @@
 package com.czertainly.ca.connector.ejbca;
 
 import com.czertainly.api.exception.NotFoundException;
-import com.czertainly.api.model.common.attribute.v2.BaseAttribute;
+import com.czertainly.api.model.common.attribute.common.BaseAttribute;
 import com.czertainly.ca.connector.ejbca.api.AuthorityInstanceControllerImpl;
 import com.czertainly.ca.connector.ejbca.dao.AuthorityInstanceRepository;
 import com.czertainly.ca.connector.ejbca.dao.entity.AuthorityInstance;

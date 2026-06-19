@@ -33,3 +33,6 @@ build/
 .vscode/
 
 .DS_Store
+
+### Superpowers working docs (local only, not committed) ###
+docs/superpowers/

@@ -2,7 +2,8 @@ package com.czertainly.ca.connector.ejbca.service.impl;
 
 import com.czertainly.api.exception.NotFoundException;
 import com.czertainly.api.exception.ValidationException;
-import com.czertainly.api.model.client.attribute.RequestAttributeDto;
+import com.czertainly.api.model.client.attribute.RequestAttribute;
+import com.czertainly.api.model.client.attribute.RequestAttributeV2;
 import com.czertainly.api.model.common.NameAndIdDto;
 import com.czertainly.api.model.connector.v2.CertificateIdentificationRequestDto;
 import com.czertainly.api.model.connector.v2.CertificateIdentificationResponseDto;
@@ -67,21 +68,24 @@ public class CertificateEjbcaServiceImplTest {
 
     private CertificateIdentificationRequestDto getCertificateIdentificationRequestDto(int profileId, String profileName) {
         CertificateIdentificationRequestDto dto = new CertificateIdentificationRequestDto();
-        dto.setRaProfileAttributes(List.of(getEndEntityProfileRequestAttributeDto(profileId, profileName), getCertificateProfileRequestAttributeDto(profileId, profileName)));
+        List<RequestAttribute> attrs = new java.util.ArrayList<>();
+        attrs.add(getEndEntityProfileRequestAttributeV2(profileId, profileName));
+        attrs.add(getCertificateProfileRequestAttributeV2(profileId, profileName));
+        dto.setRaProfileAttributes(attrs);
         dto.setCertificate("MIIC1TCCAb2gAwIBAgIJANQeIhz8h9A3MA0GCSqGSIb3DQEBBQUAMBoxGDAWBgNVBAMTD3d3dy5leGFtcGxlLmNvbTAeFw0yMjAxMDEwOTUwMDhaFw0zMTEyMzAwOTUwMDhaMBoxGDAWBgNVBAMTD3d3dy5leGFtcGxlLmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALG+wuvOrdMjD5nwhLwmd2+FcO0htFcMi4/Ciu1/9NlHjy55JO+poBih+3JnaJ+u+BY/GCTjbn3RGvC8y2J+1RuAalU0252R0lSWOC2SqUOvUMtOJTufbr/jW0xYk2UePqPj4FX3h3zK3Byw8UaQuUmr9n9acTwyD0oYcxutFm4FqjRZ88eCm7EqNZm+52DmJBHokZPd/z+PLuN6X+Yog5DHS9E1VodHLVVcf3/9KTb3jFhKfNM9y/4pwclRKU1KbjSLStVZmGP3etYYYcFjPswy7zPgWtE8waprQxSJo+Cdqb7+16m69UjaJ1B507xhN8LUjdzZfRJVjSjiP3VKOtMCAwEAAaMeMBwwGgYDVR0RBBMwEYIPd3d3LmV4YW1wbGUuY29tMA0GCSqGSIb3DQEBBQUAA4IBAQAiUmsCNTv/pAxbAB8R9xlarMV/dL42slWJ7bI2e3e03GycVP3eajCfkEKG6XB7aaX4Epn0/jRpEPfplRXkXrxNZ8/bwkwlNN5CiziUcyqVANFC8r/GVlcg+n2+hvu7ZLXmGqBvAJBsbLuvdBKo2iqF4R3BklScDVAHhuXTYwPXd3n7iHEYnuxnGo5yshm6vZ7FKPyIroN9bFc0llJ/n5r4h8WNqaN77M6TycZm4Dlw6EGGM8Bk+IrcRoNE1JLdhIOm3YI5g1zwCprXJ4L+3X6IC20tJUK4PpMGAAdS6ak4/Sq3UM+JxF7oZ2fRCIJrKyfsN3rridYJe0tg5bQnkqmQ");
         return dto;
     }
 
-    private RequestAttributeDto getEndEntityProfileRequestAttributeDto(int profileId, String profileName) {
-        RequestAttributeDto dto = new RequestAttributeDto();
+    private RequestAttributeV2 getEndEntityProfileRequestAttributeV2(int profileId, String profileName) {
+        RequestAttributeV2 dto = new RequestAttributeV2();
         dto.setName(AuthorityInstanceControllerImpl.ATTRIBUTE_END_ENTITY_PROFILE);
         NameAndIdDto nameAndIdDto = new NameAndIdDto(profileId, profileName);
         dto.setContent(LocalAttributeUtil.convertFromNameAndIdToBase(List.of(nameAndIdDto)));
         return dto;
     }
 
-    private RequestAttributeDto getCertificateProfileRequestAttributeDto(int profileId, String profileName) {
-        RequestAttributeDto dto = new RequestAttributeDto();
+    private RequestAttributeV2 getCertificateProfileRequestAttributeV2(int profileId, String profileName) {
+        RequestAttributeV2 dto = new RequestAttributeV2();
         dto.setName(AuthorityInstanceControllerImpl.ATTRIBUTE_CERTIFICATE_PROFILE);
         NameAndIdDto nameAndIdDto = new NameAndIdDto(profileId, profileName);
         dto.setContent(LocalAttributeUtil.convertFromNameAndIdToBase(List.of(nameAndIdDto)));

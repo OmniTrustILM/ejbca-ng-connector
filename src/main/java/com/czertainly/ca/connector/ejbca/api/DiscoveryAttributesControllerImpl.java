@@ -2,8 +2,8 @@ package com.czertainly.ca.connector.ejbca.api;
 
 import com.czertainly.api.exception.ValidationException;
 import com.czertainly.api.interfaces.connector.AttributesController;
-import com.czertainly.api.model.client.attribute.RequestAttributeDto;
-import com.czertainly.api.model.common.attribute.v2.BaseAttribute;
+import com.czertainly.api.model.client.attribute.RequestAttribute;
+import com.czertainly.api.model.common.attribute.common.BaseAttribute;
 import com.czertainly.ca.connector.ejbca.service.DiscoveryAttributeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,7 +28,7 @@ public class DiscoveryAttributesControllerImpl implements AttributesController {
     }
 
     @Override
-    public void validateAttributes(String kind, List<RequestAttributeDto> attributes) throws ValidationException {
+    public void validateAttributes(String kind, List<RequestAttribute> attributes) throws ValidationException {
         discoveryAttributeService.validateAttributes(kind, attributes);
     }
 }

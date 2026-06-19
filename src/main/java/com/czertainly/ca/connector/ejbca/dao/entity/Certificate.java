@@ -1,6 +1,6 @@
 package com.czertainly.ca.connector.ejbca.dao.entity;
 
-import com.czertainly.api.model.common.attribute.v2.MetadataAttribute;
+import com.czertainly.api.model.common.attribute.common.MetadataAttribute;
 import com.czertainly.api.model.connector.discovery.DiscoveryProviderCertificateDataDto;
 import com.czertainly.core.util.AttributeDefinitionUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;

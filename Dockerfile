@@ -2,7 +2,6 @@
 FROM maven:3.9.9-eclipse-temurin-21 AS build
 COPY src /home/app/src
 COPY pom.xml /home/app
-COPY settings.xml /root/.m2/settings.xml
 COPY docker /home/app/docker
 COPY ejbca-libs /home/app/ejbca-libs
 RUN /home/app/ejbca-libs/maven-install-files.sh

@@ -5,10 +5,10 @@ import com.czertainly.api.exception.NotFoundException;
 import com.czertainly.api.exception.ValidationError;
 import com.czertainly.api.exception.ValidationException;
 import com.czertainly.api.model.common.NameAndIdDto;
-import com.czertainly.api.model.common.attribute.v2.BaseAttribute;
-import com.czertainly.api.model.common.attribute.v2.content.BaseAttributeContent;
-import com.czertainly.api.model.common.attribute.v2.content.ObjectAttributeContent;
-import com.czertainly.api.model.common.attribute.v2.content.StringAttributeContent;
+import com.czertainly.api.model.common.attribute.common.BaseAttribute;
+import com.czertainly.api.model.common.attribute.v2.content.BaseAttributeContentV2;
+import com.czertainly.api.model.common.attribute.v2.content.ObjectAttributeContentV2;
+import com.czertainly.api.model.common.attribute.v2.content.StringAttributeContentV2;
 import com.czertainly.ca.connector.ejbca.dto.EjbcaVersionResponseDto;
 import com.czertainly.ca.connector.ejbca.service.AuthorityInstanceService;
 import com.czertainly.ca.connector.ejbca.service.DiscoveryAttributeService;
@@ -80,13 +80,13 @@ public class DiscoverySupportController {
             method = RequestMethod.GET,
             produces = "application/json"
     )
-    public List<ObjectAttributeContent> listEndEntityProfiles(@PathVariable String ejbcaInstanceUuid) throws NotFoundException {
+    public List<ObjectAttributeContentV2> listEndEntityProfiles(@PathVariable String ejbcaInstanceUuid) throws NotFoundException {
         checkEjbcaVersion(ejbcaInstanceUuid);
 
         List<NameAndIdDto> endEntityProfiles = endEntityProfileEjbcaService.listEndEntityProfiles(ejbcaInstanceUuid);
-        List<ObjectAttributeContent> contentList = new ArrayList<>();
+        List<ObjectAttributeContentV2> contentList = new ArrayList<>();
         for (NameAndIdDto endEntityProfile : endEntityProfiles) {
-            ObjectAttributeContent content = new ObjectAttributeContent(endEntityProfile.getName(), endEntityProfile);
+            ObjectAttributeContentV2 content = new ObjectAttributeContentV2(endEntityProfile.getName(), endEntityProfile);
             contentList.add(content);
         }
         return contentList;
@@ -97,7 +97,7 @@ public class DiscoverySupportController {
             method = RequestMethod.GET,
             produces = "application/json"
     )
-    public List<ObjectAttributeContent> listCas(@PathVariable String ejbcaInstanceUuid) throws NotFoundException {
+    public List<ObjectAttributeContentV2> listCas(@PathVariable String ejbcaInstanceUuid) throws NotFoundException {
         checkEjbcaVersion(ejbcaInstanceUuid);
 
         List<NameAndIdDto> cas = ejbcaService.getAvailableCas(ejbcaInstanceUuid);
@@ -109,11 +109,11 @@ public class DiscoverySupportController {
             method = RequestMethod.GET,
             produces = "application/json"
     )
-    public BaseAttributeContent<String> ejbcaRestApi(@PathVariable String ejbcaInstanceUuid) throws NotFoundException {
+    public StringAttributeContentV2 ejbcaRestApi(@PathVariable String ejbcaInstanceUuid) throws NotFoundException {
         checkEjbcaVersion(ejbcaInstanceUuid);
 
         String url = authorityInstanceService.getRestApiUrl(ejbcaInstanceUuid);
-        return new BaseAttributeContent<>(url);
+        return new StringAttributeContentV2(url);
     }
 
     @RequestMapping(
@@ -126,18 +126,18 @@ public class DiscoverySupportController {
         checkEjbcaVersion(ejbcaInstanceUuid);
 
         List<NameAndIdDto> endEntityProfiles = endEntityProfileEjbcaService.listEndEntityProfiles(ejbcaInstanceUuid);
-        List<BaseAttributeContent> eeProfilesContent = new ArrayList<>();
+        List<BaseAttributeContentV2<?>> eeProfilesContent = new ArrayList<>();
         for (NameAndIdDto endEntityProfile : endEntityProfiles) {
-            ObjectAttributeContent content = new ObjectAttributeContent(endEntityProfile.getName(), endEntityProfile);
+            ObjectAttributeContentV2 content = new ObjectAttributeContentV2(endEntityProfile.getName(), endEntityProfile);
             eeProfilesContent.add(content);
         }
 
         List<NameAndIdDto> cas = ejbcaService.getAvailableCas(ejbcaInstanceUuid);
-        List<BaseAttributeContent> casContent = LocalAttributeUtil.convertFromNameAndIdToBase(cas);
+        List<BaseAttributeContentV2<?>> casContent = LocalAttributeUtil.convertFromNameAndIdToBase(cas);
 
         String url = authorityInstanceService.getRestApiUrl(ejbcaInstanceUuid);
-        List<BaseAttributeContent> urlContent = new ArrayList<>();
-        StringAttributeContent urlAttributeContent = new StringAttributeContent(url);
+        List<BaseAttributeContentV2<?>> urlContent = new ArrayList<>();
+        StringAttributeContentV2 urlAttributeContent = new StringAttributeContentV2(url);
         urlContent.add(urlAttributeContent);
 
         return discoveryAttributeService.getInstanceAndKindAttributes(kind, eeProfilesContent, casContent, urlContent);
