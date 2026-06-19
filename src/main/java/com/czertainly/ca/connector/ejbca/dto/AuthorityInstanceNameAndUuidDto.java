@@ -1,6 +1,8 @@
 package com.czertainly.ca.connector.ejbca.dto;
 
-public class AuthorityInstanceNameAndUuidDto {
+public class AuthorityInstanceNameAndUuidDto implements java.io.Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private String name;
     private String uuid;

@@ -3,11 +3,12 @@ package com.czertainly.ca.connector.ejbca.service.impl;
 import com.czertainly.api.exception.NotFoundException;
 import com.czertainly.api.exception.ValidationException;
 import com.czertainly.api.model.common.NameAndIdDto;
-import com.czertainly.api.model.common.attribute.v2.AttributeType;
-import com.czertainly.api.model.common.attribute.v2.MetadataAttribute;
-import com.czertainly.api.model.common.attribute.v2.content.AttributeContentType;
-import com.czertainly.api.model.common.attribute.v2.content.StringAttributeContent;
-import com.czertainly.api.model.common.attribute.v2.properties.MetadataAttributeProperties;
+import com.czertainly.api.model.common.attribute.common.AttributeType;
+import com.czertainly.api.model.common.attribute.common.MetadataAttribute;
+import com.czertainly.api.model.common.attribute.common.content.AttributeContentType;
+import com.czertainly.api.model.common.attribute.v2.MetadataAttributeV2;
+import com.czertainly.api.model.common.attribute.v2.content.StringAttributeContentV2;
+import com.czertainly.api.model.common.attribute.common.properties.MetadataAttributeProperties;
 import com.czertainly.api.model.connector.v2.*;
 import com.czertainly.ca.connector.ejbca.api.AuthorityInstanceControllerImpl;
 import com.czertainly.ca.connector.ejbca.api.CertificateControllerImpl;
@@ -72,9 +73,9 @@ public class CertificateEjbcaServiceImpl implements CertificateEjbcaService {
     @Override
     public CertificateDataResponseDto issueCertificate(String uuid, CertificateSignRequestDto request) throws Exception {
         // generate username based on the request
-        String usernameGenMethod = AttributeDefinitionUtils.getSingleItemAttributeContentValue(AuthorityInstanceControllerImpl.ATTRIBUTE_USERNAME_GEN_METHOD, request.getRaProfileAttributes(), StringAttributeContent.class).getData();
-        String usernamePrefix = AttributeDefinitionUtils.getSingleItemAttributeContentValue(AuthorityInstanceControllerImpl.ATTRIBUTE_USERNAME_PREFIX, request.getRaProfileAttributes(), StringAttributeContent.class).getData();
-        String usernamePostfix = AttributeDefinitionUtils.getSingleItemAttributeContentValue(AuthorityInstanceControllerImpl.ATTRIBUTE_USERNAME_POSTFIX, request.getRaProfileAttributes(), StringAttributeContent.class).getData();
+        String usernameGenMethod = AttributeDefinitionUtils.getSingleItemAttributeContentValue(AuthorityInstanceControllerImpl.ATTRIBUTE_USERNAME_GEN_METHOD, request.getRaProfileAttributes(), StringAttributeContentV2.class).getData();
+        String usernamePrefix = AttributeDefinitionUtils.getSingleItemAttributeContentValue(AuthorityInstanceControllerImpl.ATTRIBUTE_USERNAME_PREFIX, request.getRaProfileAttributes(), StringAttributeContentV2.class).getData();
+        String usernamePostfix = AttributeDefinitionUtils.getSingleItemAttributeContentValue(AuthorityInstanceControllerImpl.ATTRIBUTE_USERNAME_POSTFIX, request.getRaProfileAttributes(), StringAttributeContentV2.class).getData();
 
         CertificateRequest certificateRequest = CertificateRequestUtils.createCertificateRequest(
                 Base64.getDecoder().decode(request.getRequest()), request.getFormat());
@@ -91,9 +92,9 @@ public class CertificateEjbcaServiceImpl implements CertificateEjbcaService {
 
         certificate.setMeta(getIssueMetadata(
                 username,
-                AttributeDefinitionUtils.getSingleItemAttributeContentValue(CertificateControllerImpl.ATTRIBUTE_EMAIL, request.getAttributes(), StringAttributeContent.class).getData(),
-                AttributeDefinitionUtils.getSingleItemAttributeContentValue(CertificateControllerImpl.ATTRIBUTE_SAN, request.getAttributes(), StringAttributeContent.class).getData(),
-                AttributeDefinitionUtils.getSingleItemAttributeContentValue(CertificateControllerImpl.ATTRIBUTE_EXTENSION, request.getAttributes(), StringAttributeContent.class).getData()
+                AttributeDefinitionUtils.getSingleItemAttributeContentValue(CertificateControllerImpl.ATTRIBUTE_EMAIL, request.getAttributes(), StringAttributeContentV2.class).getData(),
+                AttributeDefinitionUtils.getSingleItemAttributeContentValue(CertificateControllerImpl.ATTRIBUTE_SAN, request.getAttributes(), StringAttributeContentV2.class).getData(),
+                AttributeDefinitionUtils.getSingleItemAttributeContentValue(CertificateControllerImpl.ATTRIBUTE_EXTENSION, request.getAttributes(), StringAttributeContentV2.class).getData()
         ));
 
         return certificate;
@@ -109,12 +110,12 @@ public class CertificateEjbcaServiceImpl implements CertificateEjbcaService {
         // check if we have the username in the metadata, and if not, generate username
         String username = null;
         if (!request.getMeta().isEmpty()) {
-            username = AttributeDefinitionUtils.getSingleItemAttributeContentValue(META_EJBCA_USERNAME, metadata, StringAttributeContent.class).getData();
+            username = AttributeDefinitionUtils.getSingleItemAttributeContentValue(META_EJBCA_USERNAME, metadata, StringAttributeContentV2.class).getData();
         }
         if (StringUtils.isBlank(username)) {
-            String usernameGenMethod = AttributeDefinitionUtils.getSingleItemAttributeContentValue(AuthorityInstanceControllerImpl.ATTRIBUTE_USERNAME_GEN_METHOD, request.getRaProfileAttributes(), StringAttributeContent.class).getData();
-            String usernamePrefix = AttributeDefinitionUtils.getSingleItemAttributeContentValue(AuthorityInstanceControllerImpl.ATTRIBUTE_USERNAME_PREFIX, request.getRaProfileAttributes(), StringAttributeContent.class).getData();
-            String usernamePostfix = AttributeDefinitionUtils.getSingleItemAttributeContentValue(AuthorityInstanceControllerImpl.ATTRIBUTE_USERNAME_POSTFIX, request.getRaProfileAttributes(), StringAttributeContent.class).getData();
+            String usernameGenMethod = AttributeDefinitionUtils.getSingleItemAttributeContentValue(AuthorityInstanceControllerImpl.ATTRIBUTE_USERNAME_GEN_METHOD, request.getRaProfileAttributes(), StringAttributeContentV2.class).getData();
+            String usernamePrefix = AttributeDefinitionUtils.getSingleItemAttributeContentValue(AuthorityInstanceControllerImpl.ATTRIBUTE_USERNAME_PREFIX, request.getRaProfileAttributes(), StringAttributeContentV2.class).getData();
+            String usernamePostfix = AttributeDefinitionUtils.getSingleItemAttributeContentValue(AuthorityInstanceControllerImpl.ATTRIBUTE_USERNAME_POSTFIX, request.getRaProfileAttributes(), StringAttributeContentV2.class).getData();
             username = generateUsername(usernameGenMethod, usernamePrefix, usernamePostfix, certificateRequest);
         }
 
@@ -144,13 +145,13 @@ public class CertificateEjbcaServiceImpl implements CertificateEjbcaService {
         List<MetadataAttribute> attributes = new ArrayList<>();
 
         // Username
-        MetadataAttribute attribute = new MetadataAttribute();
+        MetadataAttributeV2 attribute = new MetadataAttributeV2();
         attribute.setUuid("b42ab690-60fd-11ed-9b6a-0242ac120002");
         attribute.setName(META_EJBCA_USERNAME);
         attribute.setDescription("EJBCA Username");
         attribute.setType(AttributeType.META);
         attribute.setContentType(AttributeContentType.STRING);
-        attribute.setContent(List.of(new StringAttributeContent(username)));
+        attribute.setContent(List.of(new StringAttributeContentV2(username)));
 
         MetadataAttributeProperties attributeProperties = new MetadataAttributeProperties();
         attributeProperties.setVisible(true);
@@ -163,13 +164,13 @@ public class CertificateEjbcaServiceImpl implements CertificateEjbcaService {
 
     private MetadataAttribute getUsernameMetadataAttribute(String username) {
         // Username
-        MetadataAttribute attribute = new MetadataAttribute();
+        MetadataAttributeV2 attribute = new MetadataAttributeV2();
         attribute.setUuid("b42ab690-60fd-11ed-9b6a-0242ac120002");
         attribute.setName(META_EJBCA_USERNAME);
         attribute.setDescription("EJBCA Username");
         attribute.setType(AttributeType.META);
         attribute.setContentType(AttributeContentType.STRING);
-        attribute.setContent(List.of(new StringAttributeContent(username)));
+        attribute.setContent(List.of(new StringAttributeContentV2(username)));
 
         MetadataAttributeProperties attributeProperties = new MetadataAttributeProperties();
         attributeProperties.setVisible(true);
@@ -187,13 +188,13 @@ public class CertificateEjbcaServiceImpl implements CertificateEjbcaService {
 
         // EMAIL
         if (StringUtils.isNotBlank(email)) {
-            MetadataAttribute emailAttribute = new MetadataAttribute();
+            MetadataAttributeV2 emailAttribute = new MetadataAttributeV2();
             emailAttribute.setUuid("b42ab942-60fd-11ed-9b6a-0242ac120002");
             emailAttribute.setName(META_EMAIL);
             emailAttribute.setDescription("Email");
             emailAttribute.setType(AttributeType.META);
             emailAttribute.setContentType(AttributeContentType.STRING);
-            emailAttribute.setContent(List.of(new StringAttributeContent(email)));
+            emailAttribute.setContent(List.of(new StringAttributeContentV2(email)));
 
             MetadataAttributeProperties emailAttributeProperties = new MetadataAttributeProperties();
             emailAttributeProperties.setVisible(true);
@@ -205,13 +206,13 @@ public class CertificateEjbcaServiceImpl implements CertificateEjbcaService {
 
         // SAN Attribute
         if (StringUtils.isNotBlank(san)) {
-            MetadataAttribute sanAttribute = new MetadataAttribute();
+            MetadataAttributeV2 sanAttribute = new MetadataAttributeV2();
             sanAttribute.setUuid("b42abc58-60fd-11ed-9b6a-0242ac120002");
             sanAttribute.setName(META_SAN);
             sanAttribute.setDescription("SAN");
             sanAttribute.setType(AttributeType.META);
             sanAttribute.setContentType(AttributeContentType.STRING);
-            sanAttribute.setContent(List.of(new StringAttributeContent(san)));
+            sanAttribute.setContent(List.of(new StringAttributeContentV2(san)));
 
             MetadataAttributeProperties sanAttributeProperties = new MetadataAttributeProperties();
             sanAttributeProperties.setVisible(true);
@@ -223,13 +224,13 @@ public class CertificateEjbcaServiceImpl implements CertificateEjbcaService {
 
         //Extension
         if (StringUtils.isNotBlank(extensions)) {
-            MetadataAttribute extensionAttribute = new MetadataAttribute();
+            MetadataAttributeV2 extensionAttribute = new MetadataAttributeV2();
             extensionAttribute.setUuid("b42abe38-60fd-11ed-9b6a-0242ac120002");
             extensionAttribute.setName(META_EXTENSION);
             extensionAttribute.setDescription("Extension");
             extensionAttribute.setType(AttributeType.META);
             extensionAttribute.setContentType(AttributeContentType.STRING);
-            extensionAttribute.setContent(List.of(new StringAttributeContent(extensions)));
+            extensionAttribute.setContent(List.of(new StringAttributeContentV2(extensions)));
 
             MetadataAttributeProperties extensionAttributeProperties = new MetadataAttributeProperties();
             extensionAttributeProperties.setVisible(true);

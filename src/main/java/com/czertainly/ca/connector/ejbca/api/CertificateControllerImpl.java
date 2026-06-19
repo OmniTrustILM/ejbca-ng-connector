@@ -1,17 +1,20 @@
 package com.czertainly.ca.connector.ejbca.api;
 
 import com.czertainly.api.exception.CertificateOperationException;
+import com.czertainly.api.exception.CertificateRequestException;
 import com.czertainly.api.exception.NotFoundException;
 import com.czertainly.api.exception.ValidationException;
 import com.czertainly.api.interfaces.connector.v2.CertificateController;
-import com.czertainly.api.model.client.attribute.RequestAttributeDto;
-import com.czertainly.api.model.common.attribute.v2.AttributeType;
-import com.czertainly.api.model.common.attribute.v2.BaseAttribute;
-import com.czertainly.api.model.common.attribute.v2.DataAttribute;
-import com.czertainly.api.model.common.attribute.v2.content.AttributeContentType;
-import com.czertainly.api.model.common.attribute.v2.properties.DataAttributeProperties;
+import com.czertainly.api.model.client.attribute.RequestAttribute;
+import com.czertainly.api.model.common.attribute.common.AttributeType;
+import com.czertainly.api.model.common.attribute.common.BaseAttribute;
+import com.czertainly.api.model.common.attribute.common.DataAttribute;
+import com.czertainly.api.model.common.attribute.common.content.AttributeContentType;
+import com.czertainly.api.model.common.attribute.v2.DataAttributeV2;
+import com.czertainly.api.model.common.attribute.common.properties.DataAttributeProperties;
 import com.czertainly.api.model.connector.v2.*;
 import com.czertainly.ca.connector.ejbca.service.CertificateEjbcaService;
+import org.springframework.http.ResponseEntity;
 import com.czertainly.core.util.AttributeDefinitionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
@@ -46,7 +49,7 @@ public class CertificateControllerImpl implements CertificateController {
     public List<BaseAttribute> listIssueCertificateAttributes(String uuid) {
         List<BaseAttribute> attrs = new ArrayList<>();
 
-        DataAttribute email = new DataAttribute();
+        DataAttributeV2 email = new DataAttributeV2();
         email.setUuid(ATTRIBUTE_EMAIL_UUID);
         email.setName(ATTRIBUTE_EMAIL);
         email.setDescription("End Entity email address");
@@ -62,7 +65,7 @@ public class CertificateControllerImpl implements CertificateController {
         email.setProperties(emailProperties);
         attrs.add(email);
 
-        DataAttribute san = new DataAttribute();
+        DataAttributeV2 san = new DataAttributeV2();
         san.setUuid(ATTRIBUTE_SAN_UUID);
         san.setName(ATTRIBUTE_SAN);
         san.setDescription("Comma separated Subject Alternative Names. If present, it will override the SANs in the CSR");
@@ -78,7 +81,7 @@ public class CertificateControllerImpl implements CertificateController {
         san.setProperties(sanProperties);
         attrs.add(san);
 
-        DataAttribute extension = new DataAttribute();
+        DataAttributeV2 extension = new DataAttributeV2();
         extension.setUuid(ATTRIBUTE_EXTENSION_UUID);
         extension.setName(ATTRIBUTE_EXTENSION);
         extension.setDescription("Comma separated Extension Data in the format OID=Value");
@@ -98,27 +101,35 @@ public class CertificateControllerImpl implements CertificateController {
     }
 
     @Override
-    public void validateIssueCertificateAttributes(String uuid, List<RequestAttributeDto> attributes) throws ValidationException {
+    public void validateIssueCertificateAttributes(String uuid, List<RequestAttribute> attributes) throws ValidationException {
         AttributeDefinitionUtils.validateAttributes(
                 listIssueCertificateAttributes(uuid),
                 attributes);
     }
 
     @Override
-    public CertificateDataResponseDto issueCertificate(String uuid, CertificateSignRequestDto request) throws CertificateOperationException {
+    public ResponseEntity<CertificateDataResponseDto> issueCertificate(String uuid, CertificateSignRequestDto request) throws NotFoundException, CertificateOperationException, CertificateRequestException {
         try {
-            return certificateEjbcaService.issueCertificate(uuid, request);
+            return ResponseEntity.ok(certificateEjbcaService.issueCertificate(uuid, request));
+        } catch (CertificateOperationException | CertificateRequestException | NotFoundException e) {
+            throw e;
         } catch (Exception e) {
-            throw new CertificateOperationException(e.getMessage());
+            CertificateOperationException coe = new CertificateOperationException(e.getMessage());
+            coe.initCause(e);
+            throw coe;
         }
     }
 
     @Override
-    public CertificateDataResponseDto renewCertificate(String uuid, CertificateRenewRequestDto request) throws CertificateOperationException {
+    public ResponseEntity<CertificateDataResponseDto> renewCertificate(String uuid, CertificateRenewRequestDto request) throws NotFoundException, CertificateOperationException, CertificateRequestException {
         try {
-            return certificateEjbcaService.renewCertificate(uuid, request);
+            return ResponseEntity.ok(certificateEjbcaService.renewCertificate(uuid, request));
+        } catch (CertificateOperationException | CertificateRequestException | NotFoundException e) {
+            throw e;
         } catch (Exception e) {
-            throw new CertificateOperationException(e.getMessage());
+            CertificateOperationException coe = new CertificateOperationException(e.getMessage());
+            coe.initCause(e);
+            throw coe;
         }
     }
 
@@ -128,15 +139,44 @@ public class CertificateControllerImpl implements CertificateController {
     }
 
     @Override
-    public void validateRevokeCertificateAttributes(String uuid, List<RequestAttributeDto> attributes) throws ValidationException {
+    public void validateRevokeCertificateAttributes(String uuid, List<RequestAttribute> attributes) throws ValidationException {
         AttributeDefinitionUtils.validateAttributes(
                 listRevokeCertificateAttributes(uuid),
                 attributes);
     }
 
     @Override
-    public void revokeCertificate(String uuid, CertRevocationDto request) throws NotFoundException, AccessDeniedException {
-        certificateEjbcaService.revokeCertificate(uuid, request);
+    public ResponseEntity<Void> revokeCertificate(String uuid, CertRevocationDto request) throws NotFoundException, CertificateOperationException {
+        try {
+            certificateEjbcaService.revokeCertificate(uuid, request);
+        } catch (NotFoundException | AccessDeniedException e) {
+            throw e;
+        } catch (Exception e) {
+            CertificateOperationException coe = new CertificateOperationException(e.getMessage());
+            coe.initCause(e);
+            throw coe;
+        }
+        return ResponseEntity.noContent().build();
+    }
+
+    @Override
+    public CertificateOperationStatusResponseDto getIssueCertificateStatus(String uuid, CertificateOperationStatusRequestDto request) throws NotFoundException {
+        throw new UnsupportedOperationException("getIssueCertificateStatus is not supported");
+    }
+
+    @Override
+    public void cancelIssueCertificate(String uuid, CertificateOperationCancelRequestDto request) throws NotFoundException, ValidationException {
+        throw new UnsupportedOperationException("cancelIssueCertificate is not supported");
+    }
+
+    @Override
+    public void cancelRevokeCertificate(String uuid, CertificateOperationCancelRequestDto request) throws NotFoundException, ValidationException {
+        throw new UnsupportedOperationException("cancelRevokeCertificate is not supported");
+    }
+
+    @Override
+    public CertificateOperationStatusResponseDto getRevokeCertificateStatus(String uuid, CertificateOperationStatusRequestDto request) throws NotFoundException {
+        throw new UnsupportedOperationException("getRevokeCertificateStatus is not supported");
     }
 
     @Override

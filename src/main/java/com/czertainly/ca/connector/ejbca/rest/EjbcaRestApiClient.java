@@ -2,10 +2,10 @@ package com.czertainly.ca.connector.ejbca.rest;
 
 import com.czertainly.api.clients.BaseApiClient;
 import com.czertainly.api.exception.ValidationException;
-import com.czertainly.api.model.common.attribute.v2.BaseAttribute;
-import com.czertainly.api.model.common.attribute.v2.content.FileAttributeContent;
-import com.czertainly.api.model.common.attribute.v2.content.SecretAttributeContent;
-import com.czertainly.api.model.common.attribute.v2.content.StringAttributeContent;
+import com.czertainly.api.model.common.attribute.common.BaseAttribute;
+import com.czertainly.api.model.common.attribute.v2.content.FileAttributeContentV2;
+import com.czertainly.api.model.common.attribute.v2.content.SecretAttributeContentV2;
+import com.czertainly.api.model.common.attribute.v2.content.StringAttributeContentV2;
 import com.czertainly.ca.connector.ejbca.config.TrustedCertificatesConfig;
 import com.czertainly.ca.connector.ejbca.dao.entity.AuthorityInstance;
 import com.czertainly.ca.connector.ejbca.dto.ejbca.response.ExceptionErrorRestResponse;
@@ -61,12 +61,12 @@ public abstract class EjbcaRestApiClient {
             SslContextBuilder sslContextBuilder = SslContextBuilder.forClient();
 
             KeyManager km = null;
-            FileAttributeContent keyStoreData = AttributeDefinitionUtils.getSingleItemAttributeContentValue(ATTRIBUTE_KEYSTORE, attributes, FileAttributeContent.class);
+            FileAttributeContentV2 keyStoreData = AttributeDefinitionUtils.getSingleItemAttributeContentValue(ATTRIBUTE_KEYSTORE, attributes, FileAttributeContentV2.class);
             if (keyStoreData != null && keyStoreData.getData() != null && keyStoreData.getData().getContent() != null && !keyStoreData.getData().getContent().isEmpty()) {
                 KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm()); //"SunX509"
 
-                String keyStoreType = AttributeDefinitionUtils.getSingleItemAttributeContentValue(ATTRIBUTE_KEYSTORE_TYPE, attributes, StringAttributeContent.class).getData();
-                String keyStorePassword = AttributeDefinitionUtils.getSingleItemAttributeContentValue(ATTRIBUTE_KEYSTORE_PASSWORD, attributes, SecretAttributeContent.class).getData().getSecret();
+                String keyStoreType = AttributeDefinitionUtils.getSingleItemAttributeContentValue(ATTRIBUTE_KEYSTORE_TYPE, attributes, StringAttributeContentV2.class).getData();
+                String keyStorePassword = AttributeDefinitionUtils.getSingleItemAttributeContentValue(ATTRIBUTE_KEYSTORE_PASSWORD, attributes, SecretAttributeContentV2.class).getData().getSecret();
                 byte[] keyStoreBytes = Base64.getDecoder().decode(keyStoreData.getData().getContent());
 
                 kmf.init(KeyStoreUtils.bytes2KeyStore(keyStoreBytes, keyStorePassword, keyStoreType), keyStorePassword.toCharArray());
@@ -76,12 +76,12 @@ public abstract class EjbcaRestApiClient {
             sslContextBuilder.keyManager(km);
 
             TrustManager tm;
-            FileAttributeContent trustStoreData = AttributeDefinitionUtils.getSingleItemAttributeContentValue(ATTRIBUTE_TRUSTSTORE, attributes, FileAttributeContent.class);
+            FileAttributeContentV2 trustStoreData = AttributeDefinitionUtils.getSingleItemAttributeContentValue(ATTRIBUTE_TRUSTSTORE, attributes, FileAttributeContentV2.class);
             if (trustStoreData != null && trustStoreData.getData() != null && trustStoreData.getData().getContent() != null && !trustStoreData.getData().getContent().isEmpty()) {
                 TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm()); //"SunX509"
 
-                String trustStoreType = AttributeDefinitionUtils.getSingleItemAttributeContentValue(ATTRIBUTE_TRUSTSTORE_TYPE, attributes, StringAttributeContent.class).getData();
-                String trustStorePassword = AttributeDefinitionUtils.getSingleItemAttributeContentValue(ATTRIBUTE_TRUSTSTORE_PASSWORD, attributes, SecretAttributeContent.class).getData().getSecret();
+                String trustStoreType = AttributeDefinitionUtils.getSingleItemAttributeContentValue(ATTRIBUTE_TRUSTSTORE_TYPE, attributes, StringAttributeContentV2.class).getData();
+                String trustStorePassword = AttributeDefinitionUtils.getSingleItemAttributeContentValue(ATTRIBUTE_TRUSTSTORE_PASSWORD, attributes, SecretAttributeContentV2.class).getData().getSecret();
                 byte[] trustStoreBytes = Base64.getDecoder().decode(trustStoreData.getData().getContent());
 
                 tmf.init(KeyStoreUtils.bytes2KeyStore(trustStoreBytes, trustStorePassword, trustStoreType));

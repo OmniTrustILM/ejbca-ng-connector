@@ -1,27 +1,27 @@
 package com.czertainly.ca.connector.ejbca.util;
 
 import com.czertainly.api.model.common.NameAndIdDto;
-import com.czertainly.api.model.common.attribute.v2.content.BaseAttributeContent;
-import com.czertainly.api.model.common.attribute.v2.content.ObjectAttributeContent;
+import com.czertainly.api.model.common.attribute.v2.content.BaseAttributeContentV2;
+import com.czertainly.api.model.common.attribute.v2.content.ObjectAttributeContentV2;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class LocalAttributeUtil {
 
-    public static List<ObjectAttributeContent> convertFromNameAndId(List<NameAndIdDto> data) {
-        List<ObjectAttributeContent> contentList = new ArrayList<>();
+    public static List<ObjectAttributeContentV2> convertFromNameAndId(List<NameAndIdDto> data) {
+        List<ObjectAttributeContentV2> contentList = new ArrayList<>();
         for (NameAndIdDto x : data) {
-            ObjectAttributeContent content = new ObjectAttributeContent(x.getName(), x);
+            ObjectAttributeContentV2 content = new ObjectAttributeContentV2(x.getName(), x);
             contentList.add(content);
         }
         return contentList;
     }
 
-    public static List<BaseAttributeContent> convertFromNameAndIdToBase(List<NameAndIdDto> data) {
-        List<BaseAttributeContent> contentList = new ArrayList<>();
+    public static List<BaseAttributeContentV2<?>> convertFromNameAndIdToBase(List<NameAndIdDto> data) {
+        List<BaseAttributeContentV2<?>> contentList = new ArrayList<>();
         for (NameAndIdDto x : data) {
-            ObjectAttributeContent content = new ObjectAttributeContent(x.getName(), x);
+            ObjectAttributeContentV2 content = new ObjectAttributeContentV2(x.getName(), x);
             contentList.add(content);
         }
         return contentList;

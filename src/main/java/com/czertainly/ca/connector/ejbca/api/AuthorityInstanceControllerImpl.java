@@ -4,20 +4,21 @@ import com.czertainly.api.exception.AlreadyExistException;
 import com.czertainly.api.exception.NotFoundException;
 import com.czertainly.api.exception.ValidationException;
 import com.czertainly.api.interfaces.connector.AuthorityInstanceController;
-import com.czertainly.api.model.client.attribute.RequestAttributeDto;
+import com.czertainly.api.model.client.attribute.RequestAttribute;
 import com.czertainly.api.model.common.NameAndIdDto;
-import com.czertainly.api.model.common.attribute.v2.AttributeType;
-import com.czertainly.api.model.common.attribute.v2.BaseAttribute;
-import com.czertainly.api.model.common.attribute.v2.DataAttribute;
-import com.czertainly.api.model.common.attribute.v2.callback.AttributeCallback;
-import com.czertainly.api.model.common.attribute.v2.callback.AttributeCallbackMapping;
-import com.czertainly.api.model.common.attribute.v2.callback.AttributeValueTarget;
-import com.czertainly.api.model.common.attribute.v2.content.AttributeContentType;
-import com.czertainly.api.model.common.attribute.v2.content.BaseAttributeContent;
-import com.czertainly.api.model.common.attribute.v2.content.BooleanAttributeContent;
-import com.czertainly.api.model.common.attribute.v2.content.ObjectAttributeContent;
-import com.czertainly.api.model.common.attribute.v2.content.StringAttributeContent;
-import com.czertainly.api.model.common.attribute.v2.properties.DataAttributeProperties;
+import com.czertainly.api.model.common.attribute.common.AttributeType;
+import com.czertainly.api.model.common.attribute.common.BaseAttribute;
+import com.czertainly.api.model.common.attribute.common.DataAttribute;
+import com.czertainly.api.model.common.attribute.common.callback.AttributeCallback;
+import com.czertainly.api.model.common.attribute.common.callback.AttributeCallbackMapping;
+import com.czertainly.api.model.common.attribute.common.callback.AttributeValueTarget;
+import com.czertainly.api.model.common.attribute.common.content.AttributeContentType;
+import com.czertainly.api.model.common.attribute.v2.DataAttributeV2;
+import com.czertainly.api.model.common.attribute.v2.content.BaseAttributeContentV2;
+import com.czertainly.api.model.common.attribute.v2.content.BooleanAttributeContentV2;
+import com.czertainly.api.model.common.attribute.v2.content.ObjectAttributeContentV2;
+import com.czertainly.api.model.common.attribute.v2.content.StringAttributeContentV2;
+import com.czertainly.api.model.common.attribute.common.properties.DataAttributeProperties;
 import com.czertainly.api.model.connector.authority.*;
 import com.czertainly.ca.connector.ejbca.service.AuthorityInstanceService;
 import com.czertainly.ca.connector.ejbca.service.EjbcaService;
@@ -109,16 +110,16 @@ public class AuthorityInstanceControllerImpl implements AuthorityInstanceControl
         List<BaseAttribute> attrs = new ArrayList<>();
 
         // transform objects to Attributes that can be selected
-        List<BaseAttributeContent> endEntityProfilesContent = new ArrayList<>();
+        List<BaseAttributeContentV2<?>> endEntityProfilesContent = new ArrayList<>();
         ArrayList<NameAndIdDto> endEntityProfiles = new ArrayList<>(endEntityProfileEjbcaService.listEndEntityProfiles(uuid));
         for (NameAndIdDto endEntityProfile : endEntityProfiles) {
-            ObjectAttributeContent content = new ObjectAttributeContent();
+            ObjectAttributeContentV2 content = new ObjectAttributeContentV2();
             content.setReference(endEntityProfile.getName());
             content.setData(endEntityProfile);
             endEntityProfilesContent.add(content);
         }
 
-        DataAttribute endEntityProfile = new DataAttribute();
+        DataAttributeV2 endEntityProfile = new DataAttributeV2();
         endEntityProfile.setUuid("baf2d142-f35a-437f-81c7-35c128881fc0");
         endEntityProfile.setName(ATTRIBUTE_END_ENTITY_PROFILE);
         endEntityProfile.setDescription("Available end entity profiles");
@@ -139,7 +140,7 @@ public class AuthorityInstanceControllerImpl implements AuthorityInstanceControl
         mappings.add(new AttributeCallbackMapping("authorityId", AttributeValueTarget.PATH_VARIABLE, uuid));
         mappings.add(new AttributeCallbackMapping(ATTRIBUTE_END_ENTITY_PROFILE + ".data.id", "endEntityProfileId", AttributeValueTarget.PATH_VARIABLE));
 
-        DataAttribute certificateProfile = new DataAttribute();
+        DataAttributeV2 certificateProfile = new DataAttributeV2();
         certificateProfile.setUuid("eb57a756-5a11-4d31-866b-e3f066f7a2b9");
         certificateProfile.setName(ATTRIBUTE_CERTIFICATE_PROFILE);
         certificateProfile.setDescription("Available certificate profiles for selected end entity profile");
@@ -162,7 +163,7 @@ public class AuthorityInstanceControllerImpl implements AuthorityInstanceControl
 
         attrs.add(certificateProfile);
 
-        DataAttribute certificationAuthority = new DataAttribute();
+        DataAttributeV2 certificationAuthority = new DataAttributeV2();
         certificationAuthority.setUuid("edfd318a-8428-4fd1-b546-fd5238674f78");
         certificationAuthority.setName(ATTRIBUTE_CERTIFICATION_AUTHORITY);
         certificationAuthority.setDescription("Available CAs for selected end entity profile");
@@ -185,7 +186,7 @@ public class AuthorityInstanceControllerImpl implements AuthorityInstanceControl
 
         attrs.add(certificationAuthority);
 
-        DataAttribute sendNotifications = new DataAttribute();
+        DataAttributeV2 sendNotifications = new DataAttributeV2();
         sendNotifications.setUuid("e0ab3b4e-7681-4a9f-aec5-e025eb1a56a4");
         sendNotifications.setName(ATTRIBUTE_SEND_NOTIFICATIONS);
         sendNotifications.setDescription("Notifications to be send fot the end entity");
@@ -199,10 +200,10 @@ public class AuthorityInstanceControllerImpl implements AuthorityInstanceControl
         sendNotificationsProperties.setList(false);
         sendNotificationsProperties.setMultiSelect(false);
         sendNotifications.setProperties(sendNotificationsProperties);
-        sendNotifications.setContent(List.of(new BooleanAttributeContent(false)));
+        sendNotifications.setContent(List.of(new BooleanAttributeContentV2(false)));
         attrs.add(sendNotifications);
 
-        DataAttribute keyRecoverable = new DataAttribute();
+        DataAttributeV2 keyRecoverable = new DataAttributeV2();
         keyRecoverable.setUuid("417077da-bb2b-4f35-a0f7-abf824e345ec");
         keyRecoverable.setName(ATTRIBUTE_KEY_RECOVERABLE);
         keyRecoverable.setDescription("Recovery option for the private key");
@@ -216,7 +217,7 @@ public class AuthorityInstanceControllerImpl implements AuthorityInstanceControl
         keyRecoverableProperties.setList(false);
         keyRecoverableProperties.setMultiSelect(false);
         keyRecoverable.setProperties(keyRecoverableProperties);
-        keyRecoverable.setContent(List.of(new BooleanAttributeContent(false)));
+        keyRecoverable.setContent(List.of(new BooleanAttributeContentV2(false)));
         attrs.add(keyRecoverable);
 
         // available methods to generate the username in the EJBCA that should be unique
@@ -225,15 +226,15 @@ public class AuthorityInstanceControllerImpl implements AuthorityInstanceControl
         usernameGenMethods.add("RANDOM"); // this will generate random 16 byte Base64 encoded string
         usernameGenMethods.add("CN"); // CN from the request will be used to create username
 
-        List<BaseAttributeContent> usernameGenMethodsContent = new ArrayList<>();
+        List<BaseAttributeContentV2<?>> usernameGenMethodsContent = new ArrayList<>();
         for (String usernameGenMethod : usernameGenMethods) {
-            StringAttributeContent content = new StringAttributeContent();
+            StringAttributeContentV2 content = new StringAttributeContentV2();
             content.setData(usernameGenMethod);
             usernameGenMethodsContent.add(content);
         }
 
         // options to generate the username
-        DataAttribute usernameGenMethod = new DataAttribute();
+        DataAttributeV2 usernameGenMethod = new DataAttributeV2();
         usernameGenMethod.setUuid("3655e4f5-61d8-49c9-b116-f466a9f8c6b4");
         usernameGenMethod.setDescription("Method to generate username of the end entity");
         usernameGenMethod.setName(ATTRIBUTE_USERNAME_GEN_METHOD);
@@ -251,7 +252,7 @@ public class AuthorityInstanceControllerImpl implements AuthorityInstanceControl
         attrs.add(usernameGenMethod);
 
         // prefix
-        DataAttribute usernamePrefix = new DataAttribute();
+        DataAttributeV2 usernamePrefix = new DataAttributeV2();
         usernamePrefix.setUuid("c0c14dee-9319-4b03-af01-6a21bf30c1e3");
         usernamePrefix.setDescription("Optional prefix to be used when generating username");
         usernamePrefix.setName(ATTRIBUTE_USERNAME_PREFIX);
@@ -265,11 +266,11 @@ public class AuthorityInstanceControllerImpl implements AuthorityInstanceControl
         usernamePrefixProperties.setList(false);
         usernamePrefixProperties.setMultiSelect(false);
         usernamePrefix.setProperties(usernamePrefixProperties);
-        usernamePrefix.setContent(List.of(new StringAttributeContent("czertainly-")));
+        usernamePrefix.setContent(List.of(new StringAttributeContentV2("czertainly-")));
         attrs.add(usernamePrefix);
 
         // postfix
-        DataAttribute usernamePostfix = new DataAttribute();
+        DataAttributeV2 usernamePostfix = new DataAttributeV2();
         usernamePostfix.setUuid("5c94731f-621e-4851-b40d-b4f4897f0240");
         usernamePostfix.setDescription("Optional postfix to be used when generating username");
         usernamePostfix.setName(ATTRIBUTE_USERNAME_POSTFIX);
@@ -283,14 +284,14 @@ public class AuthorityInstanceControllerImpl implements AuthorityInstanceControl
         usernamePostfixProperties.setList(false);
         usernamePostfixProperties.setMultiSelect(false);
         usernamePostfix.setProperties(usernamePostfixProperties);
-        usernamePostfix.setContent(List.of(new StringAttributeContent("-generated")));
+        usernamePostfix.setContent(List.of(new StringAttributeContentV2("-generated")));
         attrs.add(usernamePostfix);
 
         return attrs;
     }
 
     @Override
-    public void validateRAProfileAttributes(@PathVariable String uuid, @RequestBody List<RequestAttributeDto> attributes) throws ValidationException, NotFoundException {
+    public void validateRAProfileAttributes(@PathVariable String uuid, @RequestBody List<RequestAttribute> attributes) throws ValidationException, NotFoundException {
         AttributeDefinitionUtils.validateAttributes(listRAProfileAttributes(uuid), attributes);
     }
 

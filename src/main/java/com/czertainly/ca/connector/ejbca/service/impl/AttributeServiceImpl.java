@@ -1,15 +1,16 @@
 package com.czertainly.ca.connector.ejbca.service.impl;
 
 import com.czertainly.api.interfaces.connector.AttributesController;
-import com.czertainly.api.model.client.attribute.RequestAttributeDto;
-import com.czertainly.api.model.common.attribute.v2.AttributeType;
-import com.czertainly.api.model.common.attribute.v2.BaseAttribute;
-import com.czertainly.api.model.common.attribute.v2.DataAttribute;
-import com.czertainly.api.model.common.attribute.v2.callback.AttributeCallback;
-import com.czertainly.api.model.common.attribute.v2.callback.AttributeCallbackMapping;
-import com.czertainly.api.model.common.attribute.v2.callback.AttributeValueTarget;
-import com.czertainly.api.model.common.attribute.v2.content.AttributeContentType;
-import com.czertainly.api.model.common.attribute.v2.properties.DataAttributeProperties;
+import com.czertainly.api.model.client.attribute.RequestAttribute;
+import com.czertainly.api.model.common.attribute.common.AttributeType;
+import com.czertainly.api.model.common.attribute.common.BaseAttribute;
+import com.czertainly.api.model.common.attribute.common.DataAttribute;
+import com.czertainly.api.model.common.attribute.common.callback.AttributeCallback;
+import com.czertainly.api.model.common.attribute.common.callback.AttributeCallbackMapping;
+import com.czertainly.api.model.common.attribute.common.callback.AttributeValueTarget;
+import com.czertainly.api.model.common.attribute.common.content.AttributeContentType;
+import com.czertainly.api.model.common.attribute.v2.DataAttributeV2;
+import com.czertainly.api.model.common.attribute.common.properties.DataAttributeProperties;
 import com.czertainly.ca.connector.ejbca.service.AttributeService;
 import com.czertainly.core.util.AttributeDefinitionUtils;
 import org.slf4j.Logger;
@@ -42,7 +43,7 @@ public class AttributeServiceImpl implements AttributeService {
 		logger.debug("Getting the attributes for {}", kind);
 		List<BaseAttribute> attrs = new ArrayList<>();
 
-        DataAttribute url = new DataAttribute();
+        DataAttributeV2 url = new DataAttributeV2();
         url.setUuid(DATA_ATTRIBUTE_URL_UUID);
         url.setName(DATA_ATTRIBUTE_URL_NAME);
         url.setDescription(DATA_ATTRIBUTE_URL_DESCRIPTION);
@@ -58,7 +59,7 @@ public class AttributeServiceImpl implements AttributeService {
         url.setProperties(urlProperties);
         attrs.add(url);
 
-        DataAttribute credential = new DataAttribute();
+        DataAttributeV2 credential = new DataAttributeV2();
         credential.setUuid(DATA_ATTRIBUTE_CREDENTIAL_UUID);
         credential.setName(DATA_ATTRIBUTE_CREDENTIAL_NAME);
         credential.setDescription(DATA_ATTRIBUTE_CREDENTIAL_DESCRIPTION);
@@ -91,7 +92,7 @@ public class AttributeServiceImpl implements AttributeService {
 	}
 
 	@Override
-	public boolean validateAttributes(String kind, List<RequestAttributeDto> attributes) {
+	public boolean validateAttributes(String kind, List<RequestAttribute> attributes) {
         if (attributes == null) {
             return false;
         }

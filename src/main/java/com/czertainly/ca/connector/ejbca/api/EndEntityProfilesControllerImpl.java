@@ -2,7 +2,7 @@ package com.czertainly.ca.connector.ejbca.api;
 
 import com.czertainly.api.exception.NotFoundException;
 import com.czertainly.api.model.common.NameAndIdDto;
-import com.czertainly.api.model.common.attribute.v2.content.ObjectAttributeContent;
+import com.czertainly.api.model.common.attribute.v2.content.ObjectAttributeContentV2;
 import com.czertainly.ca.connector.ejbca.service.EndEntityProfileEjbcaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,11 +21,11 @@ public class EndEntityProfilesControllerImpl {
     private EndEntityProfileEjbcaService endEntityProfileEjbcaService;
 
     @RequestMapping(method = RequestMethod.GET, produces = {"application/json"})
-    public List<ObjectAttributeContent> listEntityProfiles(@PathVariable String uuid) throws NotFoundException {
-        List<ObjectAttributeContent> listJsonContent = new ArrayList<>();
+    public List<ObjectAttributeContentV2> listEntityProfiles(@PathVariable String uuid) throws NotFoundException {
+        List<ObjectAttributeContentV2> listJsonContent = new ArrayList<>();
         List<NameAndIdDto> dataList = endEntityProfileEjbcaService.listEndEntityProfiles(uuid);
         for (NameAndIdDto data : dataList) {
-            ObjectAttributeContent content = new ObjectAttributeContent();
+            ObjectAttributeContentV2 content = new ObjectAttributeContentV2();
             content.setReference(data.getName());
             content.setData(data);
             listJsonContent.add(content);
@@ -34,11 +34,11 @@ public class EndEntityProfilesControllerImpl {
     }
 
     @RequestMapping(path = "/{endEntityProfileId}/certificateprofiles", method = RequestMethod.GET, produces = {"application/json"})
-    public List<ObjectAttributeContent> listCertificateProfiles(@PathVariable String uuid, @PathVariable Integer endEntityProfileId) throws NotFoundException {
-        List<ObjectAttributeContent> listJsonContent = new ArrayList<>();
+    public List<ObjectAttributeContentV2> listCertificateProfiles(@PathVariable String uuid, @PathVariable Integer endEntityProfileId) throws NotFoundException {
+        List<ObjectAttributeContentV2> listJsonContent = new ArrayList<>();
         List<NameAndIdDto> dataList = endEntityProfileEjbcaService.listCertificateProfiles(uuid, endEntityProfileId);
         for (NameAndIdDto data : dataList) {
-            ObjectAttributeContent content = new ObjectAttributeContent();
+            ObjectAttributeContentV2 content = new ObjectAttributeContentV2();
             content.setReference(data.getName());
             content.setData(data);
             listJsonContent.add(content);
@@ -47,11 +47,11 @@ public class EndEntityProfilesControllerImpl {
     }
 
     @RequestMapping(path = "/{endEntityProfileId}/cas", method = RequestMethod.GET, produces = {"application/json"})
-    public List<ObjectAttributeContent> listCAsInProfile(@PathVariable String uuid, @PathVariable Integer endEntityProfileId) throws NotFoundException {
-        List<ObjectAttributeContent> listJsonContent = new ArrayList<>();
+    public List<ObjectAttributeContentV2> listCAsInProfile(@PathVariable String uuid, @PathVariable Integer endEntityProfileId) throws NotFoundException {
+        List<ObjectAttributeContentV2> listJsonContent = new ArrayList<>();
         List<NameAndIdDto> dataList = endEntityProfileEjbcaService.listCAsInProfile(uuid, endEntityProfileId);
         for (NameAndIdDto data : dataList) {
-            ObjectAttributeContent content = new ObjectAttributeContent();
+            ObjectAttributeContentV2 content = new ObjectAttributeContentV2();
             content.setReference(data.getName());
             content.setData(data);
             listJsonContent.add(content);

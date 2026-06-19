@@ -4,11 +4,11 @@ import com.czertainly.api.exception.AlreadyExistException;
 import com.czertainly.api.exception.NotFoundException;
 import com.czertainly.api.exception.ValidationError;
 import com.czertainly.api.exception.ValidationException;
-import com.czertainly.api.model.common.attribute.v2.BaseAttribute;
-import com.czertainly.api.model.common.attribute.v2.content.FileAttributeContent;
-import com.czertainly.api.model.common.attribute.v2.content.SecretAttributeContent;
-import com.czertainly.api.model.common.attribute.v2.content.StringAttributeContent;
-import com.czertainly.api.model.common.attribute.v2.content.data.CredentialAttributeContentData;
+import com.czertainly.api.model.common.attribute.common.BaseAttribute;
+import com.czertainly.api.model.common.attribute.v2.content.FileAttributeContentV2;
+import com.czertainly.api.model.common.attribute.v2.content.SecretAttributeContentV2;
+import com.czertainly.api.model.common.attribute.v2.content.StringAttributeContentV2;
+import com.czertainly.api.model.common.attribute.common.content.data.CredentialAttributeContentData;
 import com.czertainly.api.model.connector.authority.AuthorityProviderInstanceDto;
 import com.czertainly.api.model.connector.authority.AuthorityProviderInstanceRequestDto;
 import com.czertainly.ca.connector.ejbca.config.ApplicationConfig;
@@ -114,7 +114,7 @@ public class AuthorityInstanceServiceImpl implements AuthorityInstanceService {
 
         AuthorityInstance instance = new AuthorityInstance();
         instance.setName(request.getName());
-        instance.setUrl(AttributeDefinitionUtils.getSingleItemAttributeContentValue("url", request.getAttributes(), StringAttributeContent.class).getData());
+        instance.setUrl(AttributeDefinitionUtils.getSingleItemAttributeContentValue("url", request.getAttributes(), StringAttributeContentV2.class).getData());
         instance.setUuid(UUID.randomUUID().toString());
         CredentialAttributeContentData credential = AttributeDefinitionUtils.getCredentialContent("credential", request.getAttributes());
         instance.setCredentialUuid(credential.getUuid());
@@ -153,7 +153,7 @@ public class AuthorityInstanceServiceImpl implements AuthorityInstanceService {
         }
 
         instance.setName(request.getName());
-        instance.setUrl(AttributeDefinitionUtils.getSingleItemAttributeContentValue("url", request.getAttributes(), StringAttributeContent.class).getData());
+        instance.setUrl(AttributeDefinitionUtils.getSingleItemAttributeContentValue("url", request.getAttributes(), StringAttributeContentV2.class).getData());
 
         CredentialAttributeContentData credential = AttributeDefinitionUtils.getCredentialContent("credential", request.getAttributes());
         instance.setCredentialUuid(credential.getUuid());
@@ -239,12 +239,12 @@ public class AuthorityInstanceServiceImpl implements AuthorityInstanceService {
             List<BaseAttribute> attributes = AttributeDefinitionUtils.deserialize(instance.getCredentialData(), BaseAttribute.class);
 
             KeyManager[] km = null;
-            FileAttributeContent keyStoreData = AttributeDefinitionUtils.getSingleItemAttributeContentValue("keyStore", attributes, FileAttributeContent.class);
+            FileAttributeContentV2 keyStoreData = AttributeDefinitionUtils.getSingleItemAttributeContentValue("keyStore", attributes, FileAttributeContentV2.class);
             if (keyStoreData != null && keyStoreData.getData() != null && keyStoreData.getData().getContent() != null && !keyStoreData.getData().getContent().isEmpty()) {
                 KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm()); //"SunX509"
 
-                String keyStoreType = AttributeDefinitionUtils.getSingleItemAttributeContentValue("keyStoreType", attributes, StringAttributeContent.class).getData();
-                String keyStorePassword = AttributeDefinitionUtils.getSingleItemAttributeContentValue("keyStorePassword", attributes, SecretAttributeContent.class).getData().getSecret();
+                String keyStoreType = AttributeDefinitionUtils.getSingleItemAttributeContentValue("keyStoreType", attributes, StringAttributeContentV2.class).getData();
+                String keyStorePassword = AttributeDefinitionUtils.getSingleItemAttributeContentValue("keyStorePassword", attributes, SecretAttributeContentV2.class).getData().getSecret();
                 byte[] keyStoreBytes = Base64.getDecoder().decode(keyStoreData.getData().getContent());
 
                 kmf.init(KeyStoreUtils.bytes2KeyStore(keyStoreBytes, keyStorePassword, keyStoreType), keyStorePassword.toCharArray());
@@ -252,12 +252,12 @@ public class AuthorityInstanceServiceImpl implements AuthorityInstanceService {
             }
 
             TrustManager[] tm = null;
-            FileAttributeContent trustStoreData = AttributeDefinitionUtils.getSingleItemAttributeContentValue("trustStore", attributes, FileAttributeContent.class);
+            FileAttributeContentV2 trustStoreData = AttributeDefinitionUtils.getSingleItemAttributeContentValue("trustStore", attributes, FileAttributeContentV2.class);
             if (trustStoreData != null && trustStoreData.getData() != null && trustStoreData.getData().getContent() != null && !trustStoreData.getData().getContent().isEmpty()) {
                 TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm()); //"SunX509"
 
-                String trustStoreType = AttributeDefinitionUtils.getSingleItemAttributeContentValue("trustStoreType", attributes, StringAttributeContent.class).getData();
-                String trustStorePassword = AttributeDefinitionUtils.getSingleItemAttributeContentValue("trustStorePassword", attributes, SecretAttributeContent.class).getData().getSecret();
+                String trustStoreType = AttributeDefinitionUtils.getSingleItemAttributeContentValue("trustStoreType", attributes, StringAttributeContentV2.class).getData();
+                String trustStorePassword = AttributeDefinitionUtils.getSingleItemAttributeContentValue("trustStorePassword", attributes, SecretAttributeContentV2.class).getData().getSecret();
                 byte[] trustStoreBytes = Base64.getDecoder().decode(trustStoreData.getData().getContent());
 
                 tmf.init(KeyStoreUtils.bytes2KeyStore(trustStoreBytes, trustStorePassword, trustStoreType));
