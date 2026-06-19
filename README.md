@@ -95,6 +95,8 @@ EJBCA NG `Connector` is provided as a Docker container. Use the `docker pull cze
 | `REMOTE_DEBUG`           | Enables JVM remote debug on port 5005                  | ![](https://img.shields.io/badge/-NO-red.svg)      | `false`       |
 | `MAX_PAYLOAD_SIZE`       | Maximum payload size in bytes                          | ![](https://img.shields.io/badge/-NO-red.svg)      | `2000000`     |
 | `EJBCA_SEARCH_PAGE_SIZE` | Maximum number of certificates to fetch in one request | ![](https://img.shields.io/badge/-NO-red.svg)      | `100`         |
+| `EJBCA_TIMEOUT_CONNECT`  | Connection timeout in milliseconds for EJBCA SOAP and REST API calls | ![](https://img.shields.io/badge/-NO-red.svg)      | `5000`        |
+| `EJBCA_TIMEOUT_REQUEST`  | Request (read) timeout in milliseconds for EJBCA SOAP and REST API calls | ![](https://img.shields.io/badge/-NO-red.svg)  | `30000`       |
 
 ### Proxy settings
 

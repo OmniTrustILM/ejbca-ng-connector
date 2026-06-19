@@ -22,6 +22,7 @@ import com.czertainly.ca.connector.ejbca.ws.EjbcaWS;
 import com.czertainly.ca.connector.ejbca.ws.EjbcaWSService;
 import com.czertainly.core.util.AttributeDefinitionUtils;
 import com.czertainly.core.util.KeyStoreUtils;
+import io.netty.channel.ChannelOption;
 import io.netty.handler.ssl.SslContext;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
@@ -46,6 +47,7 @@ import jakarta.xml.ws.BindingProvider;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -67,10 +69,10 @@ public class AuthorityInstanceServiceImpl implements AuthorityInstanceService {
     private static final Map<Long, EjbcaWS> connectionsCache = new ConcurrentHashMap<>();
     private static final Map<Long, WebClient> connectionsRestApiCache = new ConcurrentHashMap<>();
 
-    @Value("${ejbca.timeout.connect:500}")
+    @Value("${ejbca.timeout.connect:5000}")
     private int connectionTimeout;
 
-    @Value("${ejbca.timeout.request:1500}")
+    @Value("${ejbca.timeout.request:30000}")
     private int requestTimeout;
 
     @Autowired
@@ -225,13 +227,34 @@ public class AuthorityInstanceServiceImpl implements AuthorityInstanceService {
         EjbcaWS port = service.getEjbcaWSPort();
         final Map<String, Object> requestContext = ((BindingProvider) port).getRequestContext();
         requestContext.put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, instance.getUrl());
-        requestContext.put(ApplicationConfig.CONNECT_TIMEOUT, connectionTimeout);
-        requestContext.put(ApplicationConfig.REQUEST_TIMEOUT, 1500);
+        applyTimeouts(requestContext);
         requestContext.put(ApplicationConfig.REQUEST_SSL_SOCKET_FACTORY, createSSLSocketFactory(instance));
 
         logger.info("Connected to EJBCA {}", port.getEjbcaVersion());
 
         return port;
+    }
+
+    /**
+     * Applies the configured connect and request (read) timeouts to the JAX-WS request context.
+     * The request timeout is driven by {@code ejbca.timeout.request}; it was previously hardcoded,
+     * which ignored the configured value and caused SocketTimeoutException ("Read timed out") once
+     * an EJBCA SOAP call took longer than the fixed limit.
+     */
+    void applyTimeouts(Map<String, Object> requestContext) {
+        requestContext.put(ApplicationConfig.CONNECT_TIMEOUT, connectionTimeout);
+        requestContext.put(ApplicationConfig.REQUEST_TIMEOUT, requestTimeout);
+    }
+
+    /**
+     * Applies the configured connect and response (read) timeouts to the reactor-netty HTTP client
+     * used for EJBCA REST calls. The client previously had no read timeout, so an unresponsive REST
+     * endpoint could hang the call indefinitely.
+     */
+    HttpClient withTimeouts(HttpClient httpClient) {
+        return httpClient
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectionTimeout)
+                .responseTimeout(Duration.ofMillis(requestTimeout));
     }
 
     private SSLSocketFactory createSSLSocketFactory(AuthorityInstance instance) {
@@ -330,7 +353,7 @@ public class AuthorityInstanceServiceImpl implements AuthorityInstanceService {
 
         SslContext sslContext = EjbcaRestApiClient.createSslContext(attributes, trustedCertificatesConfig.getDefaultTrustManagers());
 
-        HttpClient httpClient = HttpClient.create().secure(t -> t.sslContext(sslContext));
+        HttpClient httpClient = withTimeouts(HttpClient.create()).secure(t -> t.sslContext(sslContext));
 
         return WebClient
                 .builder()
