@@ -22,8 +22,8 @@ spring:
 
 ejbca:
   timeout:
-    connect: 500
-    request: 1500
+    connect: ${EJBCA_TIMEOUT_CONNECT:5000}
+    request: ${EJBCA_TIMEOUT_REQUEST:30000}
   search:
     # The maximum number of certificates to return in one page
     pageSize: ${EJBCA_SEARCH_PAGE_SIZE:100}
