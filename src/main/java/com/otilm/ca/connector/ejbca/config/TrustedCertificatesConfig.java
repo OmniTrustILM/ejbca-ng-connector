@@ -29,7 +29,7 @@ public class TrustedCertificatesConfig {
     private static final Logger logger = LoggerFactory.getLogger(TrustedCertificatesConfig.class);
 
     @Value("${ejbca.cacerts.password:changeit}")
-    private String cacertsPassword = "changeit";
+    private String cacertsPassword;
 
     private static final String BEGIN_CERTIFICATE = "-----BEGIN CERTIFICATE-----";
     private static final String END_CERTIFICATE = "-----END CERTIFICATE-----";
