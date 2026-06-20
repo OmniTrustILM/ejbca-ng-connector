@@ -55,6 +55,7 @@ public class CertificateEjbcaServiceImpl implements CertificateEjbcaService {
     public static final String META_SAN = "san";
     public static final String META_EXTENSION = "extension";
     private static final Logger logger = LoggerFactory.getLogger(CertificateEjbcaServiceImpl.class);
+    private static final SecureRandom RANDOM = new SecureRandom();
     public final String META_EJBCA_USERNAME = "ejbcaUsername";
     private final String COMMON_NAME = "2.5.4.3";
     private EjbcaService ejbcaService;
@@ -246,9 +247,8 @@ public class CertificateEjbcaServiceImpl implements CertificateEjbcaService {
     private String generateUsername(String usernameGenMethod, String usernamePrefix, String usernamePostfix, CertificateRequest csr) throws Exception {
         String username;
         if (usernameGenMethod.equals(UsernameGenMethod.RANDOM.name())) {
-            SecureRandom random = new SecureRandom();
             byte[] r = new byte[8];
-            random.nextBytes(r);
+            RANDOM.nextBytes(r);
             username = Base64.getEncoder().encodeToString(r);
         } else if (usernameGenMethod.equals(UsernameGenMethod.CN.name())) {
             if (csr == null) {
