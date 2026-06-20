@@ -15,16 +15,21 @@ import com.otilm.api.model.common.attribute.v2.content.StringAttributeContentV2;
 import com.otilm.ca.connector.ejbca.config.TrustedCertificatesConfig;
 import com.otilm.ca.connector.ejbca.dao.entity.AuthorityInstance;
 import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.ClientResponse;
+import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
+import reactor.netty.http.client.HttpClient;
 
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
@@ -46,7 +51,7 @@ class EjbcaRestApiClientTest {
 
     @RegisterExtension
     static WireMockExtension wireMock = WireMockExtension.newInstance()
-            .options(wireMockConfig().dynamicPort())
+            .options(wireMockConfig().dynamicPort().dynamicHttpsPort())
             .build();
 
     /** Minimal concrete subclass — needed only to instantiate the abstract class. */
@@ -137,6 +142,7 @@ class EjbcaRestApiClientTest {
 
         assertEquals(HttpStatus.UNAUTHORIZED, ex.getHttpStatus());
         assertNotNull(ex.getError());
+        assertEquals("Unauthorized", ex.getMessage());
     }
 
     // ── processRequest ────────────────────────────────────────────────────────
@@ -362,70 +368,106 @@ class EjbcaRestApiClientTest {
         field.set(client, webClient);
     }
 
+    /**
+     * Build a WebClient that trusts any certificate — required for tests that route
+     * through WireMock's self-signed HTTPS listener.
+     */
+    private WebClient buildInsecureWebClient() throws Exception {
+        SslContext insecureCtx = SslContextBuilder.forClient()
+                .trustManager(InsecureTrustManagerFactory.INSTANCE)
+                .build();
+        HttpClient httpClient = HttpClient.create()
+                .secure(spec -> spec.sslContext(insecureCtx));
+        return WebClient.builder()
+                .clientConnector(new ReactorClientHttpConnector(httpClient))
+                .filter(ExchangeFilterFunction.ofResponseProcessor(EjbcaRestApiClient::handleHttpExceptions))
+                .build();
+    }
+
+    /**
+     * Return the HTTPS base URL for WireMock, e.g. "https://localhost:PORT".
+     * WireMockExtension exposes getHttpsPort() for the dynamically allocated HTTPS port.
+     */
+    private String wireMockHttpsBaseUrl() {
+        return "https://localhost:" + wireMock.getHttpsPort();
+    }
+
     @Test
-    void prepareRequest_returnsNonNullRequestSpec() throws Exception {
-        injectWebClient(WebClient.builder().baseUrl(wireMock.baseUrl()).build());
+    void prepareRequest_returnsNonNullRequestBodySpec() throws Exception {
+        injectWebClient(WebClient.builder().baseUrl(wireMockHttpsBaseUrl()).build());
 
         WebClient.RequestBodyUriSpec spec = client.prepareRequest(HttpMethod.GET, emptyAttributes());
 
         assertNotNull(spec);
+        // RequestBodyUriSpec is a sub-interface of RequestBodySpec/RequestHeadersUriSpec;
+        // verifying non-null is sufficient to prove prepareRequest() returns the correct type.
     }
 
-    // ── searchCertificates (via WireMock) ─────────────────────────────────────
+    // ── searchCertificates over WireMock HTTPS ────────────────────────────────
+
+    private static final String SEARCH_PATH = "/ejbca/ejbca-rest-api/v2/certificate";
+
+    /**
+     * Build a minimal AuthorityInstance whose URL points at the WireMock HTTPS listener.
+     * getRestApiUrl() strips the path from the URL and appends the fixed REST path, so any
+     * path suffix in the supplied URL is intentionally overwritten — only host+port matter.
+     * credentialData is an empty JSON array so AttributeDefinitionUtils.deserialize returns
+     * an empty list → no SSL attributes → injected WebClient's TLS config is used.
+     */
+    private AuthorityInstance buildHttpsInstance() {
+        AuthorityInstance instance = new AuthorityInstance();
+        instance.setUuid("wm-https-test-uuid");
+        instance.setUrl(wireMockHttpsBaseUrl());
+        instance.setCredentialData("[]");
+        return instance;
+    }
 
     @Test
-    void searchCertificates_200_completesWithoutException() throws Exception {
-        wireMock.stubFor(post(urlPathMatching("/ejbca/ejbca-rest-api/v2/certificate"))
+    void searchCertificates_200_wireMockIsHitAndCompletesWithoutException() throws Exception {
+        wireMock.stubFor(post(urlPathEqualTo(SEARCH_PATH))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json")
                         .withBody("{}")));
 
-        injectWebClient(WebClient.builder().baseUrl(wireMock.baseUrl()).build());
+        injectWebClient(buildInsecureWebClient());
 
-        AuthorityInstance instance = buildInstance(wireMock.baseUrl());
+        // processRequest wraps the call: 200 response → Void body → no exception escapes
+        assertDoesNotThrow(() -> client.searchCertificates(buildHttpsInstance()));
 
-        // processRequest wraps the call: 200 response → Void body → null returned, no exception
-        assertDoesNotThrow(() -> client.searchCertificates(instance));
+        // Prove WireMock was actually contacted — this would fail if TLS handshake had failed
+        // and processRequest had silently swallowed the error before WireMock was hit.
+        wireMock.verify(postRequestedFor(urlPathEqualTo(SEARCH_PATH)));
     }
 
     @Test
-    void searchCertificates_500_processRequestCatchesException() throws Exception {
-        wireMock.stubFor(post(urlPathMatching("/ejbca/ejbca-rest-api/v2/certificate"))
+    void searchCertificates_500_processRequestCatchesEjbcaRestApiException() throws Exception {
+        wireMock.stubFor(post(urlPathEqualTo(SEARCH_PATH))
                 .willReturn(aResponse()
                         .withStatus(500)
                         .withHeader("Content-Type", "application/json")
                         .withBody("{\"error_code\":500,\"error_message\":\"Server error\"}")));
 
-        injectWebClient(WebClient.builder().baseUrl(wireMock.baseUrl()).build());
+        injectWebClient(buildInsecureWebClient());
 
-        // processRequest swallows the EjbcaRestApiException → no exception escapes
-        assertDoesNotThrow(() -> client.searchCertificates(buildInstance(wireMock.baseUrl())));
+        // handleHttpExceptions converts 500 → EjbcaRestApiException; processRequest swallows it
+        assertDoesNotThrow(() -> client.searchCertificates(buildHttpsInstance()));
+
+        wireMock.verify(postRequestedFor(urlPathEqualTo(SEARCH_PATH)));
     }
 
     @Test
-    void searchCertificates_404_processRequestCatchesException() throws Exception {
-        wireMock.stubFor(post(urlPathMatching("/ejbca/ejbca-rest-api/v2/certificate"))
+    void searchCertificates_404_processRequestCatchesEjbcaRestApiException() throws Exception {
+        wireMock.stubFor(post(urlPathEqualTo(SEARCH_PATH))
                 .willReturn(aResponse()
                         .withStatus(404)
                         .withHeader("Content-Type", "application/json")
                         .withBody("{\"error_code\":404,\"error_message\":\"Not found\"}")));
 
-        injectWebClient(WebClient.builder().baseUrl(wireMock.baseUrl()).build());
+        injectWebClient(buildInsecureWebClient());
 
-        assertDoesNotThrow(() -> client.searchCertificates(buildInstance(wireMock.baseUrl())));
-    }
+        assertDoesNotThrow(() -> client.searchCertificates(buildHttpsInstance()));
 
-    /**
-     * Build a minimal AuthorityInstance whose URL resolves to the WireMock base URL.
-     * credentialData is an empty JSON array so AttributeDefinitionUtils.deserialize returns
-     * an empty list → no SSL attributes → default TM used in createSslContext.
-     */
-    private AuthorityInstance buildInstance(String baseUrl) {
-        AuthorityInstance instance = new AuthorityInstance();
-        instance.setUuid("wm-test-uuid");
-        instance.setUrl(baseUrl);
-        instance.setCredentialData("[]");
-        return instance;
+        wireMock.verify(postRequestedFor(urlPathEqualTo(SEARCH_PATH)));
     }
 }
