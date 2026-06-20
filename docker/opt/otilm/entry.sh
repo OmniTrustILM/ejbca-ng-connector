@@ -1,12 +1,12 @@
 #!/bin/sh
 
-czertainlyHome="/opt/czertainly"
-source ${czertainlyHome}/static-functions
+otilmHome="/opt/otilm"
+source ${otilmHome}/static-functions
 
-#if [ -f ${czertainlyHome}/trusted-certificates.pem ]
+#if [ -f ${otilmHome}/trusted-certificates.pem ]
 #then
 #  log "INFO" "Adding additional trusted certificates to cacerts"
-#  ./update-cacerts.sh /opt/czertainly/trusted-certificates.pem
+#  ./update-cacerts.sh /opt/otilm/trusted-certificates.pem
 #else
 #  log "INFO" "No trusted certificates were provided, continue!"
 #fi
