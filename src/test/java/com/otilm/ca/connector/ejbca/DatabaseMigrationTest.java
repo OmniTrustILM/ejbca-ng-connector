@@ -11,23 +11,14 @@ import org.junit.jupiter.api.Test;
 public class DatabaseMigrationTest {
 
     @Test
-    public void testCalculateChecksum_V202206231700__AttributeChanges() {
-        int checksum = DatabaseMigrationUtils.calculateChecksum("src/main/java/db/migration/V202206231700__AttributeChanges.java");
-
-        Assertions.assertEquals(JavaMigrationChecksums.V202206231700__AttributeChanges.getChecksum(), checksum);
-    }
-
-    @Test
-    public void testCalculateChecksum_V202211031300__AttributeV2Changes() {
-        int checksum = DatabaseMigrationUtils.calculateChecksum("src/main/java/db/migration/V202211031300__AttributeV2Changes.java");
-
-        Assertions.assertEquals(JavaMigrationChecksums.V202211031300__AttributeV2Changes.getChecksum(), checksum);
-    }
-
-    @Test
-    public void testCalculateChecksum_V202211112000__MetadataToInfoAttributeMigration() {
-        int checksum = DatabaseMigrationUtils.calculateChecksum("src/main/java/db/migration/V202211112000__MetadataToInfoAttributeMigration.java");
-
-        Assertions.assertEquals(JavaMigrationChecksums.V202211112000__MetadataToInfoAttributeMigration.getChecksum(), checksum);
+    public void testJavaMigrationsChecksums() {
+        for (JavaMigrationChecksums migrationChecksum : JavaMigrationChecksums.values()) {
+            if (migrationChecksum.isAltered()) {
+                continue;
+            }
+            int checksum = DatabaseMigrationUtils.calculateChecksum("src/main/java/db/migration/" + migrationChecksum.name() + ".java");
+            Assertions.assertEquals(migrationChecksum.getChecksum(), checksum,
+                    "Error in checking checksum of Java migration: " + migrationChecksum.name());
+        }
     }
 }
