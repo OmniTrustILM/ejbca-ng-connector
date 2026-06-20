@@ -179,9 +179,9 @@ public class EjbcaServiceImpl implements EjbcaService {
     }
 
     @Override
-    public SearchCertificatesRestResponseV2 searchCertificates(String authorityInstanceUuid, String restUrl, SearchCertificatesRestRequestV2 request) throws IOException {
+    public SearchCertificatesRestResponseV2 searchCertificates(String authorityInstanceUuid, String restUrl, SearchCertificatesRestRequestV2 request) throws NotFoundException, IOException {
+        WebClient ejbcaWC = authorityInstanceService.getRestApiConnection(authorityInstanceUuid);
         try {
-            WebClient ejbcaWC = authorityInstanceService.getRestApiConnection(authorityInstanceUuid);
             return ejbcaWC.post()
                     .uri(restUrl + "/v2/certificate/search")
                     .contentType(MediaType.APPLICATION_JSON)

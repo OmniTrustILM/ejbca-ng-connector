@@ -683,4 +683,17 @@ class EjbcaServiceImplTest {
 
         assertThrows(IOException.class, () -> service.searchCertificates(UUID, restUrl, request));
     }
+
+    @Test
+    void searchCertificates_unknownAuthorityUuid_propagatesNotFoundException() throws Exception {
+        // getRestApiConnection throws NotFoundException for an unknown UUID — must NOT be
+        // wrapped into IOException (regression guard for the S112 refactor).
+        given(authorityInstanceService.getRestApiConnection(UUID))
+                .willThrow(new NotFoundException("AuthorityInstance", UUID));
+
+        SearchCertificatesRestRequestV2 request = new SearchCertificatesRestRequestV2();
+
+        assertThrows(NotFoundException.class,
+                () -> service.searchCertificates(UUID, "http://irrelevant", request));
+    }
 }

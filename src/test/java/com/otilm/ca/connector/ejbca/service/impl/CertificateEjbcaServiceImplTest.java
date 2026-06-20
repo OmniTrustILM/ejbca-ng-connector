@@ -323,6 +323,20 @@ class CertificateEjbcaServiceImplTest {
         assertEquals(1, dto.getMeta().size());
     }
 
+    @Test
+    void identifyCertificate_searchCertificatesThrowsNotFoundException_propagatesAsNotFoundException() throws Exception {
+        // Regression guard: when getRestApiConnection throws NotFoundException (unknown authority
+        // instance UUID) that exception must reach the caller as NotFoundException (→ HTTP 404),
+        // NOT be swallowed into IOException/ValidationException.
+        String uuid = "unknown-authority-uuid";
+        given(authorityInstanceService.getRestApiUrl(uuid)).willReturn("https://ejbca.example.com:8443/ejbca/rest");
+        given(ejbcaService.searchCertificates(anyString(), any(), any()))
+                .willThrow(new NotFoundException("AuthorityInstance", uuid));
+
+        assertThrows(NotFoundException.class,
+                () -> certificateEjbcaServiceImpl.identifyCertificate(uuid, getCertificateIdentificationRequestDto(1, "Test")));
+    }
+
     // ── helpers ──────────────────────────────────────────────────────────────
 
     private CertificateSignRequestDto buildSignRequest(

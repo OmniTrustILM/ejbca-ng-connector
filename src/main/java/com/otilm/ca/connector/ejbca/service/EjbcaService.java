@@ -31,7 +31,7 @@ public interface EjbcaService {
 
     EjbcaVersion getEjbcaVersion(String authorityInstanceUuid) throws NotFoundException;
 
-    SearchCertificatesRestResponseV2 searchCertificates(String authorityInstanceUuid, String restUrl, SearchCertificatesRestRequestV2 request) throws IOException;
+    SearchCertificatesRestResponseV2 searchCertificates(String authorityInstanceUuid, String restUrl, SearchCertificatesRestRequestV2 request) throws NotFoundException, IOException;
 
     List<NameAndIdDto> getAvailableCas(String authorityInstanceUuid) throws NotFoundException;
 
