@@ -42,6 +42,10 @@
             src/main/java/com/otilm/ca/connector/ejbca/dto/**,
             src/main/java/com/otilm/ca/connector/ejbca/dao/**
         </sonar.cpd.exclusions>
+        <sonar.exclusions>
+            src/main/java/com/otilm/ca/connector/ejbca/ws/**,
+            src/main/java/db/migration/**
+        </sonar.exclusions>
         <!-- CVE overrides: pin transitive deps to patched versions -->
         <tomcat.version>10.1.55</tomcat.version>
         <netty.version>4.1.135.Final</netty.version>
@@ -177,6 +181,11 @@
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.wiremock</groupId>
+            <artifactId>wiremock-standalone</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
