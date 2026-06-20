@@ -41,11 +41,14 @@ import java.util.List;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.junit.jupiter.api.Assertions.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class EjbcaServiceImplTest {
@@ -256,6 +259,8 @@ class EjbcaServiceImplTest {
         assertDoesNotThrow(() -> service.createEndEntity(
                 UUID, "newUser", "pass", "CN=newUser", "",
                 buildRaProfileAttributes(), buildIssueAttributes()));
+
+        verify(ejbcaWS).editUser(any());
     }
 
     @Test
@@ -316,6 +321,8 @@ class EjbcaServiceImplTest {
         assertDoesNotThrow(() -> service.createEndEntityWithMeta(
                 UUID, "newUser", "pass", "CN=newUser", "",
                 buildRaProfileAttributes(), buildMetadataAttributes()));
+
+        verify(ejbcaWS).editUser(any());
     }
 
     @Test
@@ -364,6 +371,8 @@ class EjbcaServiceImplTest {
         given(ejbcaWS.findUser(any())).willReturn(List.of(buildUserDataVOWS("existingUser")));
 
         assertDoesNotThrow(() -> service.renewEndEntity(UUID, "existingUser", "newPass", "CN=existingUser", ""));
+
+        verify(ejbcaWS).editUser(any());
     }
 
     @Test
@@ -482,6 +491,8 @@ class EjbcaServiceImplTest {
     @Test
     void revokeCertificate_happyPath() throws Exception {
         assertDoesNotThrow(() -> service.revokeCertificate(UUID, "CN=TestCA", "123abc", 0));
+
+        verify(ejbcaWS).revokeCert("CN=TestCA", "123abc", 0);
     }
 
     @Test
@@ -648,6 +659,7 @@ class EjbcaServiceImplTest {
 
         assertNotNull(result);
         assertNotNull(result.getCertificates());
+        wireMock.verify(postRequestedFor(urlPathEqualTo("/v2/certificate/search")));
     }
 
     @Test

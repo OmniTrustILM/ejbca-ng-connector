@@ -59,8 +59,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.verify;
@@ -279,7 +279,8 @@ class CertificateEjbcaServiceImplTest {
 
         certificateEjbcaServiceImpl.revokeCertificate(uuid, request);
 
-        verify(ejbcaService).revokeCertificate(anyString(), anyString(), anyString(), anyInt());
+        // KEY_COMPROMISE has reasonCode = 1 per RFC 5280 / CRLReason
+        verify(ejbcaService).revokeCertificate(anyString(), anyString(), anyString(), eq(1));
     }
 
     @Test
