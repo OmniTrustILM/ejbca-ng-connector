@@ -35,7 +35,9 @@
             src/main/java/com/otilm/ca/connector/ejbca/enums/**,
             src/main/java/com/otilm/ca/connector/ejbca/exception/**,
             src/main/java/com/otilm/ca/connector/ejbca/ws/**,
-            src/main/java/db/migration/**
+            src/main/java/db/migration/**,
+            <!-- EjbcaConnectionFactory: exercised by EJBCAIT, needs live EJBCA -->
+            src/main/java/com/otilm/ca/connector/ejbca/service/impl/EjbcaConnectionFactory.java
         </sonar.coverage.exclusions>
         <sonar.cpd.exclusions>
             src/main/java/com/otilm/ca/connector/ejbca/ws/**,

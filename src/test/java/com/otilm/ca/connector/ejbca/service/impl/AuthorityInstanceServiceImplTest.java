@@ -16,17 +16,17 @@ class AuthorityInstanceServiceImplTest {
 
     // Values distinct from the production defaults (5000/30000) so the tests fail if the code
     // ever reverts to hardcoding instead of reading the injected fields.
-    private AuthorityInstanceServiceImpl serviceWithTimeouts() {
-        AuthorityInstanceServiceImpl service = new AuthorityInstanceServiceImpl();
-        ReflectionTestUtils.setField(service, "connectionTimeout", 1234);
-        ReflectionTestUtils.setField(service, "requestTimeout", 5678);
-        return service;
+    private EjbcaConnectionFactory factoryWithTimeouts() {
+        EjbcaConnectionFactory factory = new EjbcaConnectionFactory();
+        ReflectionTestUtils.setField(factory, "connectionTimeout", 1234);
+        ReflectionTestUtils.setField(factory, "requestTimeout", 5678);
+        return factory;
     }
 
     @Test
     void applyTimeouts_usesConfiguredConnectAndRequestTimeouts() {
         Map<String, Object> requestContext = new HashMap<>();
-        serviceWithTimeouts().applyTimeouts(requestContext);
+        factoryWithTimeouts().applyTimeouts(requestContext);
 
         assertEquals(1234, requestContext.get(ApplicationConfig.CONNECT_TIMEOUT));
         assertEquals(5678, requestContext.get(ApplicationConfig.REQUEST_TIMEOUT));
@@ -34,7 +34,7 @@ class AuthorityInstanceServiceImplTest {
 
     @Test
     void withTimeouts_appliesConfiguredConnectAndResponseTimeoutsToHttpClient() {
-        HttpClient client = serviceWithTimeouts().withTimeouts(HttpClient.create());
+        HttpClient client = factoryWithTimeouts().withTimeouts(HttpClient.create());
 
         assertEquals(Duration.ofMillis(5678), client.configuration().responseTimeout());
         assertEquals(1234, client.configuration().options().get(ChannelOption.CONNECT_TIMEOUT_MILLIS));
