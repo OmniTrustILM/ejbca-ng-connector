@@ -133,6 +133,7 @@ class CertificateEjbcaServiceImplTest {
         // meta contains ejbcaUsername + email + san (no extension)
         assertEquals(3, result.getMeta().size());
         assertTrue(result.getMeta().stream().anyMatch(m -> CertificateEjbcaServiceImpl.META_EMAIL.equals(m.getName())));
+        assertTrue(result.getMeta().stream().anyMatch(m -> CertificateEjbcaServiceImpl.META_SAN.equals(m.getName())));
         assertTrue(result.getMeta().stream().anyMatch(m -> "ejbcaUsername".equals(m.getName())));
         verify(ejbcaService).createEndEntity(anyString(), anyString(), anyString(), anyString(), anyString(), any(), any());
     }
@@ -155,6 +156,7 @@ class CertificateEjbcaServiceImplTest {
         assertNotNull(meta);
         assertTrue(meta.stream().anyMatch(m -> "ejbcaUsername".equals(m.getName())));
         assertTrue(meta.stream().anyMatch(m -> CertificateEjbcaServiceImpl.META_EXTENSION.equals(m.getName())));
+        verify(ejbcaService).createEndEntity(anyString(), anyString(), anyString(), anyString(), anyString(), any(), any());
     }
 
     @Test
@@ -243,6 +245,7 @@ class CertificateEjbcaServiceImplTest {
         CertificateDataResponseDto result = certificateEjbcaServiceImpl.renewCertificate(uuid, request);
 
         assertNotNull(result);
+        verify(ejbcaService).renewEndEntity(anyString(), anyString(), anyString(), anyString(), anyString());
         List<MetadataAttribute> meta = result.getMeta();
         assertTrue(meta.stream().anyMatch(m -> "ejbcaUsername".equals(m.getName())));
     }
