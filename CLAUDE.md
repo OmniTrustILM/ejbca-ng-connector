@@ -4,35 +4,35 @@ Engineering and process guidance for this connector. Build commands, architectur
 package layout are derivable from the code and README; this file captures what is **not**
 obvious from the code.
 
-## Dependency resolution & the x509-common-util jar
+## Dependency resolution, snapshots & the x509-common-util jar
 
-- All released dependencies resolve from **Maven Central** — there is no `settings.xml` and
-  no custom `<repositories>` (the parent `com.otilm:dependencies`, `com.czertainly:interfaces`,
-  and all transitives are on Central).
+- Most dependencies (the `com.otilm:dependencies` parent BOM and its transitives) resolve
+  from **Maven Central**.
+- **`com.otilm:interfaces` is currently consumed as a SNAPSHOT** (`2.18.1-SNAPSHOT`), so the
+  build needs the snapshot `<repositories>` declared in `pom.xml`: GitHub Packages
+  (`maven.pkg.github.com/omnitrustilm/*`) and the public Sonatype Central Portal snapshots
+  (`central.sonatype.com/repository/maven-snapshots`). The snapshot resolves from
+  `central-portal` without auth; the `github` repo is best-effort and needs a token. **Builds
+  are not reproducible** until `com.otilm:interfaces` cuts a release — pin it then.
 - **`com.keyfactor:x509-common-util` is NOT on any public Maven repository.** It ships as a jar
   under `ejbca-libs/` and is installed into the local repo by `ejbca-libs/maven-install-files.sh`.
   Run that script before any Maven build. CI (`build.yml` / `build_pr.yml`) and the Dockerfile
-  build stage all run it. **Do not delete the script or the jar**, and don't assume `mvn` works
-  without it — "resolve from Maven Central" applies to the *released* deps only.
-- Consequently the Docker publish/test workflows call the shared OmniTrustILM workflow with
+  build stage all run it. **Do not delete the script or the jar.**
+- The Docker publish/test workflows call the shared OmniTrustILM workflow with
   **`pre-build: none`**: the self-building Dockerfile runs the install script in its build stage.
   `pre-build: maven` would run a plain `mvn package` that cannot install the local jar.
 
-## The namespace is transitional — don't "fix" it
+## Namespace
 
-- The Maven parent is `com.otilm:dependencies`, but the connector's own Java packages **and** all
-  interface imports are still `com.czertainly`. That's because the released `interfaces` artifact
-  (2.18.0) is still `com.czertainly`, and there is no released `com.otilm:interfaces` yet.
-- This mixed state is intentional. **Do not rename the `com.czertainly` imports/packages to
-  `com.otilm`** piecemeal. The full namespace move is a planned follow-up once a
-  `com.otilm:interfaces` release exists, done atomically (and with a DB class-name migration
-  check for any serialized FQCNs).
+- Group/package is `com.otilm` throughout: the Maven parent is `com.otilm:dependencies`, the
+  interfaces dependency is `com.otilm:interfaces`, and the connector's own code lives under
+  `com.otilm.ca.connector.ejbca`. The legacy namespace has been fully removed.
 
 ## EJBCA SOAP
 
 - The `EjbcaWS` port is generated from `ejbcaws.wsdl`. Its SOAP `targetNamespace`
-  `http://ws.protocol.core.ejbca.org/` belongs to **EJBCA, not us** — never change it during any
-  CZERTAINLY→ILM rebrand (a blanket `com.czertainly`→`com.otilm` replace must skip it).
+  `http://ws.protocol.core.ejbca.org/` belongs to **EJBCA, not us** — never change it.
+  It contains no `com.otilm` package token, so a package-rename find/replace skips it automatically.
 - The `EjbcaWS` port is cached per authority (`connectionsCache`) and reused across requests.
   JAX-WS timeouts are applied to the binding request context (`com.sun.xml.ws.connect.timeout` /
   `com.sun.xml.ws.request.timeout`).
@@ -51,8 +51,8 @@ obvious from the code.
 - `sonar.coverage.exclusions` / `sonar.cpd.exclusions` (in `pom.xml`) exclude the generated stubs,
   DTOs, JPA entities/repositories, Spring config, enums, exception types, thin API controllers,
   and Flyway migrations. The **service layer is deliberately not excluded** — low coverage there is
-  real test debt, not an exclusion candidate. SonarCloud gates on *new-code* coverage, so a large
-  mechanical change touching the untested service layer will show low new-code coverage.
+  real test debt. SonarCloud gates on *new-code* coverage, so a large mechanical change touching
+  the untested service layer will show low new-code coverage.
 
 ## Quality gate before pushing
 
