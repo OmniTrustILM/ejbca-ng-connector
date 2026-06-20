@@ -1,6 +1,6 @@
-# CZERTAINLY EJBCA NG Connector
+# EJBCA NG Connector
 
-> This repository is part of the open-source project CZERTAINLY. You can find more information about the project at [CZERTAINLY](https://github.com/CZERTAINLY/CZERTAINLY) repository, including the contribution guide.
+> This repository is part of the open-source project OmniTrustILM. You can find more information about the project at [OmniTrustILM](https://github.com/OmniTrustILM/ejbca-ng-connector) repository, including the contribution guide.
 
 EJBCA NG `Connector` is the implementation of the following `Function Groups` and `Kinds`:
 
@@ -33,7 +33,7 @@ EJBCA NG works under the principle of `RA Profiles`. The `Connector` provides th
 
 With the help of `RA Profiles` and the CSR information provided by the `Client` using the REST API, the `Connector` communicates with the `Authority` to get the `Certificate`.
 
-To know more about the `Core`, refer to [CZERTAINLY Core](https://github.com/CZERTAINLY/CZERTAINLY-Core)
+To know more about the `Core`, refer to [ILM Core](https://github.com/OmniTrustILM/core)
 
 ## Certificate Discovery
 
@@ -76,13 +76,13 @@ For discovering `Certificates` from the EJBCA, the following attributes can be u
 
 ## Interfaces
 
-EJBCA NG `Connector` implements `v2 Authority Provider` and `Discovery Provider` interfaces. To learn more about the interfaces and end points, refer to the [CZERTAINLY Interfaces](https://github.com/CZERTAINLY/CZERTAINLY-Interfaces).
+EJBCA NG `Connector` implements `v2 Authority Provider` and `Discovery Provider` interfaces. To learn more about the interfaces and end points, refer to the [ILM Interfaces](https://github.com/OmniTrustILM/interfaces).
 
-For more information, please refer to the [CZERTAINLY documentation](https://docs.czertainly.com).
+For more information, please refer to the [ILM documentation](https://docs.otilm.com).
 
 ## Docker container
 
-EJBCA NG `Connector` is provided as a Docker container. Use the `docker pull czertainly/czertainly-ejbca-ng-connector:tagname` to pull the required image from the repository. It can be configured using the following environment variables:
+EJBCA NG `Connector` is provided as a Docker container. Use the `docker pull hub.omnitrustregistry.com/ilm/ejbca-ng-connector:tagname` to pull the required image from the repository. It can be configured using the following environment variables:
 
 | Variable                 | Description                                            | Required                                           | Default value |
 |--------------------------|--------------------------------------------------------|----------------------------------------------------|---------------|

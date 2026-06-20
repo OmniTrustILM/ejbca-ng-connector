@@ -266,7 +266,7 @@ public class AuthorityInstanceControllerImpl implements AuthorityInstanceControl
         usernamePrefixProperties.setList(false);
         usernamePrefixProperties.setMultiSelect(false);
         usernamePrefix.setProperties(usernamePrefixProperties);
-        usernamePrefix.setContent(List.of(new StringAttributeContentV2("czertainly-")));
+        usernamePrefix.setContent(List.of(new StringAttributeContentV2("ilm-")));
         attrs.add(usernamePrefix);
 
         // postfix

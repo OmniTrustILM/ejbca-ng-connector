@@ -48,11 +48,11 @@ public class TrustedCertificatesConfig {
 
             int i = 0;
             for (X509Certificate certificate : certificates) {
-                trustStore.setCertificateEntry("czertainly-trusted-" + i, certificate);
+                trustStore.setCertificateEntry("ilm-trusted-" + i, certificate);
                 logger.info("Certificate with serial number '{}' and DN '{}' added with alias '{}'",
                         certificate.getSerialNumber().toString(16),
                         certificate.getSubjectX500Principal(),
-                        "czertainly-trusted-" + i);
+                        "ilm-trusted-" + i);
                 i++;
             }
         } else {
