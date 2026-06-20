@@ -469,6 +469,13 @@ class EjbcaServiceImplTest {
         assertThrows(NotFoundException.class, () -> service.issueCertificate(UUID, "user", "pass", "CRMFDATA", CertificateRequestFormat.CRMF));
     }
 
+    @Test
+    void issueCertificate_crmf_otherException_throwsIllegalStateException() throws Exception {
+        given(ejbcaWS.crmfRequest(any(), any(), any(), any(), any())).willThrow(new RuntimeException("unexpected"));
+
+        assertThrows(IllegalStateException.class, () -> service.issueCertificate(UUID, "user", "pass", "CRMFDATA", CertificateRequestFormat.CRMF));
+    }
+
     // ── revokeCertificate ─────────────────────────────────────────────────────
 
     @Test
@@ -513,6 +520,9 @@ class EjbcaServiceImplTest {
         var result = service.getEjbcaVersion(UUID);
 
         assertNotNull(result);
+        assertEquals(7, result.getTechVersion());
+        assertEquals(5, result.getMajorVersion());
+        assertEquals("Enterprise", result.getVersion());
     }
 
     // ── getAvailableCas ───────────────────────────────────────────────────────
