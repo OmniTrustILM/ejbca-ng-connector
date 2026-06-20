@@ -29,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.UnsupportedMediaTypeException;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -135,25 +136,11 @@ public class EjbcaServiceImpl implements EjbcaService {
         EjbcaWS ejbcaWS = authorityInstanceService.getConnection(authorityUuid);
 
         try {
-            CertificateResponse certificateResponse;
-            if (requestFormat == CertificateRequestFormat.CRMF) {
-                certificateResponse = ejbcaWS.crmfRequest(
-                        username,
-                        password,
-                        certificateRequest,
-                        null,
-                        "PKCS7WITHCHAIN");
-            } else if (requestFormat == CertificateRequestFormat.PKCS10) {
-                certificateResponse = ejbcaWS.pkcs10Request(
-                        username,
-                        password,
-                        certificateRequest,
-                        null,
-                        "PKCS7WITHCHAIN");
-            } else {
-                // we should not get here anyway
-                throw new CertificateRequestException("Unsupported certificate request format");
-            }
+            CertificateResponse certificateResponse = switch (requestFormat) {
+                case CRMF -> ejbcaWS.crmfRequest(username, password, certificateRequest, null, "PKCS7WITHCHAIN");
+                case PKCS10 -> ejbcaWS.pkcs10Request(username, password, certificateRequest, null, "PKCS7WITHCHAIN");
+                default -> throw new CertificateRequestException("Unsupported certificate request format");
+            };
             CertificateDataResponseDto response = new CertificateDataResponseDto();
             response.setCertificateData(new String(certificateResponse.getData(), StandardCharsets.UTF_8));
             return response;
@@ -192,9 +179,9 @@ public class EjbcaServiceImpl implements EjbcaService {
     }
 
     @Override
-    public SearchCertificatesRestResponseV2 searchCertificates(String authorityInstanceUuid, String restUrl, SearchCertificatesRestRequestV2 request) throws Exception {
-        WebClient ejbcaWC = authorityInstanceService.getRestApiConnection(authorityInstanceUuid);
+    public SearchCertificatesRestResponseV2 searchCertificates(String authorityInstanceUuid, String restUrl, SearchCertificatesRestRequestV2 request) throws IOException {
         try {
+            WebClient ejbcaWC = authorityInstanceService.getRestApiConnection(authorityInstanceUuid);
             return ejbcaWC.post()
                     .uri(restUrl + "/v2/certificate/search")
                     .contentType(MediaType.APPLICATION_JSON)
@@ -203,9 +190,9 @@ public class EjbcaServiceImpl implements EjbcaService {
                     .bodyToMono(SearchCertificatesRestResponseV2.class)
                     .block();
         } catch (UnsupportedMediaTypeException e) {
-            throw new Exception("Failed to communicate to EJBCA using REST API");
+            throw new IOException("Failed to communicate to EJBCA using REST API", e);
         } catch (Exception e) {
-            throw new Exception(e.getMessage());
+            throw new IOException(e.getMessage(), e);
         }
     }
 

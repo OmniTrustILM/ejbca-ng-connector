@@ -33,6 +33,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -663,7 +664,7 @@ class EjbcaServiceImplTest {
         String restUrl = wireMock.baseUrl();
         SearchCertificatesRestRequestV2 request = new SearchCertificatesRestRequestV2();
 
-        assertThrows(Exception.class, () -> service.searchCertificates(UUID, restUrl, request));
+        assertThrows(IOException.class, () -> service.searchCertificates(UUID, restUrl, request));
     }
 
     @Test
@@ -680,6 +681,6 @@ class EjbcaServiceImplTest {
         String restUrl = wireMock.baseUrl();
         SearchCertificatesRestRequestV2 request = new SearchCertificatesRestRequestV2();
 
-        assertThrows(Exception.class, () -> service.searchCertificates(UUID, restUrl, request));
+        assertThrows(IOException.class, () -> service.searchCertificates(UUID, restUrl, request));
     }
 }

@@ -28,8 +28,8 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -59,12 +59,13 @@ class AuthorityInstanceServiceImplTest {
     // ---------------------------------------------------------------------------
 
     @Test
-    void listAuthorityInstances_returnsNullWhenRepositoryIsEmpty() {
+    void listAuthorityInstances_returnsEmptyListWhenRepositoryIsEmpty() {
         when(authorityInstanceRepository.findAll()).thenReturn(new ArrayList<>());
 
         List<AuthorityProviderInstanceDto> result = service.listAuthorityInstances();
 
-        assertNull(result);
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
     }
 
     @Test

@@ -45,6 +45,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.io.IOException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.Security;
@@ -165,7 +166,7 @@ class CertificateEjbcaServiceImplTest {
         CertificateSignRequestDto request = buildSignRequest(
                 CSR_WITH_SAN_BASE64, "UNSUPPORTED_METHOD", "", "", "", "", "");
 
-        assertThrows(Exception.class, () -> certificateEjbcaServiceImpl.issueCertificate(uuid, request));
+        assertThrows(IOException.class, () -> certificateEjbcaServiceImpl.issueCertificate(uuid, request));
     }
 
     @Test

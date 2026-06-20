@@ -17,7 +17,6 @@ import com.otilm.core.util.AttributeDefinitionUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -33,14 +32,17 @@ import java.util.stream.Collectors;
 public class AuthorityInstanceServiceImpl implements AuthorityInstanceService {
     private static final Logger logger = LoggerFactory.getLogger(AuthorityInstanceServiceImpl.class);
 
-    @Autowired
-    private AuthorityInstanceRepository authorityInstanceRepository;
+    private final AuthorityInstanceRepository authorityInstanceRepository;
+    private final AttributeService attributeService;
+    private final EjbcaConnectionFactory ejbcaConnectionFactory;
 
-    @Autowired
-    private AttributeService attributeService;
-
-    @Autowired
-    private EjbcaConnectionFactory ejbcaConnectionFactory;
+    public AuthorityInstanceServiceImpl(AuthorityInstanceRepository authorityInstanceRepository,
+                                        AttributeService attributeService,
+                                        EjbcaConnectionFactory ejbcaConnectionFactory) {
+        this.authorityInstanceRepository = authorityInstanceRepository;
+        this.attributeService = attributeService;
+        this.ejbcaConnectionFactory = ejbcaConnectionFactory;
+    }
 
     @Override
     public List<AuthorityProviderInstanceDto> listAuthorityInstances() {
@@ -51,7 +53,7 @@ public class AuthorityInstanceServiceImpl implements AuthorityInstanceService {
                     .stream().map(AuthorityInstance::mapToDto)
                     .collect(Collectors.toList());
         }
-        return null;
+        return List.of();
     }
 
     @Override

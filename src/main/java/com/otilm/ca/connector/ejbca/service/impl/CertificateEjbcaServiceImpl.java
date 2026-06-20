@@ -1,5 +1,6 @@
 package com.otilm.ca.connector.ejbca.service.impl;
 
+import com.otilm.api.exception.AlreadyExistException;
 import com.otilm.api.exception.NotFoundException;
 import com.otilm.api.exception.ValidationException;
 import com.otilm.api.model.common.NameAndIdDto;
@@ -17,6 +18,7 @@ import com.otilm.ca.connector.ejbca.dto.ejbca.request.SearchCertificateCriteriaR
 import com.otilm.ca.connector.ejbca.dto.ejbca.request.SearchCertificatesRestRequestV2;
 import com.otilm.ca.connector.ejbca.dto.ejbca.response.CertificateRestResponseV2;
 import com.otilm.ca.connector.ejbca.dto.ejbca.response.SearchCertificatesRestResponseV2;
+import com.otilm.ca.connector.ejbca.EjbcaException;
 import com.otilm.ca.connector.ejbca.enums.UsernameGenMethod;
 import com.otilm.ca.connector.ejbca.request.CertificateRequest;
 import com.otilm.ca.connector.ejbca.service.AuthorityInstanceService;
@@ -56,8 +58,8 @@ public class CertificateEjbcaServiceImpl implements CertificateEjbcaService {
     public static final String META_EXTENSION = "extension";
     private static final Logger logger = LoggerFactory.getLogger(CertificateEjbcaServiceImpl.class);
     private static final SecureRandom RANDOM = new SecureRandom();
-    public final String META_EJBCA_USERNAME = "ejbcaUsername";
-    private final String COMMON_NAME = "2.5.4.3";
+    private static final String META_EJBCA_USERNAME = "ejbcaUsername";
+    private static final String COMMON_NAME = "2.5.4.3";
     private EjbcaService ejbcaService;
     private AuthorityInstanceService authorityInstanceService;
 
@@ -72,7 +74,7 @@ public class CertificateEjbcaServiceImpl implements CertificateEjbcaService {
     }
 
     @Override
-    public CertificateDataResponseDto issueCertificate(String uuid, CertificateSignRequestDto request) throws Exception {
+    public CertificateDataResponseDto issueCertificate(String uuid, CertificateSignRequestDto request) throws IOException, EjbcaException, NotFoundException, AlreadyExistException {
         // generate username based on the request
         String usernameGenMethod = AttributeDefinitionUtils.getSingleItemAttributeContentValue(AuthorityInstanceControllerImpl.ATTRIBUTE_USERNAME_GEN_METHOD, request.getRaProfileAttributes(), StringAttributeContentV2.class).getData();
         String usernamePrefix = AttributeDefinitionUtils.getSingleItemAttributeContentValue(AuthorityInstanceControllerImpl.ATTRIBUTE_USERNAME_PREFIX, request.getRaProfileAttributes(), StringAttributeContentV2.class).getData();
@@ -102,7 +104,7 @@ public class CertificateEjbcaServiceImpl implements CertificateEjbcaService {
     }
 
     @Override
-    public CertificateDataResponseDto renewCertificate(String uuid, CertificateRenewRequestDto request) throws Exception {
+    public CertificateDataResponseDto renewCertificate(String uuid, CertificateRenewRequestDto request) throws IOException, EjbcaException, NotFoundException, AlreadyExistException {
         CertificateRequest certificateRequest = CertificateRequestUtils.createCertificateRequest(
                 Base64.getDecoder().decode(request.getRequest()), request.getFormat());
 
@@ -244,7 +246,7 @@ public class CertificateEjbcaServiceImpl implements CertificateEjbcaService {
         return attributes;
     }
 
-    private String generateUsername(String usernameGenMethod, String usernamePrefix, String usernamePostfix, CertificateRequest csr) throws Exception {
+    private String generateUsername(String usernameGenMethod, String usernamePrefix, String usernamePostfix, CertificateRequest csr) throws IOException {
         String username;
         if (usernameGenMethod.equals(UsernameGenMethod.RANDOM.name())) {
             byte[] r = new byte[8];
@@ -258,7 +260,7 @@ public class CertificateEjbcaServiceImpl implements CertificateEjbcaService {
         } else {
             String message = "Unsupported username generation method: " + usernameGenMethod;
             logger.debug(message);
-            throw new Exception(message);
+            throw new IOException(message);
         }
         if (StringUtils.isNotBlank(username)) {
             if (StringUtils.isNotBlank(usernamePrefix)) {
@@ -270,7 +272,7 @@ public class CertificateEjbcaServiceImpl implements CertificateEjbcaService {
         } else {
             String message = "Username is null or empty, username was not properly generated";
             logger.debug(message);
-            throw new Exception(message);
+            throw new IOException(message);
         }
         return username;
     }
@@ -325,8 +327,8 @@ public class CertificateEjbcaServiceImpl implements CertificateEjbcaService {
         SearchCertificatesRestResponseV2 response;
         try {
             response = ejbcaService.searchCertificates(uuid, restApiUrl, searchRequest);
-        } catch (Exception e) {
-            throw new ValidationException("Cannot identify certificate: serialnumber=" + sn + ", " + e);
+        } catch (IOException e) {
+            throw new ValidationException("Cannot identify certificate: serialnumber=" + sn + ", " + e.getMessage());
         }
 
         // check if we found the certificate and process result

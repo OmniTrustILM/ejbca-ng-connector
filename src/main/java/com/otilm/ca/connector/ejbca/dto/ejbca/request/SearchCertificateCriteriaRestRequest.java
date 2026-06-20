@@ -1,6 +1,7 @@
 package com.otilm.ca.connector.ejbca.dto.ejbca.request;
 
 import java.util.EnumSet;
+import java.util.Set;
 
 public class SearchCertificateCriteriaRestRequest {
 
@@ -70,7 +71,7 @@ public class SearchCertificateCriteriaRestRequest {
          *
          * @return subset of criteria properties.
          */
-        public static EnumSet<CriteriaProperty> STRING_PROPERTIES() {
+        public static Set<CriteriaProperty> stringProperties() {
             return EnumSet.of(QUERY, STATUS, EXTERNAL_ACCOUNT_BINDING_ID);
         }
 
@@ -79,7 +80,7 @@ public class SearchCertificateCriteriaRestRequest {
          *
          * @return subset of criteria properties.
          */
-        public static EnumSet<CriteriaProperty> DATE_PROPERTIES() {
+        public static Set<CriteriaProperty> dateProperties() {
             return EnumSet.of(ISSUED_DATE, EXPIRE_DATE, REVOCATION_DATE);
         }
     }
@@ -114,7 +115,7 @@ public class SearchCertificateCriteriaRestRequest {
          *
          * @return subset of criteria operations.
          */
-        public static EnumSet<CriteriaOperation> STRING_OPERATIONS() {
+        public static Set<CriteriaOperation> stringOperations() {
             return EnumSet.of(EQUAL, LIKE);
         }
 
@@ -123,7 +124,7 @@ public class SearchCertificateCriteriaRestRequest {
          *
          * @return subset of criteria operations.
          */
-        public static EnumSet<CriteriaOperation> DATE_OPERATIONS() {
+        public static Set<CriteriaOperation> dateOperations() {
             return EnumSet.of(AFTER, BEFORE);
         }
     }
@@ -166,7 +167,7 @@ public class SearchCertificateCriteriaRestRequest {
          *
          * @return subset of criteria operations.
          */
-        public static EnumSet<CertificateStatus> REVOCATION_REASONS() {
+        public static Set<CertificateStatus> revocationReasons() {
             return EnumSet.of(
                     REVOCATION_REASON_UNSPECIFIED,
                     REVOCATION_REASON_KEYCOMPROMISE,
@@ -195,7 +196,6 @@ public class SearchCertificateCriteriaRestRequest {
         private String property;
         private String value;
         private String operation;
-        private int identifier;
 
         private SearchCertificateCriteriaRestRequestBuilder() {
         }
@@ -212,11 +212,6 @@ public class SearchCertificateCriteriaRestRequest {
 
         public SearchCertificateCriteriaRestRequestBuilder operation(final String operation) {
             this.operation = operation;
-            return this;
-        }
-
-        public SearchCertificateCriteriaRestRequestBuilder identifier(final int identifier) {
-            this.identifier = identifier;
             return this;
         }
 

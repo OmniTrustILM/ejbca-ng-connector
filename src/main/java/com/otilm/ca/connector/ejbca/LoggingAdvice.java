@@ -57,7 +57,7 @@ public class LoggingAdvice {
             log.debug("Method {} result: {}", path, getValue(result));
             return result;
         } catch (Exception e) {
-            log.error("Exception when calling " + path, e);
+            log.debug("Exception propagating from method {}: {}", path, e.getMessage());
             throw e;
         } finally {
             long elapsedTime = System.currentTimeMillis() - start;
