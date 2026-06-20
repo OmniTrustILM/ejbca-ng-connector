@@ -7,7 +7,9 @@ import com.otilm.api.model.common.attribute.common.AttributeType;
 import com.otilm.api.model.common.attribute.common.BaseAttribute;
 import com.otilm.api.model.common.attribute.common.callback.AttributeCallback;
 import com.otilm.api.model.common.attribute.common.content.AttributeContentType;
+import com.otilm.api.model.common.attribute.common.content.data.CredentialAttributeContentData;
 import com.otilm.api.model.common.attribute.v2.DataAttributeV2;
+import com.otilm.api.model.common.attribute.v2.content.CredentialAttributeContentV2;
 import com.otilm.api.model.common.attribute.v2.content.StringAttributeContentV2;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -79,7 +81,7 @@ class AttributeServiceImplTest {
 
     @Test
     void validateAttributes_validList_returnsTrue() {
-        // build a minimal valid request — url (STRING) + credential (CREDENTIAL)
+        // URL attribute: STRING content, required
         RequestAttributeV2 urlAttr = new RequestAttributeV2(
                 UUID.fromString(AttributeServiceImpl.DATA_ATTRIBUTE_URL_UUID),
                 AttributeServiceImpl.DATA_ATTRIBUTE_URL_NAME,
@@ -87,29 +89,25 @@ class AttributeServiceImplTest {
                 List.of(new StringAttributeContentV2("https://ejbca.example.com:8443/ejbca/ws"))
         );
 
-        // credential attribute has a callback (list=true), so we can supply an empty content list
-        // without triggering content-type mismatch — but required=true means we need something.
-        // Supply a StringAttributeContentV2 for the credential slot to satisfy "required" check
-        // (the real validator only checks presence, not credential structure in unit scope).
+        // Credential attribute: CREDENTIAL content, required.
+        // Supply a CredentialAttributeContentV2 with a minimal CredentialAttributeContentData
+        // so the validator reaches the CredentialDto conversion without finding null data.
+        CredentialAttributeContentData credData = new CredentialAttributeContentData();
+        credData.setUuid("11111111-1111-1111-1111-111111111111");
+        credData.setName("test-credential");
+        credData.setKind("SoftKeyStore");
         RequestAttributeV2 credAttr = new RequestAttributeV2(
                 UUID.fromString(AttributeServiceImpl.DATA_ATTRIBUTE_CREDENTIAL_UUID),
                 AttributeServiceImpl.DATA_ATTRIBUTE_CREDENTIAL_NAME,
                 AttributeContentType.CREDENTIAL,
-                List.of()
+                List.of(new CredentialAttributeContentV2(credData))
         );
 
-        // validateAttributes throws ValidationException if attributes are invalid, returns true otherwise.
-        // Providing the required 'url' attribute with a STRING value should satisfy the validator.
-        // We only test the url attribute here since credential validation might require complex content.
         List<RequestAttribute> input = List.of(urlAttr, credAttr);
-        // The method either returns true or throws — we accept both "true" and a thrown exception
-        // since the interfaces library's validator may require full credential content.
-        try {
-            boolean result = service.validateAttributes("ejbca", input);
-            assertTrue(result);
-        } catch (ValidationException e) {
-            // acceptable — credential CREDENTIAL content validation may be strict
-        }
+
+        boolean result = service.validateAttributes("ejbca", input);
+
+        assertTrue(result);
     }
 
     @Test

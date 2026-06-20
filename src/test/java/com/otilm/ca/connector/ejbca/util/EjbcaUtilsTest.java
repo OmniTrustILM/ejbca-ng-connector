@@ -17,7 +17,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
-public class EjbcaUtilsTest {
+class EjbcaUtilsTest {
 
     private static final String username = "test";
     private static final String password = "test";
@@ -26,7 +26,7 @@ public class EjbcaUtilsTest {
     private UserDataVOWS userData;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         userData = new UserDataVOWS();
         userData.setUsername(username);
         userData.setPassword(password);
@@ -34,7 +34,7 @@ public class EjbcaUtilsTest {
     }
 
     @Test
-    public void setUserExtensions_WrongData() {
+    void setUserExtensions_WrongData() {
         String extensions = "wrong_extensions";
         ValidationException ex = Assertions.assertThrows(
                 ValidationException.class,
@@ -44,13 +44,13 @@ public class EjbcaUtilsTest {
     }
 
     @Test
-    public void setUserExtensions_Ok() {
+    void setUserExtensions_Ok() {
         String extensions = "1.1.1.1.1=sample extension";
         Assertions.assertDoesNotThrow(() -> EjbcaUtils.setUserExtensions(userData, extensions));
     }
 
     @Test
-    public void setUserExtensions_NotOk() {
+    void setUserExtensions_NotOk() {
         String extensions = "my extension=sample extension";
         ValidationException ex = Assertions.assertThrows(
                 ValidationException.class,
@@ -60,13 +60,13 @@ public class EjbcaUtilsTest {
     }
 
     @Test
-    public void setUserExtensions_Ok_Multiple() {
+    void setUserExtensions_Ok_Multiple() {
         String extensions = "1.1.1.1.1=sample extension,2.2.2.2=something, 3.3.3=third one";
         Assertions.assertDoesNotThrow(() -> EjbcaUtils.setUserExtensions(userData, extensions));
     }
 
     @Test
-    public void setUserExtensions_NotOk_Multiple() {
+    void setUserExtensions_NotOk_Multiple() {
         String extensions = "1.1.1.1.1=sample extension,2.2.2.2=something,=third one";
         ValidationException ex = Assertions.assertThrows(
                 ValidationException.class,
@@ -76,7 +76,7 @@ public class EjbcaUtilsTest {
     }
 
     @Test
-    public void prepareUsernameMatch_setsCorrectFields() {
+    void prepareUsernameMatch_setsCorrectFields() {
         UserMatch match = EjbcaUtils.prepareUsernameMatch("alice");
 
         assertEquals(MatchWith.MATCH_WITH_USERNAME.getCode(), match.getMatchwith());
@@ -85,7 +85,7 @@ public class EjbcaUtilsTest {
     }
 
     @Test
-    public void prepareEndEntityProfileMatch_setsCorrectFields() {
+    void prepareEndEntityProfileMatch_setsCorrectFields() {
         UserMatch match = EjbcaUtils.prepareEndEntityProfileMatch("EMPTY");
 
         assertEquals(MatchWith.MATCH_WITH_ENDENTITYPROFILE.getCode(), match.getMatchwith());
@@ -94,7 +94,7 @@ public class EjbcaUtilsTest {
     }
 
     @Test
-    public void mapToUserDetailDTO_withoutExtendedInfo_setsBasicFields() {
+    void mapToUserDetailDTO_withoutExtendedInfo_setsBasicFields() {
         userData.setEmail("alice@example.com");
         userData.setSubjectAltName("dNSName=alice.example.com");
         // status 10 == NEW
@@ -114,7 +114,7 @@ public class EjbcaUtilsTest {
     }
 
     @Test
-    public void mapToUserDetailDTO_withExtendedInfo_mapsExtensionData() {
+    void mapToUserDetailDTO_withExtendedInfo_mapsExtensionData() {
         ExtendedInformationWS eiWs = new ExtendedInformationWS();
         eiWs.setName("custom_key");
         eiWs.setValue("custom_value");
@@ -131,7 +131,7 @@ public class EjbcaUtilsTest {
     }
 
     @Test
-    public void setUserExtensions_blank_doesNothing() {
+    void setUserExtensions_blank_doesNothing() {
         // blank/empty string should be a no-op (isNotBlank guard)
         Assertions.assertDoesNotThrow(() -> EjbcaUtils.setUserExtensions(userData, ""));
         Assertions.assertDoesNotThrow(() -> EjbcaUtils.setUserExtensions(userData, "   "));
