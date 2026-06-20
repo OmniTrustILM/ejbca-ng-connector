@@ -45,8 +45,6 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
-import java.util.stream.Collectors;
-
 import static com.otilm.ca.connector.ejbca.api.AuthorityInstanceControllerImpl.*;
 
 @Service
@@ -137,7 +135,7 @@ public class CertificateEjbcaServiceImpl implements CertificateEjbcaService {
         CertificateDataResponseDto certificate = ejbcaService.issueCertificate(uuid, username, password, Base64.getEncoder().encodeToString(certificateRequest.getEncoded()), request.getFormat());
 
         List<MetadataAttribute> meta = new ArrayList<>();
-        meta.addAll(metadata.stream().filter(e -> !e.getName().equals(META_EJBCA_USERNAME)).collect(Collectors.toList()));
+        meta.addAll(metadata.stream().filter(e -> !e.getName().equals(META_EJBCA_USERNAME)).toList());
         meta.addAll(getUsernameMetadata(username));
         certificate.setMeta(meta);
 
@@ -340,10 +338,7 @@ public class CertificateEjbcaServiceImpl implements CertificateEjbcaService {
             CertificateRestResponseV2 certificate = response.getCertificates().get(0);
             if (certificate.getEndEntityProfileId() == endEntityProfile.getId() &&
                     certificate.getCertificateProfileId() == certificateProfile.getId()
-                // we do not need to check the CA, as it should be already checked by the RA Profile
-                // TODO: check the end entity profile for all attributes that are not present in CertificateRestResponseV2
-                // certificate.getSendNotifications() == sendNotifications &&
-                // certificate.getKeyRecoverable() == keyRecoverable
+                // CA check omitted: it is already enforced by the RA Profile
             ) {
                 CertificateIdentificationResponseDto responseDto = new CertificateIdentificationResponseDto();
 

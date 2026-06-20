@@ -32,7 +32,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static com.otilm.ca.connector.ejbca.api.AuthorityInstanceControllerImpl.ATTRIBUTE_CERTIFICATE_PROFILE;
 import static com.otilm.ca.connector.ejbca.api.AuthorityInstanceControllerImpl.ATTRIBUTE_CERTIFICATION_AUTHORITY;
@@ -204,7 +203,7 @@ public class EjbcaServiceImpl implements EjbcaService {
             if (cas == null || cas.isEmpty()) {
                 throw new NotFoundException("CertificateProfile on ca", authorityInstanceUuid);
             }
-            return cas.stream().map(p -> new NameAndIdDto(p.getId(), p.getName())).collect(Collectors.toList());
+            return cas.stream().map(p -> new NameAndIdDto(p.getId(), p.getName())).toList();
         } catch (AuthorizationDeniedException_Exception e) {
             throw new AccessDeniedException("Authorization denied on EJBCA", e);
         } catch (EjbcaException_Exception e) {
@@ -288,8 +287,6 @@ public class EjbcaServiceImpl implements EjbcaService {
     }
 
     private void setUserProfiles(UserDataVOWS user, List<RequestAttribute> raProfileAttrs) {
-        //String tokenType = AttributeDefinitionUtils.getAttributeValue(ATTRIBUTE_TOKEN_TYPE, raProfileAttrs);
-        //user.setTokenType(tokenType);
         user.setTokenType("USERGENERATED");
 
         NameAndIdDto endEntityProfile = AttributeDefinitionUtils.getNameAndIdData(ATTRIBUTE_END_ENTITY_PROFILE, raProfileAttrs);

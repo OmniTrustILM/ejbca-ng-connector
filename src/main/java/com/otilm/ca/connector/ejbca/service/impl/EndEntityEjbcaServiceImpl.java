@@ -19,8 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
-
 import static com.otilm.ca.connector.ejbca.api.AuthorityInstanceControllerImpl.ATTRIBUTE_CERTIFICATE_PROFILE;
 import static com.otilm.ca.connector.ejbca.api.AuthorityInstanceControllerImpl.ATTRIBUTE_CERTIFICATION_AUTHORITY;
 import static com.otilm.ca.connector.ejbca.api.AuthorityInstanceControllerImpl.ATTRIBUTE_END_ENTITY_PROFILE;
@@ -43,7 +41,7 @@ public class EndEntityEjbcaServiceImpl implements EndEntityEjbcaService {
         EjbcaWS ejbcaWS = authorityInstanceService.getConnection(uuid);
 
         List<UserDataVOWS> users = listUsers(ejbcaWS, endEntityProfileName);
-        return users.stream().map(EjbcaUtils::mapToUserDetailDTO).collect(Collectors.toList());
+        return users.stream().map(EjbcaUtils::mapToUserDetailDTO).toList();
     }
 
     @Override
@@ -179,9 +177,6 @@ public class EndEntityEjbcaServiceImpl implements EndEntityEjbcaService {
 
     private void prepareEndEntity(UserDataVOWS user, BaseEndEntityRequestDto request, String username) {
         List<ResponseAttribute> raProfileAttrs = request.getRaProfile().getAttributes();
-
-        //String tokenType = AttributeDefinitionUtils.getAttributeValue(ATTRIBUTE_TOKEN_TYPE, raProfileAttrs);
-        //user.setTokenType(tokenType);
 
         NameAndIdDto endEntityProfile = AttributeDefinitionUtils.getObjectAttributeContentData(ATTRIBUTE_END_ENTITY_PROFILE, raProfileAttrs, NameAndIdDto.class).get(0);
         user.setEndEntityProfileName(endEntityProfile.getName());

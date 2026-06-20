@@ -24,7 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(CertificateControllerImpl.class)
 @ExtendWith(SpringExtension.class)
-public class CertificateControllerImplTest {
+class CertificateControllerImplTest {
 
     @Autowired
     private MockMvc mvc;
@@ -35,7 +35,7 @@ public class CertificateControllerImplTest {
     private final ObjectMapper mapper = new ObjectMapper();
 
     @Test
-    public void identifyCertificate() throws Exception {
+    void identifyCertificate() throws Exception {
         String uuid = "dde2cccc-616f-11ec-90d6-0242ac120003";
         String serialized = mapper.writeValueAsString(getCertificateIdentificationResponseDto());
         given(certificateEjbcaService.identifyCertificate(eq(uuid), any())).willReturn(

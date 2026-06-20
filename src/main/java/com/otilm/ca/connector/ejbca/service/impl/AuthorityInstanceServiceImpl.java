@@ -25,7 +25,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -51,7 +50,7 @@ public class AuthorityInstanceServiceImpl implements AuthorityInstanceService {
         if (!authorities.isEmpty()) {
             return authorities
                     .stream().map(AuthorityInstance::mapToDto)
-                    .collect(Collectors.toList());
+                    .toList();
         }
         return List.of();
     }

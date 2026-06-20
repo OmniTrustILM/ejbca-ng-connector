@@ -71,7 +71,7 @@ class DiscoveryServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        ReflectionTestUtils.setField(service, "EJBCA_SEARCH_PAGE_SIZE", 100);
+        ReflectionTestUtils.setField(service, "ejbcaSearchPageSize", 100);
     }
 
     // ── fixture builders ──────────────────────────────────────────────────────

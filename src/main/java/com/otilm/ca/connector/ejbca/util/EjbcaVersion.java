@@ -15,15 +15,14 @@ public class EjbcaVersion {
         String[] parts = ejbcaVersion.split(" ");
         String[] version = parts[1].split("\\.");
 
-        this.techVersion = Integer.valueOf(version[0]);
+        this.techVersion = Integer.parseInt(version[0]);
         try { // if there is not major version number, defaults to 0
-            this.majorVersion = Integer.valueOf(version[1]);
+            this.majorVersion = Integer.parseInt(version[1]);
         } catch (ArrayIndexOutOfBoundsException e) {
             this.majorVersion = 0;
         }
-        // TODO: is this really needed? do we need to work with minor version?
         try { // some EJBCA versions do not have a minor version number, defaults to 0
-            this.minorVersion = Integer.valueOf(version[2]);
+            this.minorVersion = Integer.parseInt(version[2]);
         } catch (ArrayIndexOutOfBoundsException e) {
             this.minorVersion = 0;
         }

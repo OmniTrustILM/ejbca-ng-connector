@@ -1,6 +1,5 @@
 package com.otilm.ca.connector.ejbca.service.impl;
 
-import com.otilm.api.interfaces.connector.AttributesController;
 import com.otilm.api.model.client.attribute.RequestAttribute;
 import com.otilm.api.model.common.attribute.common.AttributeType;
 import com.otilm.api.model.common.attribute.common.BaseAttribute;
@@ -26,7 +25,7 @@ import java.util.Set;
 @Service
 @Transactional
 public class AttributeServiceImpl implements AttributeService {
-	private static final Logger logger = LoggerFactory.getLogger(AttributesController.class);
+    private static final Logger logger = LoggerFactory.getLogger(AttributeServiceImpl.class);
 
     public static final String DATA_ATTRIBUTE_URL_NAME = "url";
     public static final String DATA_ATTRIBUTE_URL_UUID = "87e968ca-9404-4128-8b58-3ab5db2ba06e";

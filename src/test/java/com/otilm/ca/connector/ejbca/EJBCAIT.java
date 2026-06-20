@@ -17,7 +17,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.util.List;
 
 @SpringBootTest
-public class EJBCAIT {
+class EJBCAIT {
 
     @Autowired
     private AuthorityInstanceService authorityInstanceService;
@@ -29,7 +29,7 @@ public class EJBCAIT {
     private AuthorityInstance authorityInstance;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         authorityInstance = new AuthorityInstance();
         authorityInstance.setUuid("e334e055-900e-43f1-aedc-54e837028de1");
         authorityInstance.setUrl("https://lab01.3key.company/ejbca/ejbcaws/ejbcaws?wsdl");
@@ -38,53 +38,22 @@ public class EJBCAIT {
     }
 
     @Test
-    public void testListProfiles() throws Exception {
+    void testListProfiles() throws Exception {
         EjbcaWS port = authorityInstanceService.getConnection(authorityInstance.getUuid());
-        port.getAuthorizedEndEntityProfiles().stream()
-                .forEach(p -> System.out.println("ID: " + p.getId() + " - NAME: " + p.getName()));
+        List<com.otilm.ca.connector.ejbca.ws.NameAndId> profiles = port.getAuthorizedEndEntityProfiles();
+        Assertions.assertNotNull(profiles);
+        profiles.forEach(p -> System.out.println("ID: " + p.getId() + " - NAME: " + p.getName()));
     }
 
-//    @Test
-//    public void testGetProfile() throws Exception {
-//        EjbcaWS port = authorityInstanceService.getConnection("e334e055-900e-43f1-aedc-54e837028de1");
-//        byte[] profileData = port.getProfile(1824207592, "eep");
-//
-////        System.out.println(new String(profileData));
-//
-////        SecureXMLDecoder decoder = new SecureXMLDecoder(new ByteArrayInputStream(profileData));
-//
-//        XMLDecoder decoder = new XMLDecoder(new ByteArrayInputStream(profileData));
-//
-//        Object profile = decoder.readObject();
-//
-////        System.out.println(profile.getClass().getName());
-////
-////        ((Base64GetHashMap) profile).entrySet().forEach(
-////                e -> System.out.println(e)
-////        );
-//
-//        EndEntityProfile eep = new EndEntityProfile();
-//        eep.loadData(profile);
-//
-//        eep.getUsername().getInstances().forEach(i -> {
-//            System.out.println(i.getName());
-//            System.out.println(i.getValue());
-//            System.out.println(i.getDefaultValue());
-//            System.out.println(i.getRegexPattern());
-//        });
-//    }
-
     @Test
-    public void testGetRAProfileAttributes() throws NotFoundException {
+    void testGetRAProfileAttributes() throws NotFoundException {
         List<BaseAttribute> attrs = caInstanceController.listRAProfileAttributes(authorityInstance.getUuid());
         Assertions.assertNotNull(attrs);
         Assertions.assertEquals(8, attrs.size());
-//        boolean result = raProfileAttributesController.validateAttributes(caInstance.getId(), attrs);
-//        Assertions.assertTrue(result);
     }
 
     @Test
-    public void testGetEjbcaVersion() throws NotFoundException {
+    void testGetEjbcaVersion() throws NotFoundException {
         EjbcaWS port = authorityInstanceService.getConnection(authorityInstance.getUuid());
         String ejbcaVersion = port.getEjbcaVersion();
 

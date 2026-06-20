@@ -36,7 +36,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class DiscoveryAttributeServiceImpl implements DiscoveryAttributeService {
@@ -125,7 +124,7 @@ public class DiscoveryAttributeServiceImpl implements DiscoveryAttributeService 
     }
 
     private DataAttribute prepareEjbcaInstanceAttribute() {
-        List<AuthorityInstanceNameAndUuidDto> instanceNames = authorityInstanceRepository.findAll().stream().map(AuthorityInstance::mapToNameAndUuidDto).collect(Collectors.toList());
+        List<AuthorityInstanceNameAndUuidDto> instanceNames = authorityInstanceRepository.findAll().stream().map(AuthorityInstance::mapToNameAndUuidDto).toList();
         List<BaseAttributeContentV2<?>> contentList = new ArrayList<>();
         for (AuthorityInstanceNameAndUuidDto instance : instanceNames) {
             ObjectAttributeContentV2 content = new ObjectAttributeContentV2(instance.getName(), instance);
@@ -196,22 +195,6 @@ public class DiscoveryAttributeServiceImpl implements DiscoveryAttributeService 
         return attribute;
     }
 
-    private DataAttribute listCas() {
-        DataAttributeV2 attribute = (DataAttributeV2) listCasAttributeBase();
-
-        Set<AttributeCallbackMapping> mappings = new HashSet<>();
-        mappings.add(new AttributeCallbackMapping(ATTRIBUTE_EJBCA_INSTANCE + ".data.uuid", "ejbcaInstanceUuid", AttributeValueTarget.PATH_VARIABLE));
-
-        AttributeCallback attributeCallback = new AttributeCallback();
-        attributeCallback.setCallbackContext("/v1/discoveryProvider/{ejbcaInstanceUuid}/listCas");
-        attributeCallback.setCallbackMethod("GET");
-        attributeCallback.setMappings(mappings);
-
-        attribute.setAttributeCallback(attributeCallback);
-
-        return attribute;
-    }
-
     private DataAttribute listCasWithContent(List<BaseAttributeContentV2<?>> casContent) {
         DataAttribute attribute = listCasAttributeBase();
 
@@ -236,22 +219,6 @@ public class DiscoveryAttributeServiceImpl implements DiscoveryAttributeService 
         attributeProperties.setMultiSelect(true);
         attribute.setProperties(attributeProperties);
         attribute.setContent(List.of());
-
-        return attribute;
-    }
-
-    private DataAttribute listEndEntityProfiles() {
-        DataAttributeV2 attribute = (DataAttributeV2) listEndEntityProfilesAttributeBase();
-
-        Set<AttributeCallbackMapping> mappings = new HashSet<>();
-        mappings.add(new AttributeCallbackMapping(ATTRIBUTE_EJBCA_INSTANCE + ".data.uuid", "ejbcaInstanceUuid", AttributeValueTarget.PATH_VARIABLE));
-
-        AttributeCallback attributeCallback = new AttributeCallback();
-        attributeCallback.setCallbackContext("/v1/discoveryProvider/{ejbcaInstanceUuid}/listEndEntityProfiles");
-        attributeCallback.setCallbackMethod("GET");
-        attributeCallback.setMappings(mappings);
-
-        attribute.setAttributeCallback(attributeCallback);
 
         return attribute;
     }
@@ -305,22 +272,6 @@ public class DiscoveryAttributeServiceImpl implements DiscoveryAttributeService 
         attributeProperties.setList(false);
         attributeProperties.setMultiSelect(false);
         attribute.setProperties(attributeProperties);
-
-        return attribute;
-    }
-
-    private DataAttribute ejbcaRestApiUrl() {
-        DataAttributeV2 attribute = (DataAttributeV2) ejbcaRestApiUrlAttributeBase();
-
-        Set<AttributeCallbackMapping> mappings = new HashSet<>();
-        mappings.add(new AttributeCallbackMapping(ATTRIBUTE_EJBCA_INSTANCE + ".data.uuid", "ejbcaInstanceUuid", AttributeValueTarget.PATH_VARIABLE));
-
-        AttributeCallback attributeCallback = new AttributeCallback();
-        attributeCallback.setCallbackContext("/v1/discoveryProvider/{ejbcaInstanceUuid}/ejbcaRestApi");
-        attributeCallback.setCallbackMethod("GET");
-        attributeCallback.setMappings(mappings);
-
-        attribute.setAttributeCallback(attributeCallback);
 
         return attribute;
     }

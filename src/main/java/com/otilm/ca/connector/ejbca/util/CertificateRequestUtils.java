@@ -27,6 +27,10 @@ public class CertificateRequestUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(CertificateRequestUtils.class);
 
+    private CertificateRequestUtils() {
+        // utility class
+    }
+
     public static JcaPKCS10CertificationRequest csrStringToJcaObject(String csr) throws IOException {
         csr = csr.replace("-----BEGIN CERTIFICATE REQUEST-----", "")
                 .replaceAll(System.lineSeparator(), "")

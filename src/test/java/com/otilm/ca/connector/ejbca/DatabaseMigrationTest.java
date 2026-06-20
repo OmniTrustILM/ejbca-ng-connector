@@ -8,10 +8,10 @@ import org.junit.jupiter.api.Test;
 /**
  * Simple tests for calculating checksums and validating the migration scripts integrity.
  */
-public class DatabaseMigrationTest {
+class DatabaseMigrationTest {
 
     @Test
-    public void testJavaMigrationsChecksums() {
+    void testJavaMigrationsChecksums() {
         for (JavaMigrationChecksums migrationChecksum : JavaMigrationChecksums.values()) {
             if (migrationChecksum.isAltered()) {
                 continue;

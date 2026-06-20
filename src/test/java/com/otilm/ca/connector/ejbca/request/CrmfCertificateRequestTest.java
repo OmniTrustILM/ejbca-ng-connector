@@ -24,15 +24,15 @@ import java.security.Security;
 import java.security.spec.RSAKeyGenParameterSpec;
 
 @SpringBootTest
-public class CrmfCertificateRequestTest {
+class CrmfCertificateRequestTest {
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         Security.addProvider(new BouncyCastleProvider());
     }
 
     @Test
-    public void testRequestWithPOPSig() throws GeneralSecurityException, CRMFException, IOException, OperatorCreationException {
+    void testRequestWithPOPSig() throws GeneralSecurityException, CRMFException, IOException, OperatorCreationException {
         KeyPair keyPair = generateRSAKeyPair();
 
         byte[] request = generateRequestWithPOPSig(

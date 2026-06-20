@@ -49,7 +49,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -57,11 +56,8 @@ public class DiscoveryServiceImpl implements DiscoveryService {
 
     private static final Logger logger = LoggerFactory.getLogger(DiscoveryServiceImpl.class);
 
-    /**
-     * This constant represents the number of certificate per page in searching
-     */
     @Value("${ejbca.search.pageSize:100}")
-    private int EJBCA_SEARCH_PAGE_SIZE;
+    private int ejbcaSearchPageSize;
     private EjbcaService ejbcaService;
     private CertificateRepository certificateRepository;
     private DiscoveryHistoryService discoveryHistoryService;
@@ -108,7 +104,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
             dto.setTotalCertificatesDiscovered(0);
         } else {
             Pageable page = PageRequest.of(request.getPageNumber() <= 0 ? 0 : request.getPageNumber() - 1, request.getItemsPerPage(), Sort.by(Sort.Direction.ASC, "id"));
-            dto.setCertificateData(certificateRepository.findAllByDiscoveryId(history.getId(), page).stream().map(Certificate::mapToDto).collect(Collectors.toList()));
+            dto.setCertificateData(certificateRepository.findAllByDiscoveryId(history.getId(), page).stream().map(Certificate::mapToDto).toList());
         }
         return dto;
     }
@@ -157,9 +153,8 @@ public class DiscoveryServiceImpl implements DiscoveryService {
 
         // behaviour of the EJBCA REST API for searching certificates differs between versions
         // we need to check the version and decide on the implementation
-        // TODO: this can be improved once there are more versions of implementation
         EjbcaVersion ejbcaVersion = ejbcaService.getEjbcaVersion(instance.getUuid());
-        logger.debug("Searching for certificates in EJBCA version {}, with page size {}", ejbcaVersion.getVersion(), EJBCA_SEARCH_PAGE_SIZE);
+        logger.debug("Searching for certificates in EJBCA version {}, with page size {}", ejbcaVersion.getVersion(), ejbcaSearchPageSize);
 
         int searchVersion = resolveSearchVersion(ejbcaVersion);
         int certificatesFound = runPagedSearch(instance.getUuid(), restApiUrl, searchRequest, history, searchVersion);
@@ -257,7 +252,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
         SearchCertificatesRestRequestV2 request = new SearchCertificatesRestRequestV2();
 
         Pagination pagination = new Pagination();
-        pagination.setPageSize(EJBCA_SEARCH_PAGE_SIZE);
+        pagination.setPageSize(ejbcaSearchPageSize);
         pagination.setCurrentPage(1);
 
         SearchCertificateSortRestRequest sort = new SearchCertificateSortRestRequest();

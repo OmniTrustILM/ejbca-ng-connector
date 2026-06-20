@@ -9,21 +9,21 @@ public enum UsernameGenMethod {
     RANDOM("Random"),
     CN("CN part of the DN");
 
-    private String method;
+    private final String code;
 
-    private UsernameGenMethod(String method) {
-        this.method = method;
+    UsernameGenMethod(String code) {
+        this.code = code;
     }
+
     public String getCode() {
-        return this.method;
+        return this.code;
     }
 
-    public static UsernameGenMethod findByCode(String method) {
-        return (UsernameGenMethod) Arrays.stream(values()).filter((k) -> {
-            return k.method.equals(method);
-        }).findFirst().orElseThrow(() -> {
-            return new ValidationException(ValidationError.create("Unknown method {}", new Object[]{method}));
-        });
+    public static UsernameGenMethod findByCode(String code) {
+        return Arrays.stream(values())
+                .filter(k -> k.code.equals(code))
+                .findFirst()
+                .orElseThrow(() -> new ValidationException(ValidationError.create("Unknown method {}", new Object[]{code})));
     }
 
 }

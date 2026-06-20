@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-public class TrustedCertificatesConfigTest {
+class TrustedCertificatesConfigTest {
 
     private static final String certString = "-----BEGIN CERTIFICATE-----\n" +
             "MIIGCDCCA/CgAwIBAgIUNqs50/tomsiRjWxMbSWvq+FXRjYwDQYJKoZIhvcNAQEN\n" +
@@ -202,12 +202,12 @@ public class TrustedCertificatesConfigTest {
             "-----END CERTIFICATE-----";
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         System.setProperty("trusted.certificates", certString);
     }
 
     @Test
-    public void testConfigureGlobalTrustStore_ok() throws Exception {
+    void testConfigureGlobalTrustStore_ok() throws Exception {
         TrustedCertificatesConfig config =  new TrustedCertificatesConfig();
         Assertions.assertDoesNotThrow(config::configureGlobalTrustStore);
     }
