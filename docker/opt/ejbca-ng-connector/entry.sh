@@ -1,12 +1,12 @@
 #!/bin/sh
 
-otilmHome="/opt/otilm"
-source ${otilmHome}/static-functions
+appHome="/opt/ejbca-ng-connector"
+source ${appHome}/static-functions
 
-#if [ -f ${otilmHome}/trusted-certificates.pem ]
+#if [ -f ${appHome}/trusted-certificates.pem ]
 #then
 #  log "INFO" "Adding additional trusted certificates to cacerts"
-#  ./update-cacerts.sh /opt/otilm/trusted-certificates.pem
+#  ./update-cacerts.sh /opt/ejbca-ng-connector/trusted-certificates.pem
 #else
 #  log "INFO" "No trusted certificates were provided, continue!"
 #fi

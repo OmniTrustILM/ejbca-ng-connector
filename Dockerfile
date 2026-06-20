@@ -12,13 +12,13 @@ FROM eclipse-temurin:21-jre-alpine
 
 LABEL org.opencontainers.image.authors="ILM <ilm@omnitrust.com>"
 
-# add non root user ilm
-RUN addgroup --system --gid 10001 ilm && adduser --system --home /opt/otilm --uid 10001 --ingroup ilm ilm
+# add non root user ejbca-ng-connector
+RUN addgroup --system --gid 10001 ejbca-ng-connector && adduser --system --home /opt/ejbca-ng-connector --uid 10001 --ingroup ejbca-ng-connector ejbca-ng-connector
 
 COPY --from=build /home/app/docker /
-COPY --from=build /home/app/target/*.jar /opt/otilm/app.jar
+COPY --from=build /home/app/target/*.jar /opt/ejbca-ng-connector/app.jar
 
-WORKDIR /opt/otilm
+WORKDIR /opt/ejbca-ng-connector
 
 ENV JDBC_URL=
 ENV JDBC_USERNAME=
@@ -34,4 +34,4 @@ ENV NO_PROXY=
 
 USER 10001
 
-ENTRYPOINT ["/opt/otilm/entry.sh"]
+ENTRYPOINT ["/opt/ejbca-ng-connector/entry.sh"]

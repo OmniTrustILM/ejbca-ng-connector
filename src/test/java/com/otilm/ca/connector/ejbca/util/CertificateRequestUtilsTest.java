@@ -39,7 +39,7 @@ public class CertificateRequestUtilsTest {
         X500Name subject = new X500Name("CN=Test");
         PKCS10CertificationRequestBuilder requestBuilder = new JcaPKCS10CertificationRequestBuilder(subject, keyPair.getPublic());
         ExtensionsGenerator extGen = new ExtensionsGenerator();
-        extGen.addExtension(Extension.subjectAlternativeName, false, new GeneralNames(new GeneralName(GeneralName.dNSName, "test.otilm.com")));
+        extGen.addExtension(Extension.subjectAlternativeName, false, new GeneralNames(new GeneralName(GeneralName.dNSName, "test.example.com")));
         Extensions extensions = extGen.generate();
         requestBuilder.addAttribute(PKCSObjectIdentifiers.pkcs_9_at_extensionRequest, extensions);
         String sigAlg = "SHA256withRSA";
@@ -52,7 +52,7 @@ public class CertificateRequestUtilsTest {
         CertificateRequest certificateRequest = CertificateRequestUtils.createCertificateRequest(pkcs10CertificationRequest.getEncoded(), CertificateRequestFormat.PKCS10);
         String ejbcaSanString = CertificateRequestUtils.getEjbcaSanExtension(certificateRequest);
 
-        Assertions.assertEquals("dNSName=test.otilm.com", ejbcaSanString);
+        Assertions.assertEquals("dNSName=test.example.com", ejbcaSanString);
     }
 
 }

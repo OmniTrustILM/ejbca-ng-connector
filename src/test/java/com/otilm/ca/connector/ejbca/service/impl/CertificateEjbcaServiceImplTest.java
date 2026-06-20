@@ -41,7 +41,7 @@ public class CertificateEjbcaServiceImplTest {
     @Test
     public void identifyCertificate_NotKnown() throws Exception {
         String uuid = "dde2cccc-616f-11ec-90d6-0242ac120003";
-        given(authorityInstanceService.getRestApiUrl(eq(uuid))).willReturn("https://ejbca.otilm.com:8443/ejbca/rest");
+        given(authorityInstanceService.getRestApiUrl(eq(uuid))).willReturn("https://ejbca.example.com:8443/ejbca/rest");
         given(ejbcaService.searchCertificates(eq(uuid), any(), any())).willReturn(getSearchCertificatesRestResponseV2_NoCertificates());
 
         Assertions.assertThrows(NotFoundException.class, () -> certificateEjbcaServiceImpl.identifyCertificate(uuid, getCertificateIdentificationRequestDto(12345, "Test")));
@@ -50,7 +50,7 @@ public class CertificateEjbcaServiceImplTest {
     @Test
     public void identifyCertificate_WrongProfile() throws Exception {
         String uuid = "dde2cccc-616f-11ec-90d6-0242ac120003";
-        given(authorityInstanceService.getRestApiUrl(eq(uuid))).willReturn("https://ejbca.otilm.com:8443/ejbca/rest");
+        given(authorityInstanceService.getRestApiUrl(eq(uuid))).willReturn("https://ejbca.example.com:8443/ejbca/rest");
         given(ejbcaService.searchCertificates(eq(uuid), any(), any())).willReturn(getSearchCertificatesRestResponseV2_Certificate(12345, "TestProfile"));
 
         Assertions.assertThrows(ValidationException.class, () -> certificateEjbcaServiceImpl.identifyCertificate(uuid, getCertificateIdentificationRequestDto(98765, "TestProfile")));
@@ -59,7 +59,7 @@ public class CertificateEjbcaServiceImplTest {
     @Test
     public void identifyCertificate_Ok() throws Exception {
         String uuid = "dde2cccc-616f-11ec-90d6-0242ac120003";
-        given(authorityInstanceService.getRestApiUrl(eq(uuid))).willReturn("https://ejbca.otilm.com:8443/ejbca/rest");
+        given(authorityInstanceService.getRestApiUrl(eq(uuid))).willReturn("https://ejbca.example.com:8443/ejbca/rest");
         given(ejbcaService.searchCertificates(eq(uuid), any(), any())).willReturn(getSearchCertificatesRestResponseV2_Certificate(123456, "Test"));
 
         CertificateIdentificationResponseDto dto = certificateEjbcaServiceImpl.identifyCertificate(uuid, getCertificateIdentificationRequestDto(123456, "Test"));
