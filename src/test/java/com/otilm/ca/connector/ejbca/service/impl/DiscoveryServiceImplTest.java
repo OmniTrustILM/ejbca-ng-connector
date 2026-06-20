@@ -1,9 +1,9 @@
 package com.otilm.ca.connector.ejbca.service.impl;
 
+import com.otilm.api.model.client.attribute.RequestAttribute;
 import com.otilm.api.model.client.attribute.RequestAttributeV2;
 import com.otilm.api.model.common.NameAndIdDto;
 import com.otilm.api.model.common.attribute.common.content.AttributeContentType;
-import com.otilm.api.model.common.attribute.v2.content.BaseAttributeContentV2;
 import com.otilm.api.model.common.attribute.v2.content.DateTimeAttributeContentV2;
 import com.otilm.api.model.common.attribute.v2.content.IntegerAttributeContentV2;
 import com.otilm.api.model.common.attribute.v2.content.ObjectAttributeContentV2;
@@ -16,6 +16,8 @@ import com.otilm.ca.connector.ejbca.dao.CertificateRepository;
 import com.otilm.ca.connector.ejbca.dao.entity.Certificate;
 import com.otilm.ca.connector.ejbca.dao.entity.DiscoveryHistory;
 import com.otilm.ca.connector.ejbca.dto.AuthorityInstanceNameAndUuidDto;
+import com.otilm.ca.connector.ejbca.dto.ejbca.request.SearchCertificateCriteriaRestRequest;
+import com.otilm.ca.connector.ejbca.dto.ejbca.request.SearchCertificatesRestRequestV2;
 import com.otilm.ca.connector.ejbca.dto.ejbca.response.CertificateRestResponseV2;
 import com.otilm.ca.connector.ejbca.dto.ejbca.response.PaginationSummary;
 import com.otilm.ca.connector.ejbca.dto.ejbca.response.SearchCertificatesRestResponseV2;
@@ -25,24 +27,25 @@ import com.otilm.ca.connector.ejbca.util.EjbcaVersion;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willThrow;
-import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -131,7 +134,7 @@ class DiscoveryServiceImplTest {
         NameAndIdDto ca = new NameAndIdDto(1, "ManagementCA");
         NameAndIdDto eeProfile = new NameAndIdDto(2, "EMPTY");
 
-        List attrs = new ArrayList<>();
+        List<RequestAttribute> attrs = new ArrayList<>();
         attrs.add(objectAttr(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_INSTANCE, instance));
         attrs.add(stringAttr(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_RESTAPI_URL, REST_API_URL));
         attrs.add(objectAttr(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_CA, ca));
@@ -155,7 +158,7 @@ class DiscoveryServiceImplTest {
         NameAndIdDto ca = new NameAndIdDto(1, "ManagementCA");
         NameAndIdDto eeProfile = new NameAndIdDto(2, "EMPTY");
 
-        List attrs = new ArrayList<>();
+        List<RequestAttribute> attrs = new ArrayList<>();
         attrs.add(objectAttr(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_INSTANCE, instance));
         attrs.add(stringAttr(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_RESTAPI_URL, REST_API_URL));
         attrs.add(objectAttr(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_CA, ca));
@@ -216,8 +219,8 @@ class DiscoveryServiceImplTest {
 
         service.discoverCertificate(request, history);
 
-        verify(certificateRepository, atLeastOnce()).save(any(Certificate.class));
-        verify(discoveryHistoryService, atLeastOnce()).setHistory(history);
+        verify(certificateRepository, times(1)).save(any(Certificate.class));
+        verify(discoveryHistoryService, times(1)).setHistory(history);
         assertEquals(DiscoveryStatus.COMPLETED, history.getStatus());
     }
 
@@ -233,7 +236,7 @@ class DiscoveryServiceImplTest {
         service.discoverCertificate(request, history);
 
         verify(certificateRepository, never()).save(any());
-        verify(discoveryHistoryService, atLeastOnce()).setHistory(history);
+        verify(discoveryHistoryService, times(1)).setHistory(history);
         assertEquals(DiscoveryStatus.COMPLETED, history.getStatus());
     }
 
@@ -249,7 +252,7 @@ class DiscoveryServiceImplTest {
 
         service.discoverCertificate(request, history);
 
-        verify(certificateRepository, atLeastOnce()).save(any(Certificate.class));
+        verify(certificateRepository, times(1)).save(any(Certificate.class));
         assertEquals(DiscoveryStatus.COMPLETED, history.getStatus());
     }
 
@@ -279,7 +282,7 @@ class DiscoveryServiceImplTest {
 
         service.discoverCertificate(request, history);
 
-        verify(certificateRepository, atLeastOnce()).save(any(Certificate.class));
+        verify(certificateRepository, times(1)).save(any(Certificate.class));
         assertEquals(DiscoveryStatus.COMPLETED, history.getStatus());
     }
 
@@ -341,14 +344,32 @@ class DiscoveryServiceImplTest {
         DiscoveryHistory history = buildHistory();
         DiscoveryRequestDto request = buildScheduleRequest();
 
+        ArgumentCaptor<SearchCertificatesRestRequestV2> requestCaptor =
+                ArgumentCaptor.forClass(SearchCertificatesRestRequestV2.class);
+
         given(ejbcaService.getEjbcaVersion(INSTANCE_UUID)).willReturn(ejbcaVersion("7.11.0"));
-        given(ejbcaService.searchCertificates(eq(INSTANCE_UUID), eq(REST_API_URL), any()))
+        given(ejbcaService.searchCertificates(eq(INSTANCE_UUID), eq(REST_API_URL), requestCaptor.capture()))
                 .willReturn(emptyPage(1));
 
         service.discoverCertificate(request, history);
 
         assertEquals(DiscoveryStatus.COMPLETED, history.getStatus());
-        verify(discoveryHistoryService, atLeastOnce()).setHistory(history);
+        verify(discoveryHistoryService, times(1)).setHistory(history);
+
+        // Verify that the issuedDaysBefore=7 computation actually produced a date
+        // criterion ~7 days before now (ISSUED_DATE AFTER) in the search request.
+        SearchCertificatesRestRequestV2 capturedRequest = requestCaptor.getValue();
+        SearchCertificateCriteriaRestRequest issuedAfterCriterion = capturedRequest.getCriteria().stream()
+                .filter(c -> SearchCertificateCriteriaRestRequest.CriteriaProperty.ISSUED_DATE.name().equals(c.getProperty())
+                        && SearchCertificateCriteriaRestRequest.CriteriaOperation.AFTER.name().equals(c.getOperation()))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("No ISSUED_DATE AFTER criterion found in search request"));
+
+        OffsetDateTime issuedAfterParsed = OffsetDateTime.parse(issuedAfterCriterion.getValue());
+        OffsetDateTime expectedLow = OffsetDateTime.now().minusDays(8);
+        OffsetDateTime expectedHigh = OffsetDateTime.now().minusDays(6);
+        assertTrue(issuedAfterParsed.isAfter(expectedLow) && issuedAfterParsed.isBefore(expectedHigh),
+                "issuedAfter should be ~7 days before now, got: " + issuedAfterParsed);
     }
 
     // ── getProviderDtoData ────────────────────────────────────────────────────
@@ -468,7 +489,7 @@ class DiscoveryServiceImplTest {
         req.setKind("EJBCA");
 
         AuthorityInstanceNameAndUuidDto instance = new AuthorityInstanceNameAndUuidDto("test-instance", INSTANCE_UUID);
-        List attrs = new ArrayList<>();
+        List<RequestAttribute> attrs = new ArrayList<>();
         attrs.add(objectAttr(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_INSTANCE, instance));
         attrs.add(stringAttr(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_RESTAPI_URL, REST_API_URL));
         attrs.add(dateTimeAttr(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_ISSUED_AFTER, ZonedDateTime.now().minusDays(30)));
