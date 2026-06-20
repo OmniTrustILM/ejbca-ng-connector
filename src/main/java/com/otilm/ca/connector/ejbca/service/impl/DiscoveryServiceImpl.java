@@ -180,7 +180,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
         return null;
     }
 
-    private int resolveSearchVersion(EjbcaVersion ejbcaVersion) throws Exception {
+    private int resolveSearchVersion(EjbcaVersion ejbcaVersion) {
         if (ejbcaVersion.getTechVersion() > 7) {
             return 2;
         } else if (ejbcaVersion.getTechVersion() == 7 && ejbcaVersion.getMajorVersion() >= 11) {
@@ -188,7 +188,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
         } else if (ejbcaVersion.getTechVersion() == 7 && ejbcaVersion.getMajorVersion() >= 8) {
             return 1;
         } else {
-            throw new Exception("Unsupported EJBCA version");
+            throw new IllegalStateException("Unsupported EJBCA version");
         }
     }
 

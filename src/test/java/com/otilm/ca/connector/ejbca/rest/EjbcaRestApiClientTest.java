@@ -399,8 +399,6 @@ class EjbcaRestApiClientTest {
         WebClient.RequestBodyUriSpec spec = client.prepareRequest(HttpMethod.GET, emptyAttributes());
 
         assertNotNull(spec);
-        // RequestBodyUriSpec is a sub-interface of RequestBodySpec/RequestHeadersUriSpec;
-        // verifying non-null is sufficient to prove prepareRequest() returns the correct type.
     }
 
     // ── searchCertificates over WireMock HTTPS ────────────────────────────────
