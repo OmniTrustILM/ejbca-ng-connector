@@ -111,7 +111,7 @@ public class CertificateControllerImpl implements CertificateController {
     public ResponseEntity<CertificateDataResponseDto> issueCertificate(String uuid, CertificateSignRequestDto request) throws NotFoundException, CertificateOperationException, CertificateRequestException {
         try {
             return ResponseEntity.ok(certificateEjbcaService.issueCertificate(uuid, request));
-        } catch (CertificateOperationException | CertificateRequestException | NotFoundException e) {
+        } catch (NotFoundException e) {
             throw e;
         } catch (Exception e) {
             CertificateOperationException coe = new CertificateOperationException(e.getMessage());
@@ -124,7 +124,7 @@ public class CertificateControllerImpl implements CertificateController {
     public ResponseEntity<CertificateDataResponseDto> renewCertificate(String uuid, CertificateRenewRequestDto request) throws NotFoundException, CertificateOperationException, CertificateRequestException {
         try {
             return ResponseEntity.ok(certificateEjbcaService.renewCertificate(uuid, request));
-        } catch (CertificateOperationException | CertificateRequestException | NotFoundException e) {
+        } catch (NotFoundException e) {
             throw e;
         } catch (Exception e) {
             CertificateOperationException coe = new CertificateOperationException(e.getMessage());

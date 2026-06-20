@@ -9,9 +9,12 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class EjbcaUtils {
+
+    private EjbcaUtils() {
+        // utility class
+    }
 
     public static UserMatch prepareUsernameMatch(String username) {
         UserMatch usermatch = new UserMatch();
@@ -40,7 +43,7 @@ public class EjbcaUtils {
             List<EndEntityExtendedInfoDto> extendedInformationList = userDataVOWS.getExtendedInformation()
                     .stream()
                     .map(i -> new EndEntityExtendedInfoDto(i.getName(), i.getValue()))
-                    .collect(Collectors.toList());
+                    .toList();
             userDetailDTO.setExtensionData(extendedInformationList);
         }
         return userDetailDTO;

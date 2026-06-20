@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 
 import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Value;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
@@ -26,6 +27,9 @@ import java.util.List;
 public class TrustedCertificatesConfig {
 
     private static final Logger logger = LoggerFactory.getLogger(TrustedCertificatesConfig.class);
+
+    @Value("${ejbca.cacerts.password:changeit}")
+    private String cacertsPassword;
 
     private static final String BEGIN_CERTIFICATE = "-----BEGIN CERTIFICATE-----";
     private static final String END_CERTIFICATE = "-----END CERTIFICATE-----";
@@ -49,10 +53,10 @@ public class TrustedCertificatesConfig {
             int i = 0;
             for (X509Certificate certificate : certificates) {
                 trustStore.setCertificateEntry("platform-trusted-" + i, certificate);
-                logger.info("Certificate with serial number '{}' and DN '{}' added with alias '{}'",
+                logger.info("Certificate with serial number '{}' and DN '{}' added with alias 'platform-trusted-{}'",
                         certificate.getSerialNumber().toString(16),
                         certificate.getSubjectX500Principal(),
-                        "platform-trusted-" + i);
+                        i);
                 i++;
             }
         } else {
@@ -73,17 +77,11 @@ public class TrustedCertificatesConfig {
     private KeyStore loadCacertsKeyStore() throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException {
         String relativeCacertsPath = "/lib/security/cacerts".replace("/", File.separator);
         String filename = System.getProperty("java.home") + relativeCacertsPath;
-        FileInputStream is = new FileInputStream(filename);
-        try {
-
+        try (FileInputStream is = new FileInputStream(filename)) {
             logger.debug("Loading cacert in location: {}", filename);
             KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
-            String password = "changeit";
-            keystore.load(is, password.toCharArray());
-
+            keystore.load(is, cacertsPassword.toCharArray());
             return keystore;
-        } finally {
-            is.close();
         }
     }
 

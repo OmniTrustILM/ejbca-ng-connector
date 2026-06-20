@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class ExceptionHandlingAdvice {
@@ -73,7 +72,7 @@ public class ExceptionHandlingAdvice {
 
         return ex.getErrors().stream()
                 .map(ValidationError::getErrorDescription)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**

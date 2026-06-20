@@ -4,9 +4,10 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @SpringBootTest
-public class TrustedCertificatesConfigTest {
+class TrustedCertificatesConfigTest {
 
     private static final String certString = "-----BEGIN CERTIFICATE-----\n" +
             "MIIGCDCCA/CgAwIBAgIUNqs50/tomsiRjWxMbSWvq+FXRjYwDQYJKoZIhvcNAQEN\n" +
@@ -202,13 +203,14 @@ public class TrustedCertificatesConfigTest {
             "-----END CERTIFICATE-----";
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         System.setProperty("trusted.certificates", certString);
     }
 
     @Test
-    public void testConfigureGlobalTrustStore_ok() throws Exception {
-        TrustedCertificatesConfig config =  new TrustedCertificatesConfig();
+    void testConfigureGlobalTrustStore_ok() throws Exception {
+        TrustedCertificatesConfig config = new TrustedCertificatesConfig();
+        ReflectionTestUtils.setField(config, "cacertsPassword", "changeit");
         Assertions.assertDoesNotThrow(config::configureGlobalTrustStore);
     }
 }

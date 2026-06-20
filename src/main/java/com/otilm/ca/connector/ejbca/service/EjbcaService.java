@@ -14,6 +14,7 @@ import com.otilm.ca.connector.ejbca.util.EjbcaVersion;
 import com.otilm.ca.connector.ejbca.ws.*;
 import org.springframework.security.access.AccessDeniedException;
 
+import java.io.IOException;
 import java.util.List;
 
 public interface EjbcaService {
@@ -24,13 +25,13 @@ public interface EjbcaService {
 
     void renewEndEntity(String authorityUuid, String username, String password, String subjectDn, String subjectAltName) throws NotFoundException;
 
-    CertificateDataResponseDto issueCertificate(String authorityUuid, String username, String password, String certificateRequest, CertificateRequestFormat requestFormat) throws NotFoundException, CADoesntExistsException_Exception, EjbcaException_Exception, AuthorizationDeniedException_Exception, NotFoundException_Exception, CesecoreException_Exception;
+    CertificateDataResponseDto issueCertificate(String authorityUuid, String username, String password, String certificateRequest, CertificateRequestFormat requestFormat) throws NotFoundException;
 
     void revokeCertificate(String uuid, String issuerDn, String serialNumber, int revocationReason) throws NotFoundException, AccessDeniedException;
 
     EjbcaVersion getEjbcaVersion(String authorityInstanceUuid) throws NotFoundException;
 
-    SearchCertificatesRestResponseV2 searchCertificates(String authorityInstanceUuid, String restUrl, SearchCertificatesRestRequestV2 request) throws Exception;
+    SearchCertificatesRestResponseV2 searchCertificates(String authorityInstanceUuid, String restUrl, SearchCertificatesRestRequestV2 request) throws NotFoundException, IOException;
 
     List<NameAndIdDto> getAvailableCas(String authorityInstanceUuid) throws NotFoundException;
 

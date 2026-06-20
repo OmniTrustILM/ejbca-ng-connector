@@ -17,9 +17,9 @@ import com.otilm.ca.connector.ejbca.service.EndEntityProfileEjbcaService;
 import com.otilm.ca.connector.ejbca.util.EjbcaVersion;
 import com.otilm.ca.connector.ejbca.util.LocalAttributeUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
@@ -54,11 +54,7 @@ public class DiscoverySupportController {
         this.discoveryAttributeService = discoveryAttributeService;
     }
 
-    @RequestMapping(
-            path = "/{ejbcaInstanceName}/ejbcaVersion",
-            method = RequestMethod.GET,
-            produces = "application/json"
-    )
+    @GetMapping(path = "/{ejbcaInstanceName}/ejbcaVersion", produces = "application/json")
     public EjbcaVersionResponseDto getEjbcaVersion(@PathVariable String ejbcaInstanceName) throws NotFoundException, AlreadyExistException {
         EjbcaVersion ejbcaVersion = ejbcaService.getEjbcaVersion(ejbcaInstanceName);
 
@@ -68,18 +64,10 @@ public class DiscoverySupportController {
             throw new ValidationException("EJBCA version is not supported", errors);
         }
 
-        //List<String> list = new ArrayList<>();
-        //list.add(ejbcaVersion.toString());
-        //return ejbcaVersion.toString();
-
         return new EjbcaVersionResponseDto(ejbcaVersion.toString());
     }
 
-    @RequestMapping(
-            path = "/{ejbcaInstanceUuid}/listEndEntityProfiles",
-            method = RequestMethod.GET,
-            produces = "application/json"
-    )
+    @GetMapping(path = "/{ejbcaInstanceUuid}/listEndEntityProfiles", produces = "application/json")
     public List<ObjectAttributeContentV2> listEndEntityProfiles(@PathVariable String ejbcaInstanceUuid) throws NotFoundException {
         checkEjbcaVersion(ejbcaInstanceUuid);
 
@@ -92,11 +80,7 @@ public class DiscoverySupportController {
         return contentList;
     }
 
-    @RequestMapping(
-            path = "/{ejbcaInstanceUuid}/listCas",
-            method = RequestMethod.GET,
-            produces = "application/json"
-    )
+    @GetMapping(path = "/{ejbcaInstanceUuid}/listCas", produces = "application/json")
     public List<ObjectAttributeContentV2> listCas(@PathVariable String ejbcaInstanceUuid) throws NotFoundException {
         checkEjbcaVersion(ejbcaInstanceUuid);
 
@@ -104,11 +88,7 @@ public class DiscoverySupportController {
         return LocalAttributeUtil.convertFromNameAndId(cas);
     }
 
-    @RequestMapping(
-            path = "/{ejbcaInstanceUuid}/ejbcaRestApi",
-            method = RequestMethod.GET,
-            produces = "application/json"
-    )
+    @GetMapping(path = "/{ejbcaInstanceUuid}/ejbcaRestApi", produces = "application/json")
     public StringAttributeContentV2 ejbcaRestApi(@PathVariable String ejbcaInstanceUuid) throws NotFoundException {
         checkEjbcaVersion(ejbcaInstanceUuid);
 
@@ -116,11 +96,7 @@ public class DiscoverySupportController {
         return new StringAttributeContentV2(url);
     }
 
-    @RequestMapping(
-            path = "/{ejbcaInstanceUuid}/{kind}/configuration",
-            method = RequestMethod.GET,
-            produces = "application/json"
-    )
+    @GetMapping(path = "/{ejbcaInstanceUuid}/{kind}/configuration", produces = "application/json")
     public List<BaseAttribute> configuration(
             @PathVariable String ejbcaInstanceUuid, @PathVariable String kind) throws NotFoundException {
         checkEjbcaVersion(ejbcaInstanceUuid);
@@ -146,13 +122,9 @@ public class DiscoverySupportController {
     private void checkEjbcaVersion(String ejbcaInstanceName) throws NotFoundException {
         EjbcaVersion ejbcaVersion = ejbcaService.getEjbcaVersion(ejbcaInstanceName);
 
-        boolean supported = false;
         // check the EJBCA version, only from 7.8 and above the REST API for certificate searching is available
-        if (ejbcaVersion.getTechVersion() > 7) {
-            supported = true;
-        } else if (ejbcaVersion.getTechVersion() == 7) {
-            supported = ejbcaVersion.getMajorVersion() >= 8;
-        }
+        boolean supported = ejbcaVersion.getTechVersion() > 7
+                || (ejbcaVersion.getTechVersion() == 7 && ejbcaVersion.getMajorVersion() >= 8);
 
         if (!supported) {
             List<ValidationError> errors = new ArrayList<>();

@@ -1,6 +1,5 @@
 package com.otilm.ca.connector.ejbca.rest;
 
-import com.otilm.api.clients.BaseApiClient;
 import com.otilm.api.exception.ValidationException;
 import com.otilm.api.model.common.attribute.common.BaseAttribute;
 import com.otilm.api.model.common.attribute.v2.content.FileAttributeContentV2;
@@ -51,7 +50,7 @@ public abstract class EjbcaRestApiClient {
     public static final String ATTRIBUTE_TRUSTSTORE_TYPE = "trustStoreType";
     public static final String ATTRIBUTE_TRUSTSTORE = "trustStore";
     public static final String ATTRIBUTE_TRUSTSTORE_PASSWORD = "trustStorePassword";
-    private static final Logger logger = LoggerFactory.getLogger(BaseApiClient.class);
+    private static final Logger logger = LoggerFactory.getLogger(EjbcaRestApiClient.class);
     private static final ParameterizedTypeReference<List<String>> ERROR_LIST_TYPE_REF = new ParameterizedTypeReference<>() {
     };
     protected WebClient webClient;

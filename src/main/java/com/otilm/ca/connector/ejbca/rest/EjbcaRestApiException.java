@@ -5,8 +5,11 @@ import org.springframework.http.HttpStatus;
 
 public class EjbcaRestApiException extends Exception {
 
-    private ExceptionErrorRestResponse error;
-    private HttpStatus httpStatus;
+    private static final long serialVersionUID = 1L;
+
+    // ExceptionErrorRestResponse is not Serializable; marked transient to satisfy S1948
+    private final transient ExceptionErrorRestResponse error;
+    private final HttpStatus httpStatus;
 
     public EjbcaRestApiException(String message, HttpStatus httpStatus, ExceptionErrorRestResponse error) {
         super(message);
@@ -18,15 +21,7 @@ public class EjbcaRestApiException extends Exception {
         return error;
     }
 
-    public void setError(ExceptionErrorRestResponse error) {
-        this.error = error;
-    }
-
     public HttpStatus getHttpStatus() {
         return httpStatus;
-    }
-
-    public void setHttpStatus(HttpStatus httpStatus) {
-        this.httpStatus = httpStatus;
     }
 }

@@ -1,6 +1,5 @@
 package com.otilm.ca.connector.ejbca.service.impl;
 
-import com.otilm.api.interfaces.connector.AttributesController;
 import com.otilm.api.model.client.attribute.RequestAttribute;
 import com.otilm.api.model.common.attribute.common.AttributeType;
 import com.otilm.api.model.common.attribute.common.BaseAttribute;
@@ -26,7 +25,7 @@ import java.util.Set;
 @Service
 @Transactional
 public class AttributeServiceImpl implements AttributeService {
-	private static final Logger logger = LoggerFactory.getLogger(AttributesController.class);
+    private static final Logger logger = LoggerFactory.getLogger(AttributeServiceImpl.class);
 
     public static final String DATA_ATTRIBUTE_URL_NAME = "url";
     public static final String DATA_ATTRIBUTE_URL_UUID = "87e968ca-9404-4128-8b58-3ab5db2ba06e";
@@ -34,6 +33,8 @@ public class AttributeServiceImpl implements AttributeService {
     public static final String DATA_ATTRIBUTE_URL_DESCRIPTION = "URL of EJBCA web services";
 
     public static final String DATA_ATTRIBUTE_CREDENTIAL_NAME = "credential";
+    // attribute-definition UUID, not a secret
+    @SuppressWarnings("java:S6418")
     public static final String DATA_ATTRIBUTE_CREDENTIAL_UUID = "9379ca2c-aa51-42c8-8afd-2a2d16c99c57";
     public static final String DATA_ATTRIBUTE_CREDENTIAL_LABEL = "Credential";
     public static final String DATA_ATTRIBUTE_CREDENTIAL_DESCRIPTION = "SoftKeyStore Credential representing EJBCA administrator for the communication";

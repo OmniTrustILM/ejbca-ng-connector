@@ -5,6 +5,10 @@ import org.apache.commons.lang3.StringUtils;
 
 public class OidUtils {
 
+    private OidUtils() {
+        // utility class
+    }
+
     // Validation method for OID
     public static void validateOidFormat(String oid) {
         // OID should be a series of integers separated by dots

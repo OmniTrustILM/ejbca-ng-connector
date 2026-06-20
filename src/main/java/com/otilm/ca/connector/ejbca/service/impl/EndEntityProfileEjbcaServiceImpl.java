@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -39,7 +38,7 @@ public class EndEntityProfileEjbcaServiceImpl implements EndEntityProfileEjbcaSe
 
             return endEntityProfiles.stream()
                     .map(p -> new NameAndIdDto(p.getId(), p.getName()))
-                    .collect(Collectors.toList());
+                    .toList();
         } catch (AuthorizationDeniedException_Exception e) {
             throw new AccessDeniedException("Authorization denied on EJBCA", e);
         } catch (EjbcaException_Exception e) {
@@ -56,7 +55,7 @@ public class EndEntityProfileEjbcaServiceImpl implements EndEntityProfileEjbcaSe
                 throw new NotFoundException("CertificateProfile on ca", uuid);
             }
 
-            return profiles.stream().map(p -> new NameAndIdDto(p.getId(), p.getName())).collect(Collectors.toList());
+            return profiles.stream().map(p -> new NameAndIdDto(p.getId(), p.getName())).toList();
         } catch (AuthorizationDeniedException_Exception e) {
             throw new AccessDeniedException("Authorization denied on EJBCA", e);
         } catch (EjbcaException_Exception e) {
@@ -73,7 +72,7 @@ public class EndEntityProfileEjbcaServiceImpl implements EndEntityProfileEjbcaSe
                 throw new NotFoundException("CAInProfile on ca", uuid);
             }
 
-            return profiles.stream().map(p -> new NameAndIdDto(p.getId(), p.getName())).collect(Collectors.toList());
+            return profiles.stream().map(p -> new NameAndIdDto(p.getId(), p.getName())).toList();
         } catch (AuthorizationDeniedException_Exception e) {
             throw new AccessDeniedException("Authorization denied on EJBCA", e);
         } catch (EjbcaException_Exception e) {

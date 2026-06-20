@@ -144,10 +144,14 @@ public class ProxySettings {
                 username = userInfo.substring(0, idx);
                 password = userInfo.substring(idx + 1);
             }
-            // add no proxy hosts
+            // add no proxy hosts — split on literal comma and trim each entry (avoids ReDoS on \\s*,\\s*)
             String[] noProxyHosts = null;
             if (noProxy != null) {
-                noProxyHosts = noProxy.split("\\s*,\\s*");
+                String[] raw = noProxy.split(",", -1);
+                noProxyHosts = new String[raw.length];
+                for (int i = 0; i < raw.length; i++) {
+                    noProxyHosts[i] = raw[i].strip();
+                }
             }
             return new ProxySettings(protocol, scheme, url.getHost(), url.getPort(), noProxyHosts, username, password);
         } catch (URISyntaxException e) {

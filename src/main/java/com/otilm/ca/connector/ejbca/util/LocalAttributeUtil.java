@@ -9,6 +9,10 @@ import java.util.List;
 
 public class LocalAttributeUtil {
 
+    private LocalAttributeUtil() {
+        // utility class
+    }
+
     public static List<ObjectAttributeContentV2> convertFromNameAndId(List<NameAndIdDto> data) {
         List<ObjectAttributeContentV2> contentList = new ArrayList<>();
         for (NameAndIdDto x : data) {

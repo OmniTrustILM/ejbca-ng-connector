@@ -49,7 +49,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -57,11 +56,8 @@ public class DiscoveryServiceImpl implements DiscoveryService {
 
     private static final Logger logger = LoggerFactory.getLogger(DiscoveryServiceImpl.class);
 
-    /**
-     * This constant represents the number of certificate per page in searching
-     */
     @Value("${ejbca.search.pageSize:100}")
-    private int EJBCA_SEARCH_PAGE_SIZE;
+    private int ejbcaSearchPageSize;
     private EjbcaService ejbcaService;
     private CertificateRepository certificateRepository;
     private DiscoveryHistoryService discoveryHistoryService;
@@ -108,7 +104,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
             dto.setTotalCertificatesDiscovered(0);
         } else {
             Pageable page = PageRequest.of(request.getPageNumber() <= 0 ? 0 : request.getPageNumber() - 1, request.getItemsPerPage(), Sort.by(Sort.Direction.ASC, "id"));
-            dto.setCertificateData(certificateRepository.findAllByDiscoveryId(history.getId(), page).stream().map(Certificate::mapToDto).collect(Collectors.toList()));
+            dto.setCertificateData(certificateRepository.findAllByDiscoveryId(history.getId(), page).stream().map(Certificate::mapToDto).toList());
         }
         return dto;
     }
@@ -145,79 +141,87 @@ public class DiscoveryServiceImpl implements DiscoveryService {
 
     private void discoverCertificatesInternal(DiscoveryRequestDto request, DiscoveryHistory history) throws Exception {
         logger.info("Discovery initiated for the request with name {}", request.getName());
-        int certificatesFound = 0;
 
-        final AuthorityInstanceNameAndUuidDto instance = AttributeDefinitionUtils.getObjectAttributeContentData(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_INSTANCE, request.getAttributes(), AuthorityInstanceNameAndUuidDto.class).get(0);
+        final AuthorityInstanceNameAndUuidDto instance = resolveInstance(request);
         final String restApiUrl = AttributeDefinitionUtils.getSingleItemAttributeContentValue(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_RESTAPI_URL, request.getAttributes(), StringAttributeContentV2.class).getData();
         final List<NameAndIdDto> cas = AttributeDefinitionUtils.getObjectAttributeContentDataList(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_CA, request.getAttributes(), NameAndIdDto.class);
         final List<NameAndIdDto> eeProfiles = AttributeDefinitionUtils.getObjectAttributeContentDataList(DiscoveryAttributeServiceImpl.ATTRIBUTE_END_ENTITY_PROFILE, request.getAttributes(), NameAndIdDto.class);
         final List<String> statuses = AttributeDefinitionUtils.getAttributeContentValueList(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_STATUS, request.getAttributes(), BaseAttributeContentV2.class);
-
-        ZonedDateTime issuedAfter = null;
-        if (request.getKind().equals("EJBCA")) {
-            issuedAfter = AttributeDefinitionUtils.getSingleItemAttributeContentValue(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_ISSUED_AFTER, request.getAttributes(), DateTimeAttributeContentV2.class).getData();
-        }
-        if (request.getKind().equals("EJBCA-SCHEDULE")) {
-            Integer issuedDaysBefore = AttributeDefinitionUtils.getSingleItemAttributeContentValue(DiscoveryAttributeServiceImpl.ATTRIBUTE_ISSUED_DAYS_BEFORE, request.getAttributes(), IntegerAttributeContentV2.class).getData();
-            issuedAfter = ZonedDateTime.now();
-            issuedAfter = issuedAfter.minusDays(issuedDaysBefore);
-        }
+        final ZonedDateTime issuedAfter = resolveIssuedAfter(request);
 
         SearchCertificatesRestRequestV2 searchRequest = prepareSearchRequest(cas, eeProfiles, statuses, issuedAfter);
-        SearchCertificatesRestResponseV2 searchResponse;
 
         // behaviour of the EJBCA REST API for searching certificates differs between versions
         // we need to check the version and decide on the implementation
-        // TODO: this can be improved once there are more versions of implementation
         EjbcaVersion ejbcaVersion = ejbcaService.getEjbcaVersion(instance.getUuid());
-        logger.debug("Searching for certificates in EJBCA version {}, with page size {}", ejbcaVersion.getVersion(), EJBCA_SEARCH_PAGE_SIZE);
+        logger.debug("Searching for certificates in EJBCA version {}, with page size {}", ejbcaVersion.getVersion(), ejbcaSearchPageSize);
 
-        int searchVersion = 0;
-        // we need to check version of EJBCA for different implementation of the REST API
-        if (ejbcaVersion.getTechVersion() > 7) {
-            searchVersion = 2;
-        } else if (ejbcaVersion.getTechVersion() == 7 && ejbcaVersion.getMajorVersion() >= 11) {
-            searchVersion = 2;
-        } else if (ejbcaVersion.getTechVersion() == 7 && ejbcaVersion.getMajorVersion() >= 8) {
-            searchVersion = 1;
-        } else {
-            throw new Exception("Unsupported EJBCA version");
-        }
-
-        // when the version is at least 7.11
-        if (searchVersion == 2) {
-            do {
-                logger.info("Request: {}", searchRequest);
-                searchResponse = ejbcaService.searchCertificates(instance.getUuid(), restApiUrl, searchRequest);
-                logger.info("Page: {}, Found {}", searchResponse.getPaginationSummary().getCurrentPage() ,searchResponse.getCertificates().size());
-                // break the loop if there are no certificates returned from EJBCA
-                if (searchResponse.getCertificates().isEmpty()) {
-                    break;
-                }
-                // set the next page
-                searchRequest.getPagination().setCurrentPage(searchResponse.getPaginationSummary().getCurrentPage() + 1);
-                parseAndCreateCertificateEntry(searchResponse, history);
-                certificatesFound = certificatesFound + searchResponse.getCertificates().size();
-                logger.info("Before while: isEmpty: {}", searchResponse.getCertificates().isEmpty());
-            } while (!searchResponse.getCertificates().isEmpty());
-        } else { // when the version is lower than 7.11, but higher than 7.8
-            do {
-                searchResponse = ejbcaService.searchCertificates(instance.getUuid(), restApiUrl, searchRequest);
-                // break the loop if there are no certificates returned from EJBCA
-                if (searchResponse.getCertificates().isEmpty()) {
-                    break;
-                }
-                // set the next page
-                searchRequest.getPagination().setCurrentPage(searchResponse.getPaginationSummary().getCurrentPage() + 1);
-                parseAndCreateCertificateEntry(searchResponse, history);
-                certificatesFound = certificatesFound + searchResponse.getCertificates().size();
-            } while (searchResponse.getPaginationSummary().getTotalCerts() == null);
-        }
+        int searchVersion = resolveSearchVersion(ejbcaVersion);
+        int certificatesFound = runPagedSearch(instance.getUuid(), restApiUrl, searchRequest, history, searchVersion);
 
         history.setStatus(DiscoveryStatus.COMPLETED);
         history.setMeta(AttributeDefinitionUtils.serialize(getDiscoveryMeta(certificatesFound)));
         discoveryHistoryService.setHistory(history);
         logger.info("Discovery Completed. Name of the discovery is {}", request.getName());
+    }
+
+    private AuthorityInstanceNameAndUuidDto resolveInstance(DiscoveryRequestDto request) {
+        return AttributeDefinitionUtils.getObjectAttributeContentData(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_INSTANCE, request.getAttributes(), AuthorityInstanceNameAndUuidDto.class).get(0);
+    }
+
+    private ZonedDateTime resolveIssuedAfter(DiscoveryRequestDto request) {
+        if (request.getKind().equals("EJBCA")) {
+            return AttributeDefinitionUtils.getSingleItemAttributeContentValue(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_ISSUED_AFTER, request.getAttributes(), DateTimeAttributeContentV2.class).getData();
+        }
+        if (request.getKind().equals("EJBCA-SCHEDULE")) {
+            Integer issuedDaysBefore = AttributeDefinitionUtils.getSingleItemAttributeContentValue(DiscoveryAttributeServiceImpl.ATTRIBUTE_ISSUED_DAYS_BEFORE, request.getAttributes(), IntegerAttributeContentV2.class).getData();
+            return ZonedDateTime.now(ZoneOffset.UTC).minusDays(issuedDaysBefore);
+        }
+        return null;
+    }
+
+    private int resolveSearchVersion(EjbcaVersion ejbcaVersion) {
+        if (ejbcaVersion.getTechVersion() > 7) {
+            return 2;
+        } else if (ejbcaVersion.getTechVersion() == 7 && ejbcaVersion.getMajorVersion() >= 11) {
+            return 2;
+        } else if (ejbcaVersion.getTechVersion() == 7 && ejbcaVersion.getMajorVersion() >= 8) {
+            return 1;
+        } else {
+            throw new IllegalStateException("Unsupported EJBCA version");
+        }
+    }
+
+    private int runPagedSearch(String instanceUuid, String restApiUrl, SearchCertificatesRestRequestV2 searchRequest, DiscoveryHistory history, int searchVersion) throws Exception {
+        int certificatesFound = 0;
+        SearchCertificatesRestResponseV2 searchResponse;
+        if (searchVersion == 2) {
+            // when the version is at least 7.11
+            do {
+                logger.info("Request: {}", searchRequest);
+                searchResponse = ejbcaService.searchCertificates(instanceUuid, restApiUrl, searchRequest);
+                logger.info("Page: {}, Found {}", searchResponse.getPaginationSummary().getCurrentPage(), searchResponse.getCertificates().size());
+                if (searchResponse.getCertificates().isEmpty()) {
+                    break;
+                }
+                searchRequest.getPagination().setCurrentPage(searchResponse.getPaginationSummary().getCurrentPage() + 1);
+                parseAndCreateCertificateEntry(searchResponse, history);
+                certificatesFound = certificatesFound + searchResponse.getCertificates().size();
+                logger.info("Before while: isEmpty: {}", searchResponse.getCertificates().isEmpty());
+            } while (!searchResponse.getCertificates().isEmpty());
+        } else {
+            // when the version is lower than 7.11, but higher than 7.8
+            do {
+                searchResponse = ejbcaService.searchCertificates(instanceUuid, restApiUrl, searchRequest);
+                if (searchResponse.getCertificates().isEmpty()) {
+                    break;
+                }
+                searchRequest.getPagination().setCurrentPage(searchResponse.getPaginationSummary().getCurrentPage() + 1);
+                parseAndCreateCertificateEntry(searchResponse, history);
+                certificatesFound = certificatesFound + searchResponse.getCertificates().size();
+            } while (searchResponse.getPaginationSummary().getTotalCerts() == null);
+        }
+        return certificatesFound;
     }
 
     private List<MetadataAttribute> getDiscoveryMeta(Integer totalCertificates) {
@@ -248,7 +252,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
         SearchCertificatesRestRequestV2 request = new SearchCertificatesRestRequestV2();
 
         Pagination pagination = new Pagination();
-        pagination.setPageSize(EJBCA_SEARCH_PAGE_SIZE);
+        pagination.setPageSize(ejbcaSearchPageSize);
         pagination.setCurrentPage(1);
 
         SearchCertificateSortRestRequest sort = new SearchCertificateSortRestRequest();

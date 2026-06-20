@@ -291,7 +291,7 @@ public class AuthorityInstanceControllerImpl implements AuthorityInstanceControl
     }
 
     @Override
-    public void validateRAProfileAttributes(@PathVariable String uuid, @RequestBody List<RequestAttribute> attributes) throws ValidationException, NotFoundException {
+    public void validateRAProfileAttributes(@PathVariable("uuid") String uuid, @RequestBody List<RequestAttribute> attributes) throws ValidationException, NotFoundException {
         AttributeDefinitionUtils.validateAttributes(listRAProfileAttributes(uuid), attributes);
     }
 

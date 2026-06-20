@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-public class EjbcaVersionTest {
+class EjbcaVersionTest {
 
     String ejbcaVersionTech = "EJBCA 8 Enterprise (5045c834d0c99315db96d88d32cc449ff334b07f)";
     String ejbcaVersionTechMajor = "EJBCA 7.11 Enterprise (5045c834d0c99315db96d88d32cc449ff334b07f)";
@@ -13,7 +13,7 @@ public class EjbcaVersionTest {
     String ejbcaVersionTechMajorMinorPatch = "EJBCA 7.12.1.52 Enterprise (5045c834d0c99315db96d88d32cc449ff334b07f)";
 
     @Test
-    public void testVersionTech_ok() throws Exception {
+    void testVersionTech_ok() {
         Assertions.assertDoesNotThrow(() -> new EjbcaVersion(ejbcaVersionTech));
 
         EjbcaVersion version = new EjbcaVersion(ejbcaVersionTech);
@@ -27,7 +27,7 @@ public class EjbcaVersionTest {
     }
 
     @Test
-    public void testVersionTechMajor_ok() throws Exception {
+    void testVersionTechMajor_ok() {
         Assertions.assertDoesNotThrow(() -> new EjbcaVersion(ejbcaVersionTechMajor));
 
         EjbcaVersion version = new EjbcaVersion(ejbcaVersionTechMajor);
@@ -41,7 +41,7 @@ public class EjbcaVersionTest {
     }
 
     @Test
-    public void testVersionTechMajorMinor_ok() throws Exception {
+    void testVersionTechMajorMinor_ok() {
         Assertions.assertDoesNotThrow(() -> new EjbcaVersion(ejbcaVersionTechMajorMinor));
 
         EjbcaVersion version = new EjbcaVersion(ejbcaVersionTechMajorMinor);
@@ -55,7 +55,7 @@ public class EjbcaVersionTest {
     }
 
     @Test
-    public void testVersionTechMajorMinorPatch_ok() throws Exception {
+    void testVersionTechMajorMinorPatch_ok() {
         Assertions.assertDoesNotThrow(() -> new EjbcaVersion(ejbcaVersionTechMajorMinorPatch));
 
         EjbcaVersion version = new EjbcaVersion(ejbcaVersionTechMajorMinorPatch);

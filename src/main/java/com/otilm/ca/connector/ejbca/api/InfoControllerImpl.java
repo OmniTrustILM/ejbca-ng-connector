@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @RestController
@@ -39,7 +38,7 @@ public class InfoControllerImpl implements InfoController {
                 endpointsListener.getEndpoints(FunctionGroupCode.AUTHORITY_PROVIDER))
         );
         functions.add(new InfoResponse(
-                Stream.of(DiscoveryKind.values()).map(Enum::name).collect(Collectors.toList()),
+                Stream.of(DiscoveryKind.values()).map(Enum::name).toList(),
                 FunctionGroupCode.DISCOVERY_PROVIDER,
                 endpointsListener.getEndpoints(FunctionGroupCode.DISCOVERY_PROVIDER))
         );
