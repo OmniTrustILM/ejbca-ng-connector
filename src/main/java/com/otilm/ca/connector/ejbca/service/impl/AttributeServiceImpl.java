@@ -34,6 +34,8 @@ public class AttributeServiceImpl implements AttributeService {
     public static final String DATA_ATTRIBUTE_URL_DESCRIPTION = "URL of EJBCA web services";
 
     public static final String DATA_ATTRIBUTE_CREDENTIAL_NAME = "credential";
+    // attribute-definition UUID, not a secret
+    @SuppressWarnings("java:S6418")
     public static final String DATA_ATTRIBUTE_CREDENTIAL_UUID = "9379ca2c-aa51-42c8-8afd-2a2d16c99c57";
     public static final String DATA_ATTRIBUTE_CREDENTIAL_LABEL = "Credential";
     public static final String DATA_ATTRIBUTE_CREDENTIAL_DESCRIPTION = "SoftKeyStore Credential representing EJBCA administrator for the communication";
