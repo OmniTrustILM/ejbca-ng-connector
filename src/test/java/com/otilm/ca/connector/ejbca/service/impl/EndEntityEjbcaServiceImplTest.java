@@ -41,9 +41,12 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class EndEntityEjbcaServiceImplTest {
@@ -267,6 +270,8 @@ class EndEntityEjbcaServiceImplTest {
         given(ejbcaWS.findUser(any())).willReturn(null);
 
         assertDoesNotThrow(() -> service.createEndEntity(UUID, EEP_NAME, buildAddRequest("newUser")));
+
+        verify(ejbcaWS).editUser(any());
     }
 
     @Test
@@ -274,6 +279,8 @@ class EndEntityEjbcaServiceImplTest {
         given(ejbcaWS.findUser(any())).willReturn(null);
 
         assertDoesNotThrow(() -> service.createEndEntity(UUID, EEP_NAME, buildAddRequestWithExtensionData("newUser")));
+
+        verify(ejbcaWS).editUser(any());
     }
 
     @Test
@@ -314,6 +321,8 @@ class EndEntityEjbcaServiceImplTest {
         given(ejbcaWS.findUser(any())).willReturn(List.of(buildUserDataVOWS(ENTITY_NAME)));
 
         assertDoesNotThrow(() -> service.updateEndEntity(UUID, EEP_NAME, ENTITY_NAME, buildEditRequest(ENTITY_NAME)));
+
+        verify(ejbcaWS).editUser(any());
     }
 
     @Test
@@ -322,7 +331,9 @@ class EndEntityEjbcaServiceImplTest {
         EditEndEntityRequestDto req = buildEditRequest(ENTITY_NAME);
         req.setStatus(EndEntityStatus.NEW);
 
-        assertDoesNotThrow(() -> service.updateEndEntity(UUID, EEP_NAME, ENTITY_NAME, req));
+        service.updateEndEntity(UUID, EEP_NAME, ENTITY_NAME, req);
+
+        verify(ejbcaWS).editUser(argThat(u -> u.getStatus() == EndEntityStatus.NEW.getCode()));
     }
 
     @Test
@@ -363,6 +374,8 @@ class EndEntityEjbcaServiceImplTest {
         given(ejbcaWS.findUser(any())).willReturn(List.of(buildUserDataVOWS(ENTITY_NAME)));
 
         assertDoesNotThrow(() -> service.revokeAndDeleteEndEntity(UUID, EEP_NAME, ENTITY_NAME));
+
+        verify(ejbcaWS).revokeUser(eq(ENTITY_NAME), anyInt(), eq(true));
     }
 
     @Test
@@ -411,6 +424,8 @@ class EndEntityEjbcaServiceImplTest {
         given(ejbcaWS.findUser(any())).willReturn(List.of(buildUserDataVOWS(ENTITY_NAME)));
 
         assertDoesNotThrow(() -> service.resetPassword(UUID, EEP_NAME, ENTITY_NAME));
+
+        verify(ejbcaWS).editUser(any());
     }
 
     @Test
