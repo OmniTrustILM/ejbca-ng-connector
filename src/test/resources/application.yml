@@ -8,6 +8,6 @@ spring:
   jpa:
     properties:
       hibernate:
-        dialect: com.czertainly.ca.connector.ejbca.config.H2DialectExtended
+        dialect: com.otilm.ca.connector.ejbca.config.H2DialectExtended
   flyway:
     enabled: false

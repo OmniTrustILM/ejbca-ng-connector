@@ -11,8 +11,8 @@
     </parent>
 
     <artifactId>ejbca-ng-connector</artifactId>
-    <version>1.11.1</version>
-    <name>CZERTAINLY-EJBCA-NG-Connector</name>
+    <version>1.12.0-SNAPSHOT</version>
+    <name>ejbca-ng-connector</name>
 
     <properties>
         <java.version>21</java.version>
@@ -23,24 +23,24 @@
              generated JAX-WS SOAP stubs, DTOs, JPA entities/repositories, Spring config,
              enums, exception types, thin API controllers, Flyway Java migrations, bootstrap. -->
         <sonar.coverage.exclusions>
-            src/main/java/com/czertainly/ca/connector/ejbca/Application.java,
-            src/main/java/com/czertainly/ca/connector/ejbca/EndpointsListener.java,
-            src/main/java/com/czertainly/ca/connector/ejbca/LoggingAdvice.java,
-            src/main/java/com/czertainly/ca/connector/ejbca/ExceptionHandlingAdvice.java,
-            src/main/java/com/czertainly/ca/connector/ejbca/EjbcaException.java,
-            src/main/java/com/czertainly/ca/connector/ejbca/api/**,
-            src/main/java/com/czertainly/ca/connector/ejbca/config/**,
-            src/main/java/com/czertainly/ca/connector/ejbca/dto/**,
-            src/main/java/com/czertainly/ca/connector/ejbca/dao/**,
-            src/main/java/com/czertainly/ca/connector/ejbca/enums/**,
-            src/main/java/com/czertainly/ca/connector/ejbca/exception/**,
-            src/main/java/com/czertainly/ca/connector/ejbca/ws/**,
+            src/main/java/com/otilm/ca/connector/ejbca/Application.java,
+            src/main/java/com/otilm/ca/connector/ejbca/EndpointsListener.java,
+            src/main/java/com/otilm/ca/connector/ejbca/LoggingAdvice.java,
+            src/main/java/com/otilm/ca/connector/ejbca/ExceptionHandlingAdvice.java,
+            src/main/java/com/otilm/ca/connector/ejbca/EjbcaException.java,
+            src/main/java/com/otilm/ca/connector/ejbca/api/**,
+            src/main/java/com/otilm/ca/connector/ejbca/config/**,
+            src/main/java/com/otilm/ca/connector/ejbca/dto/**,
+            src/main/java/com/otilm/ca/connector/ejbca/dao/**,
+            src/main/java/com/otilm/ca/connector/ejbca/enums/**,
+            src/main/java/com/otilm/ca/connector/ejbca/exception/**,
+            src/main/java/com/otilm/ca/connector/ejbca/ws/**,
             src/main/java/db/migration/**
         </sonar.coverage.exclusions>
         <sonar.cpd.exclusions>
-            src/main/java/com/czertainly/ca/connector/ejbca/ws/**,
-            src/main/java/com/czertainly/ca/connector/ejbca/dto/**,
-            src/main/java/com/czertainly/ca/connector/ejbca/dao/**
+            src/main/java/com/otilm/ca/connector/ejbca/ws/**,
+            src/main/java/com/otilm/ca/connector/ejbca/dto/**,
+            src/main/java/com/otilm/ca/connector/ejbca/dao/**
         </sonar.cpd.exclusions>
         <!-- CVE overrides: pin transitive deps to patched versions -->
         <tomcat.version>10.1.55</tomcat.version>
@@ -50,9 +50,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.czertainly</groupId>
+            <groupId>com.otilm</groupId>
             <artifactId>interfaces</artifactId>
-            <version>2.18.0</version>
+            <version>2.18.1-SNAPSHOT</version>
         </dependency>
 
 <!--        <dependency>-->
@@ -238,5 +238,19 @@
             </plugin>
         </plugins>
     </build>
+
+    <repositories>
+        <repository>
+            <id>github</id>
+            <url>https://maven.pkg.github.com/omnitrustilm/*</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>central-portal</id>
+            <url>https://central.sonatype.com/repository/maven-snapshots/</url>
+        </repository>
+    </repositories>
 
 </project>

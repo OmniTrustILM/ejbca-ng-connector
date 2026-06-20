@@ -1,7 +1,7 @@
 package db.migration;
 
-import com.czertainly.ca.connector.ejbca.enums.JavaMigrationChecksums;
-import com.czertainly.core.util.V2AttributeMigrationUtils;
+import com.otilm.ca.connector.ejbca.enums.JavaMigrationChecksums;
+import com.otilm.core.util.V2AttributeMigrationUtils;
 import org.flywaydb.core.api.migration.BaseJavaMigration;
 import org.flywaydb.core.api.migration.Context;
 
