@@ -294,14 +294,13 @@ class DiscoveryAttributeServiceImplTest {
 
     @Test
     void getInstanceAndKindAttributes_ejbca_statusContentMatchesEjbcaSearchStatuses() {
-        // Source of truth: the complete set of STATUS values accepted by EJBCA's REST
-        // certificate-search API (SearchCertificateCriteriaRestRequest.CertificateStatus),
-        // stable across every EJBCA version the connector supports (7.8+).
-        // Hardcoded on purpose so this test is independent of the connector's own enum and
-        // catches drift in BOTH directions:
-        //   - a missing status silently skips those certificates during discovery (issue #120,
-        //     which dropped CERT_NOTIFIEDABOUTEXPIRATION);
-        //   - a bogus/extra status makes EJBCA reject the whole search request with HTTP 400.
+        // The discovery "Certificate status" options must match exactly the status values that
+        // EJBCA's REST certificate-search API accepts, a set that is stable across every EJBCA
+        // version the connector supports from 7.8 onward. The expected values are written out
+        // explicitly here, rather than derived from the connector enum, so the test stays an
+        // independent source of truth and catches drift either way: a status missing from the
+        // options silently skips those certificates during discovery, as in issue 120; an
+        // unsupported status makes EJBCA reject the whole search request with HTTP 400.
         Set<String> expected = Set.of(
                 "CERT_ACTIVE",
                 "CERT_NOTIFIEDABOUTEXPIRATION",
@@ -321,7 +320,10 @@ class DiscoveryAttributeServiceImplTest {
         List<BaseAttribute> attrs = service.getInstanceAndKindAttributes(
                 DiscoveryKind.EJBCA.name(), List.of(), List.of(), List.of());
 
-        DataAttributeV2 statusData = (DataAttributeV2) attrs.get(3);
+        DataAttributeV2 statusData = (DataAttributeV2) attrs.stream()
+                .filter(a -> DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_STATUS.equals(a.getName()))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("status attribute not found"));
         List<String> offered = statusData.getContent().stream()
                 .map(c -> (String) c.getData())
                 .toList();
