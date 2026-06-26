@@ -296,11 +296,7 @@ class DiscoveryAttributeServiceImplTest {
     void getInstanceAndKindAttributes_ejbca_statusContentMatchesEjbcaSearchStatuses() {
         // The discovery "Certificate status" options must match exactly the status values that
         // EJBCA's REST certificate-search API accepts, a set that is stable across every EJBCA
-        // version the connector supports from 7.8 onward. The expected values are written out
-        // explicitly here, rather than derived from the connector enum, so the test stays an
-        // independent source of truth and catches drift either way: a status missing from the
-        // options silently skips those certificates during discovery, as in issue 120; an
-        // unsupported status makes EJBCA reject the whole search request with HTTP 400.
+        // version the connector supports from 7.8 onward.
         Set<String> expected = Set.of(
                 "CERT_ACTIVE",
                 "CERT_NOTIFIEDABOUTEXPIRATION",
@@ -329,7 +325,7 @@ class DiscoveryAttributeServiceImplTest {
                 .toList();
 
         // No duplicates in the offered options.
-        assertEquals(offered.size(), Set.copyOf(offered).size(),
+        assertEquals(Set.copyOf(offered).size(), offered.size(),
                 "status options must not contain duplicates: " + offered);
         // Exactly the EJBCA-accepted set — nothing missing, nothing extra.
         assertEquals(expected, Set.copyOf(offered));
