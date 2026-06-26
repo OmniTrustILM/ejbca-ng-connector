@@ -26,6 +26,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -289,6 +290,45 @@ class DiscoveryAttributeServiceImplTest {
         // status content must contain all CertificateStatus enum values
         int expectedStatusCount = SearchCertificateCriteriaRestRequest.CertificateStatus.values().length;
         assertEquals(expectedStatusCount, statusData.getContent().size());
+    }
+
+    @Test
+    void getInstanceAndKindAttributes_ejbca_statusContentMatchesEjbcaSearchStatuses() {
+        // The discovery "Certificate status" options must match exactly the status values that
+        // EJBCA's REST certificate-search API accepts, a set that is stable across every EJBCA
+        // version the connector supports from 7.8 onward.
+        Set<String> expected = Set.of(
+                "CERT_ACTIVE",
+                "CERT_NOTIFIEDABOUTEXPIRATION",
+                "CERT_REVOKED",
+                "REVOCATION_REASON_UNSPECIFIED",
+                "REVOCATION_REASON_KEYCOMPROMISE",
+                "REVOCATION_REASON_CACOMPROMISE",
+                "REVOCATION_REASON_AFFILIATIONCHANGED",
+                "REVOCATION_REASON_SUPERSEDED",
+                "REVOCATION_REASON_CESSATIONOFOPERATION",
+                "REVOCATION_REASON_CERTIFICATEHOLD",
+                "REVOCATION_REASON_REMOVEFROMCRL",
+                "REVOCATION_REASON_PRIVILEGESWITHDRAWN",
+                "REVOCATION_REASON_AACOMPROMISE"
+        );
+
+        List<BaseAttribute> attrs = service.getInstanceAndKindAttributes(
+                DiscoveryKind.EJBCA.name(), List.of(), List.of(), List.of());
+
+        DataAttributeV2 statusData = (DataAttributeV2) attrs.stream()
+                .filter(a -> DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_STATUS.equals(a.getName()))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("status attribute not found"));
+        List<String> offered = statusData.getContent().stream()
+                .map(c -> (String) c.getData())
+                .toList();
+
+        // No duplicates in the offered options.
+        assertEquals(Set.copyOf(offered).size(), offered.size(),
+                "status options must not contain duplicates: " + offered);
+        // Exactly the EJBCA-accepted set — nothing missing, nothing extra.
+        assertEquals(expected, Set.copyOf(offered));
     }
 
     @Test

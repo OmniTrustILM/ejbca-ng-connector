@@ -134,6 +134,7 @@ public class SearchCertificateCriteriaRestRequest {
      */
     public enum CertificateStatus {
         CERT_ACTIVE,
+        CERT_NOTIFIEDABOUTEXPIRATION,
         CERT_REVOKED,
         REVOCATION_REASON_UNSPECIFIED,
         REVOCATION_REASON_KEYCOMPROMISE,
