@@ -7,7 +7,7 @@
     <parent>
         <groupId>com.otilm</groupId>
         <artifactId>dependencies</artifactId>
-        <version>1.4.1</version>
+        <version>1.4.2-SNAPSHOT</version>
     </parent>
 
     <artifactId>ejbca-ng-connector</artifactId>
@@ -48,10 +48,6 @@
             src/main/java/com/otilm/ca/connector/ejbca/ws/**,
             src/main/java/db/migration/**
         </sonar.exclusions>
-        <!-- CVE overrides: pin transitive deps to patched versions -->
-        <tomcat.version>10.1.55</tomcat.version>
-        <netty.version>4.1.135.Final</netty.version>
-        <postgresql.version>42.7.11</postgresql.version>
     </properties>
 
     <dependencies>
@@ -69,17 +65,14 @@
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-core</artifactId>
-            <version>2.26.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-api</artifactId>
-            <version>2.26.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-1.2-api</artifactId>
-            <version>2.26.0</version>
         </dependency>
 
         <dependency>
