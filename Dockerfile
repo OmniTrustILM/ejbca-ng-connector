@@ -12,6 +12,9 @@ FROM eclipse-temurin:21-jre-alpine
 
 LABEL org.opencontainers.image.authors="ILM <ilm@omnitrust.com>"
 
+# apply outstanding Alpine security updates on top of the base image
+RUN apk --no-cache upgrade
+
 # add non root user ejbca-ng-connector
 RUN addgroup --system --gid 10001 ejbca-ng-connector && adduser --system --home /opt/ejbca-ng-connector --uid 10001 --ingroup ejbca-ng-connector ejbca-ng-connector
 
