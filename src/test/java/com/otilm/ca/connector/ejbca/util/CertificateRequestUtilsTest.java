@@ -4,6 +4,9 @@ import com.otilm.api.model.core.enums.CertificateRequestFormat;
 import com.otilm.ca.connector.ejbca.request.CertificateRequest;
 import com.otilm.ca.connector.ejbca.request.Pkcs10CertificateRequest;
 import org.bouncycastle.asn1.DEROctetString;
+import org.bouncycastle.asn1.crmf.CertReqMessages;
+import org.bouncycastle.asn1.crmf.CertReqMsg;
+import org.bouncycastle.cert.crmf.jcajce.JcaCertificateRequestMessageBuilder;
 import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.DERUTF8String;
 import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
@@ -23,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.InetAddress;
 import java.security.*;
 import java.security.spec.RSAKeyGenParameterSpec;
@@ -106,6 +110,37 @@ class CertificateRequestUtilsTest {
 
         assertNotNull(request);
         assertEquals(CertificateRequestFormat.CRMF, request.getFormat());
+    }
+
+    @Test
+    void getEjbcaSanExtension_crmf_readsCertTemplateSan() throws Exception {
+        GeneralNames san = new GeneralNames(new GeneralName[]{
+                new GeneralName(GeneralName.dNSName, "crmf.example.com"),
+                new GeneralName(GeneralName.rfc822Name, "device@example.com")});
+        CertificateRequest request = CertificateRequestUtils.createCertificateRequest(crmf(san), CertificateRequestFormat.CRMF);
+
+        assertEquals("dNSName=crmf.example.com, rfc822name=device@example.com",
+                CertificateRequestUtils.getEjbcaSanExtension(request));
+    }
+
+    @Test
+    void getEjbcaSanExtension_crmfWithoutSan_returnsNull() throws Exception {
+        CertificateRequest request = CertificateRequestUtils.createCertificateRequest(crmf(null), CertificateRequestFormat.CRMF);
+
+        assertNull(CertificateRequestUtils.getEjbcaSanExtension(request));
+    }
+
+    private byte[] crmf(GeneralNames san) throws Exception {
+        JcaCertificateRequestMessageBuilder builder = new JcaCertificateRequestMessageBuilder(BigInteger.ONE);
+        builder.setPublicKey(sharedKeyPair.getPublic());
+        builder.setSubject(new X500Name("CN=CrmfSan"));
+        if (san != null) {
+            builder.addExtension(Extension.subjectAlternativeName, false, san);
+        }
+        builder.setProofOfPossessionSigningKeySigner(
+                new JcaContentSignerBuilder("SHA256withRSA").setProvider("BC").build(sharedKeyPair.getPrivate()));
+        CertReqMsg certReqMsg = CertReqMsg.getInstance(builder.build().getEncoded());
+        return new CertReqMessages(certReqMsg).getEncoded();
     }
 
     @Test
