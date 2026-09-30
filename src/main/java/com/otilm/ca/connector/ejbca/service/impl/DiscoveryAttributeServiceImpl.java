@@ -27,6 +27,11 @@ import com.otilm.ca.connector.ejbca.dto.ejbca.request.SearchCertificateCriteriaR
 import com.otilm.ca.connector.ejbca.enums.DiscoveryKind;
 import com.otilm.ca.connector.ejbca.service.DiscoveryAttributeService;
 import com.otilm.core.util.AttributeDefinitionUtils;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import net.steppschuh.markdowngenerator.list.UnorderedList;
 import net.steppschuh.markdowngenerator.text.Text;
 import net.steppschuh.markdowngenerator.text.heading.Heading;
@@ -34,8 +39,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.util.*;
 
 @Service
 public class DiscoveryAttributeServiceImpl implements DiscoveryAttributeService {
@@ -62,7 +65,6 @@ public class DiscoveryAttributeServiceImpl implements DiscoveryAttributeService 
 
     private AuthorityInstanceRepository authorityInstanceRepository;
 
-
     @Autowired
     public void setAuthorityInstanceRepository(AuthorityInstanceRepository authorityInstanceRepository) {
         this.authorityInstanceRepository = authorityInstanceRepository;
@@ -71,7 +73,8 @@ public class DiscoveryAttributeServiceImpl implements DiscoveryAttributeService 
     @Override
     public List<BaseAttribute> getAttributes(String kind) {
         if (!kind.equals(DiscoveryKind.EJBCA.name()) && !kind.equals(DiscoveryKind.EJBCA_SCHEDULE.name())) {
-            throw new ValidationException("Unsupported kind: " + kind, new ValidationError("Unsupported kind: " + kind));
+            throw new ValidationException("Unsupported kind: " + kind,
+                    new ValidationError("Unsupported kind: " + kind));
         }
         logger.debug("Listing discovery attributes for {}", kind);
 
@@ -99,12 +102,9 @@ public class DiscoveryAttributeServiceImpl implements DiscoveryAttributeService 
     }
 
     @Override
-    public List<BaseAttribute> getInstanceAndKindAttributes(
-            String kind,
-            List<BaseAttributeContentV2<?>> eeProfilesContent,
-            List<BaseAttributeContentV2<?>> casContent,
-            List<BaseAttributeContentV2<?>> urlContent
-    ) {
+    public List<BaseAttribute> getInstanceAndKindAttributes(String kind,
+            List<BaseAttributeContentV2<?>> eeProfilesContent, List<BaseAttributeContentV2<?>> casContent,
+            List<BaseAttributeContentV2<?>> urlContent) {
         List<BaseAttribute> attributes = new ArrayList<>();
 
         attributes.add(ejbcaRestApiUrlWithContent(urlContent));
@@ -124,7 +124,11 @@ public class DiscoveryAttributeServiceImpl implements DiscoveryAttributeService 
     }
 
     private DataAttribute prepareEjbcaInstanceAttribute() {
-        List<AuthorityInstanceNameAndUuidDto> instanceNames = authorityInstanceRepository.findAll().stream().map(AuthorityInstance::mapToNameAndUuidDto).toList();
+        List<AuthorityInstanceNameAndUuidDto> instanceNames = authorityInstanceRepository
+                .findAll()
+                .stream()
+                .map(AuthorityInstance::mapToNameAndUuidDto)
+                .toList();
         List<BaseAttributeContentV2<?>> contentList = new ArrayList<>();
         for (AuthorityInstanceNameAndUuidDto instance : instanceNames) {
             ObjectAttributeContentV2 content = new ObjectAttributeContentV2(instance.getName(), instance);
@@ -160,7 +164,9 @@ public class DiscoveryAttributeServiceImpl implements DiscoveryAttributeService 
 
         // prepare mappings for callback
         Set<AttributeCallbackMapping> mappings = new HashSet<>();
-        mappings.add(new AttributeCallbackMapping(ATTRIBUTE_EJBCA_INSTANCE + ".data.uuid", "ejbcaInstanceUuid", AttributeValueTarget.PATH_VARIABLE));
+        mappings
+                .add(new AttributeCallbackMapping(ATTRIBUTE_EJBCA_INSTANCE + ".data.uuid", "ejbcaInstanceUuid",
+                        AttributeValueTarget.PATH_VARIABLE));
         mappings.add(new AttributeCallbackMapping("kind", AttributeValueTarget.PATH_VARIABLE, kind));
 
         // create attribute callback
@@ -233,7 +239,8 @@ public class DiscoveryAttributeServiceImpl implements DiscoveryAttributeService 
 
     private DataAttribute listStatus() {
         List<BaseAttributeContentV2<?>> statuses = new ArrayList<>();
-        for (SearchCertificateCriteriaRestRequest.CertificateStatus status : SearchCertificateCriteriaRestRequest.CertificateStatus.values()) {
+        for (SearchCertificateCriteriaRestRequest.CertificateStatus status : SearchCertificateCriteriaRestRequest.CertificateStatus
+                .values()) {
             StringAttributeContentV2 content = new StringAttributeContentV2(status.name());
             statuses.add(content);
         }
@@ -306,7 +313,8 @@ public class DiscoveryAttributeServiceImpl implements DiscoveryAttributeService 
         DataAttributeV2 attribute = new DataAttributeV2();
         attribute.setUuid("4a92a6c5-38c0-4ebf-8297-594d39572c9c");
         attribute.setName(ATTRIBUTE_ISSUED_DAYS_BEFORE);
-        attribute.setDescription("Maximum number of days before the certificate was issued, from running the discovery");
+        attribute
+                .setDescription("Maximum number of days before the certificate was issued, from running the discovery");
         attribute.setType(AttributeType.DATA);
         attribute.setContentType(AttributeContentType.INTEGER);
         DataAttributeProperties attributeProperties = new DataAttributeProperties();
@@ -335,14 +343,13 @@ public class DiscoveryAttributeServiceImpl implements DiscoveryAttributeService 
         attribute.setProperties(attributeProperties);
 
         // prepare markdown string
-        List<Object> items = Arrays.asList(
-                "Certification authority",
-                "End Entity Profile",
-                "Certificate status"
-        );
+        List<Object> items = Arrays.asList("Certification authority", "End Entity Profile", "Certificate status");
         StringBuilder sb = new StringBuilder()
-                .append(new Heading("Overview", 2)).append("\n")
-                .append(new Text("Select EJBCA instance where Discovery process should search for Certificates and then you can optionally select:")).append("\n")
+                .append(new Heading("Overview", 2))
+                .append("\n")
+                .append(new Text(
+                        "Select EJBCA instance where Discovery process should search for Certificates and then you can optionally select:"))
+                .append("\n")
                 .append(new UnorderedList<>(items));
 
         attribute.setContent(List.of(new TextAttributeContentV2(sb.toString())));

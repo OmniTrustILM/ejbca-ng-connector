@@ -8,12 +8,11 @@ import com.otilm.api.model.connector.discovery.DiscoveryRequestDto;
 import com.otilm.ca.connector.ejbca.dao.entity.DiscoveryHistory;
 import com.otilm.ca.connector.ejbca.service.DiscoveryHistoryService;
 import com.otilm.ca.connector.ejbca.service.DiscoveryService;
+import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.io.IOException;
 
 @RestController
 public class DiscoveryControllerImpl implements DiscoveryController {
@@ -24,6 +23,7 @@ public class DiscoveryControllerImpl implements DiscoveryController {
     public void setDiscoveryHistoryService(DiscoveryHistoryService discoveryHistoryService) {
         this.discoveryHistoryService = discoveryHistoryService;
     }
+
     @Autowired
     public void setDiscoveryService(DiscoveryService discoveryService) {
         this.discoveryService = discoveryService;
@@ -47,7 +47,8 @@ public class DiscoveryControllerImpl implements DiscoveryController {
     }
 
     @Override
-    public DiscoveryProviderDto getDiscovery(String uuid, DiscoveryDataRequestDto request) throws IOException, NotFoundException {
+    public DiscoveryProviderDto getDiscovery(String uuid, DiscoveryDataRequestDto request)
+            throws IOException, NotFoundException {
         DiscoveryHistory history = discoveryHistoryService.getHistoryByUuid(uuid);
         return discoveryService.getProviderDtoData(request, history);
     }

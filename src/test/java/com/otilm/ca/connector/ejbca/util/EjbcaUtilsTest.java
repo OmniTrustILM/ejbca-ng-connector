@@ -12,9 +12,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 class EjbcaUtilsTest {
@@ -36,10 +36,8 @@ class EjbcaUtilsTest {
     @Test
     void setUserExtensions_WrongData() {
         String extensions = "wrong_extensions";
-        ValidationException ex = Assertions.assertThrows(
-                ValidationException.class,
-                () -> EjbcaUtils.setUserExtensions(userData, extensions)
-        );
+        ValidationException ex = Assertions
+                .assertThrows(ValidationException.class, () -> EjbcaUtils.setUserExtensions(userData, extensions));
         Assertions.assertEquals("Invalid extension format: " + extensions, ex.getMessage());
     }
 
@@ -52,10 +50,8 @@ class EjbcaUtilsTest {
     @Test
     void setUserExtensions_NotOk() {
         String extensions = "my extension=sample extension";
-        ValidationException ex = Assertions.assertThrows(
-                ValidationException.class,
-                () -> EjbcaUtils.setUserExtensions(userData, extensions)
-        );
+        ValidationException ex = Assertions
+                .assertThrows(ValidationException.class, () -> EjbcaUtils.setUserExtensions(userData, extensions));
         Assertions.assertEquals("OID should be a series of integers separated by dots", ex.getMessage());
     }
 
@@ -68,10 +64,8 @@ class EjbcaUtilsTest {
     @Test
     void setUserExtensions_NotOk_Multiple() {
         String extensions = "1.1.1.1.1=sample extension,2.2.2.2=something,=third one";
-        ValidationException ex = Assertions.assertThrows(
-                ValidationException.class,
-                () -> EjbcaUtils.setUserExtensions(userData, extensions)
-        );
+        ValidationException ex = Assertions
+                .assertThrows(ValidationException.class, () -> EjbcaUtils.setUserExtensions(userData, extensions));
         Assertions.assertEquals("OID cannot be empty", ex.getMessage());
     }
 

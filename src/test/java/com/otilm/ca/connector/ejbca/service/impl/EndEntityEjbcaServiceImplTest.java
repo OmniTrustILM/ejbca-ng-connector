@@ -27,6 +27,8 @@ import com.otilm.ca.connector.ejbca.ws.EndEntityProfileNotFoundException;
 import com.otilm.ca.connector.ejbca.ws.EndEntityProfileNotFoundException_Exception;
 import com.otilm.ca.connector.ejbca.ws.NotFoundException_Exception;
 import com.otilm.ca.connector.ejbca.ws.UserDataVOWS;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,10 +36,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -81,7 +85,8 @@ class EndEntityEjbcaServiceImplTest {
     }
 
     private EndEntityProfileNotFoundException_Exception eepNotFoundException() {
-        return new EndEntityProfileNotFoundException_Exception("profile not found", new EndEntityProfileNotFoundException());
+        return new EndEntityProfileNotFoundException_Exception("profile not found",
+                new EndEntityProfileNotFoundException());
     }
 
     private NotFoundException_Exception notFoundException() {
@@ -107,8 +112,8 @@ class EndEntityEjbcaServiceImplTest {
     }
 
     /**
-     * Builds a ResponseAttributeV2 with ObjectAttributeContentV2 wrapping a NameAndIdDto,
-     * matching what AttributeDefinitionUtils.getObjectAttributeContentData() expects.
+     * Builds a ResponseAttributeV2 with ObjectAttributeContentV2 wrapping a NameAndIdDto, matching what
+     * AttributeDefinitionUtils.getObjectAttributeContentData() expects.
      */
     private ResponseAttributeV2 nameAndIdResponseAttr(String name, int id, String attrName) {
         ResponseAttributeV2 attr = new ResponseAttributeV2();
@@ -138,7 +143,9 @@ class EndEntityEjbcaServiceImplTest {
         List<ResponseAttribute> attrs = new ArrayList<>();
         attrs.add(nameAndIdResponseAttr(AuthorityInstanceControllerImpl.ATTRIBUTE_END_ENTITY_PROFILE, 1, EEP_NAME));
         attrs.add(nameAndIdResponseAttr(AuthorityInstanceControllerImpl.ATTRIBUTE_CERTIFICATE_PROFILE, 2, "ENDUSER"));
-        attrs.add(nameAndIdResponseAttr(AuthorityInstanceControllerImpl.ATTRIBUTE_CERTIFICATION_AUTHORITY, 3, "ManagementCA"));
+        attrs
+                .add(nameAndIdResponseAttr(AuthorityInstanceControllerImpl.ATTRIBUTE_CERTIFICATION_AUTHORITY, 3,
+                        "ManagementCA"));
         attrs.add(booleanResponseAttr(AuthorityInstanceControllerImpl.ATTRIBUTE_SEND_NOTIFICATIONS, false));
         attrs.add(booleanResponseAttr(AuthorityInstanceControllerImpl.ATTRIBUTE_KEY_RECOVERABLE, false));
         rp.setAttributes(attrs);
@@ -287,7 +294,8 @@ class EndEntityEjbcaServiceImplTest {
     void createEndEntity_existingUser_throwsAlreadyExistException() throws Exception {
         given(ejbcaWS.findUser(any())).willReturn(List.of(buildUserDataVOWS("existingUser")));
 
-        assertThrows(AlreadyExistException.class, () -> service.createEndEntity(UUID, EEP_NAME, buildAddRequest("existingUser")));
+        assertThrows(AlreadyExistException.class,
+                () -> service.createEndEntity(UUID, EEP_NAME, buildAddRequest("existingUser")));
     }
 
     @Test
@@ -295,7 +303,8 @@ class EndEntityEjbcaServiceImplTest {
         given(ejbcaWS.findUser(any())).willReturn(null);
         willThrow(authDeniedException()).given(ejbcaWS).editUser(any());
 
-        assertThrows(AccessDeniedException.class, () -> service.createEndEntity(UUID, EEP_NAME, buildAddRequest("newUser")));
+        assertThrows(AccessDeniedException.class,
+                () -> service.createEndEntity(UUID, EEP_NAME, buildAddRequest("newUser")));
     }
 
     @Test
@@ -303,7 +312,8 @@ class EndEntityEjbcaServiceImplTest {
         given(ejbcaWS.findUser(any())).willReturn(null);
         willThrow(caDoesntExistException()).given(ejbcaWS).editUser(any());
 
-        assertThrows(NotFoundException.class, () -> service.createEndEntity(UUID, EEP_NAME, buildAddRequest("newUser")));
+        assertThrows(NotFoundException.class,
+                () -> service.createEndEntity(UUID, EEP_NAME, buildAddRequest("newUser")));
     }
 
     @Test
@@ -311,7 +321,8 @@ class EndEntityEjbcaServiceImplTest {
         given(ejbcaWS.findUser(any())).willReturn(null);
         willThrow(new RuntimeException("unexpected")).given(ejbcaWS).editUser(any());
 
-        assertThrows(IllegalStateException.class, () -> service.createEndEntity(UUID, EEP_NAME, buildAddRequest("newUser")));
+        assertThrows(IllegalStateException.class,
+                () -> service.createEndEntity(UUID, EEP_NAME, buildAddRequest("newUser")));
     }
 
     // ── updateEndEntity ───────────────────────────────────────────────────────
@@ -340,7 +351,8 @@ class EndEntityEjbcaServiceImplTest {
     void updateEndEntity_userNotFound_throwsNotFoundException() throws Exception {
         given(ejbcaWS.findUser(any())).willReturn(null);
 
-        assertThrows(NotFoundException.class, () -> service.updateEndEntity(UUID, EEP_NAME, ENTITY_NAME, buildEditRequest(ENTITY_NAME)));
+        assertThrows(NotFoundException.class,
+                () -> service.updateEndEntity(UUID, EEP_NAME, ENTITY_NAME, buildEditRequest(ENTITY_NAME)));
     }
 
     @Test
@@ -348,7 +360,8 @@ class EndEntityEjbcaServiceImplTest {
         given(ejbcaWS.findUser(any())).willReturn(List.of(buildUserDataVOWS(ENTITY_NAME)));
         willThrow(authDeniedException()).given(ejbcaWS).editUser(any());
 
-        assertThrows(AccessDeniedException.class, () -> service.updateEndEntity(UUID, EEP_NAME, ENTITY_NAME, buildEditRequest(ENTITY_NAME)));
+        assertThrows(AccessDeniedException.class,
+                () -> service.updateEndEntity(UUID, EEP_NAME, ENTITY_NAME, buildEditRequest(ENTITY_NAME)));
     }
 
     @Test
@@ -356,7 +369,8 @@ class EndEntityEjbcaServiceImplTest {
         given(ejbcaWS.findUser(any())).willReturn(List.of(buildUserDataVOWS(ENTITY_NAME)));
         willThrow(caDoesntExistException()).given(ejbcaWS).editUser(any());
 
-        assertThrows(NotFoundException.class, () -> service.updateEndEntity(UUID, EEP_NAME, ENTITY_NAME, buildEditRequest(ENTITY_NAME)));
+        assertThrows(NotFoundException.class,
+                () -> service.updateEndEntity(UUID, EEP_NAME, ENTITY_NAME, buildEditRequest(ENTITY_NAME)));
     }
 
     @Test
@@ -364,7 +378,8 @@ class EndEntityEjbcaServiceImplTest {
         given(ejbcaWS.findUser(any())).willReturn(List.of(buildUserDataVOWS(ENTITY_NAME)));
         willThrow(new RuntimeException("unexpected")).given(ejbcaWS).editUser(any());
 
-        assertThrows(IllegalStateException.class, () -> service.updateEndEntity(UUID, EEP_NAME, ENTITY_NAME, buildEditRequest(ENTITY_NAME)));
+        assertThrows(IllegalStateException.class,
+                () -> service.updateEndEntity(UUID, EEP_NAME, ENTITY_NAME, buildEditRequest(ENTITY_NAME)));
     }
 
     // ── revokeAndDeleteEndEntity ──────────────────────────────────────────────

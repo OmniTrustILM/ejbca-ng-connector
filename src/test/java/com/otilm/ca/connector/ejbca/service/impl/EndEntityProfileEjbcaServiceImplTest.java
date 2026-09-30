@@ -9,6 +9,7 @@ import com.otilm.ca.connector.ejbca.ws.EjbcaException;
 import com.otilm.ca.connector.ejbca.ws.EjbcaException_Exception;
 import com.otilm.ca.connector.ejbca.ws.EjbcaWS;
 import com.otilm.ca.connector.ejbca.ws.NameAndId;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,9 +17,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
 
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.BDDMockito.given;
 
 @ExtendWith(MockitoExtension.class)
@@ -97,8 +97,7 @@ class EndEntityProfileEjbcaServiceImplTest {
 
     @Test
     void listCertificateProfiles_returnsMappedList() throws Exception {
-        given(ejbcaWS.getAvailableCertificateProfiles(10))
-                .willReturn(List.of(nameAndId(10, "ENDUSER")));
+        given(ejbcaWS.getAvailableCertificateProfiles(10)).willReturn(List.of(nameAndId(10, "ENDUSER")));
 
         List<NameAndIdDto> result = service.listCertificateProfiles(UUID, 10);
 
@@ -131,8 +130,7 @@ class EndEntityProfileEjbcaServiceImplTest {
 
     @Test
     void listCAsInProfile_returnsMappedList() throws Exception {
-        given(ejbcaWS.getAvailableCAsInProfile(5))
-                .willReturn(List.of(nameAndId(5, "MyCA"), nameAndId(6, "OtherCA")));
+        given(ejbcaWS.getAvailableCAsInProfile(5)).willReturn(List.of(nameAndId(5, "MyCA"), nameAndId(6, "OtherCA")));
 
         List<NameAndIdDto> result = service.listCAsInProfile(UUID, 5);
 

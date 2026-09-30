@@ -7,13 +7,13 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 /**
  * A class representing pagination parameters with a page size and a current page.
  */
-@JsonPropertyOrder({ "page_size", "current_page" })
+@JsonPropertyOrder({"page_size", "current_page"})
 public class Pagination {
-    
+
     @JsonInclude(JsonInclude.Include.ALWAYS)
     @JsonProperty("page_size")
     private int pageSize;
-    
+
     @JsonInclude(JsonInclude.Include.ALWAYS)
     @JsonProperty("current_page")
     private int currentPage;
@@ -43,5 +43,5 @@ public class Pagination {
     public void setCurrentPage(final int currentPage) {
         this.currentPage = currentPage;
     }
-        
+
 }

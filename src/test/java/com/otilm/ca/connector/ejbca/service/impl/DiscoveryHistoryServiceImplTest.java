@@ -5,16 +5,17 @@ import com.otilm.api.model.connector.discovery.DiscoveryRequestDto;
 import com.otilm.api.model.core.discovery.DiscoveryStatus;
 import com.otilm.ca.connector.ejbca.dao.DiscoveryHistoryRepository;
 import com.otilm.ca.connector.ejbca.dao.entity.DiscoveryHistory;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
@@ -39,8 +40,7 @@ class DiscoveryHistoryServiceImplTest {
         request.setName("test-discovery");
 
         // repository.save returns what it receives (or a new instance)
-        given(discoveryHistoryRepository.save(any(DiscoveryHistory.class)))
-                .willAnswer(inv -> inv.getArgument(0));
+        given(discoveryHistoryRepository.save(any(DiscoveryHistory.class))).willAnswer(inv -> inv.getArgument(0));
 
         DiscoveryHistory result = service.addHistory(request);
 

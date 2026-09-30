@@ -20,10 +20,12 @@ public enum UsernameGenMethod {
     }
 
     public static UsernameGenMethod findByCode(String code) {
-        return Arrays.stream(values())
+        return Arrays
+                .stream(values())
                 .filter(k -> k.code.equals(code))
                 .findFirst()
-                .orElseThrow(() -> new ValidationException(ValidationError.create("Unknown method {}", new Object[]{code})));
+                .orElseThrow(
+                        () -> new ValidationException(ValidationError.create("Unknown method {}", new Object[]{code})));
     }
 
 }

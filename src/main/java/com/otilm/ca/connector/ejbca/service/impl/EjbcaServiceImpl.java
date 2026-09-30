@@ -18,8 +18,23 @@ import com.otilm.ca.connector.ejbca.service.AuthorityInstanceService;
 import com.otilm.ca.connector.ejbca.service.EjbcaService;
 import com.otilm.ca.connector.ejbca.util.EjbcaUtils;
 import com.otilm.ca.connector.ejbca.util.EjbcaVersion;
-import com.otilm.ca.connector.ejbca.ws.*;
+import com.otilm.ca.connector.ejbca.ws.AuthorizationDeniedException_Exception;
+import com.otilm.ca.connector.ejbca.ws.CADoesntExistsException_Exception;
+import com.otilm.ca.connector.ejbca.ws.Certificate;
+import com.otilm.ca.connector.ejbca.ws.CertificateResponse;
+import com.otilm.ca.connector.ejbca.ws.EjbcaException_Exception;
+import com.otilm.ca.connector.ejbca.ws.EjbcaWS;
+import com.otilm.ca.connector.ejbca.ws.EndEntityProfileNotFoundException_Exception;
+import com.otilm.ca.connector.ejbca.ws.EndEntityStatus;
+import com.otilm.ca.connector.ejbca.ws.NameAndId;
+import com.otilm.ca.connector.ejbca.ws.NotFoundException_Exception;
+import com.otilm.ca.connector.ejbca.ws.UserDataVOWS;
+import com.otilm.ca.connector.ejbca.ws.UserDoesntFullfillEndEntityProfile_Exception;
+import com.otilm.ca.connector.ejbca.ws.UserMatch;
 import com.otilm.core.util.AttributeDefinitionUtils;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -28,10 +43,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.UnsupportedMediaTypeException;
 import org.springframework.web.reactive.function.client.WebClient;
-
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
 
 import static com.otilm.ca.connector.ejbca.api.AuthorityInstanceControllerImpl.ATTRIBUTE_CERTIFICATE_PROFILE;
 import static com.otilm.ca.connector.ejbca.api.AuthorityInstanceControllerImpl.ATTRIBUTE_CERTIFICATION_AUTHORITY;
@@ -51,7 +62,9 @@ public class EjbcaServiceImpl implements EjbcaService {
     }
 
     @Override
-    public void createEndEntity(String authorityUuid, String username, String password, String subjectDn, String subjectAltName, List<RequestAttribute> raProfileAttributes, List<RequestAttribute> issueAttributes) throws NotFoundException, AlreadyExistException, EjbcaException {
+    public void createEndEntity(String authorityUuid, String username, String password, String subjectDn,
+            String subjectAltName, List<RequestAttribute> raProfileAttributes, List<RequestAttribute> issueAttributes)
+            throws NotFoundException, AlreadyExistException, EjbcaException {
         EjbcaWS ejbcaWS = authorityInstanceService.getConnection(authorityUuid);
 
         if (getUser(ejbcaWS, username) != null) {
@@ -80,7 +93,9 @@ public class EjbcaServiceImpl implements EjbcaService {
     }
 
     @Override
-    public void createEndEntityWithMeta(String authorityUuid, String username, String password, String subjectDn, String subjectAltName, List<RequestAttribute> raProfileAttributes, List<MetadataAttribute> metadata) throws NotFoundException, AlreadyExistException {
+    public void createEndEntityWithMeta(String authorityUuid, String username, String password, String subjectDn,
+            String subjectAltName, List<RequestAttribute> raProfileAttributes, List<MetadataAttribute> metadata)
+            throws NotFoundException, AlreadyExistException {
         EjbcaWS ejbcaWS = authorityInstanceService.getConnection(authorityUuid);
 
         if (getUser(ejbcaWS, username) != null) {
@@ -106,7 +121,8 @@ public class EjbcaServiceImpl implements EjbcaService {
         }
     }
 
-    public void renewEndEntity(String authorityUuid, String username, String password, String subjectDn, String subjectAltName) throws NotFoundException {
+    public void renewEndEntity(String authorityUuid, String username, String password, String subjectDn,
+            String subjectAltName) throws NotFoundException {
         EjbcaWS ejbcaWS = authorityInstanceService.getConnection(authorityUuid);
 
         UserDataVOWS user = getUser(ejbcaWS, username);
@@ -131,7 +147,8 @@ public class EjbcaServiceImpl implements EjbcaService {
     }
 
     @Override
-    public CertificateDataResponseDto issueCertificate(String authorityUuid, String username, String password, String certificateRequest, CertificateRequestFormat requestFormat) throws NotFoundException {
+    public CertificateDataResponseDto issueCertificate(String authorityUuid, String username, String password,
+            String certificateRequest, CertificateRequestFormat requestFormat) throws NotFoundException {
         EjbcaWS ejbcaWS = authorityInstanceService.getConnection(authorityUuid);
 
         try {
@@ -155,7 +172,8 @@ public class EjbcaServiceImpl implements EjbcaService {
     }
 
     @Override
-    public void revokeCertificate(String uuid, String issuerDn, String serialNumber, int revocationReason) throws NotFoundException, AccessDeniedException {
+    public void revokeCertificate(String uuid, String issuerDn, String serialNumber, int revocationReason)
+            throws NotFoundException, AccessDeniedException {
         EjbcaWS ejbcaWS = authorityInstanceService.getConnection(uuid);
         try {
             ejbcaWS.revokeCert(issuerDn, serialNumber, revocationReason);
@@ -178,10 +196,12 @@ public class EjbcaServiceImpl implements EjbcaService {
     }
 
     @Override
-    public SearchCertificatesRestResponseV2 searchCertificates(String authorityInstanceUuid, String restUrl, SearchCertificatesRestRequestV2 request) throws NotFoundException, IOException {
+    public SearchCertificatesRestResponseV2 searchCertificates(String authorityInstanceUuid, String restUrl,
+            SearchCertificatesRestRequestV2 request) throws NotFoundException, IOException {
         WebClient ejbcaWC = authorityInstanceService.getRestApiConnection(authorityInstanceUuid);
         try {
-            return ejbcaWC.post()
+            return ejbcaWC
+                    .post()
                     .uri(restUrl + "/v2/certificate/search")
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(request)
@@ -252,61 +272,89 @@ public class EjbcaServiceImpl implements EjbcaService {
         }
     }
 
-    private void prepareEndEntity(UserDataVOWS user, List<RequestAttribute> raProfileAttrs, List<RequestAttribute> issueAttrs) {
+    private void prepareEndEntity(UserDataVOWS user, List<RequestAttribute> raProfileAttrs,
+            List<RequestAttribute> issueAttrs) {
         setUserProfiles(user, raProfileAttrs);
 
-        String email = AttributeDefinitionUtils.getSingleItemAttributeContentValue(CertificateControllerImpl.ATTRIBUTE_EMAIL, issueAttrs, StringAttributeContentV2.class).getData();
+        String email = AttributeDefinitionUtils
+                .getSingleItemAttributeContentValue(CertificateControllerImpl.ATTRIBUTE_EMAIL, issueAttrs,
+                        StringAttributeContentV2.class)
+                .getData();
         if (StringUtils.isNotBlank(email)) {
             user.setEmail(email);
         }
 
-        String san = AttributeDefinitionUtils.getSingleItemAttributeContentValue(CertificateControllerImpl.ATTRIBUTE_SAN, issueAttrs, StringAttributeContentV2.class).getData();
+        String san = AttributeDefinitionUtils
+                .getSingleItemAttributeContentValue(CertificateControllerImpl.ATTRIBUTE_SAN, issueAttrs,
+                        StringAttributeContentV2.class)
+                .getData();
         if (StringUtils.isNotBlank(san)) {
             user.setSubjectAltName(san);
         }
 
-        String extension = AttributeDefinitionUtils.getSingleItemAttributeContentValue(CertificateControllerImpl.ATTRIBUTE_EXTENSION, issueAttrs, StringAttributeContentV2.class).getData();
+        String extension = AttributeDefinitionUtils
+                .getSingleItemAttributeContentValue(CertificateControllerImpl.ATTRIBUTE_EXTENSION, issueAttrs,
+                        StringAttributeContentV2.class)
+                .getData();
         EjbcaUtils.setUserExtensions(user, extension);
     }
 
-    private void prepareEndEntityWithMeta(UserDataVOWS user, List<RequestAttribute> raProfileAttrs, List<MetadataAttribute> metadata) {
+    private void prepareEndEntityWithMeta(UserDataVOWS user, List<RequestAttribute> raProfileAttrs,
+            List<MetadataAttribute> metadata) {
         setUserProfiles(user, raProfileAttrs);
 
-        String email = AttributeDefinitionUtils.getSingleItemAttributeContentValue(CertificateEjbcaServiceImpl.META_EMAIL, metadata, StringAttributeContentV2.class).getData();
+        String email = AttributeDefinitionUtils
+                .getSingleItemAttributeContentValue(CertificateEjbcaServiceImpl.META_EMAIL, metadata,
+                        StringAttributeContentV2.class)
+                .getData();
         if (StringUtils.isNotBlank(email)) {
             user.setEmail(email);
         }
 
-        String san = AttributeDefinitionUtils.getSingleItemAttributeContentValue(CertificateEjbcaServiceImpl.META_SAN, metadata, StringAttributeContentV2.class).getData();
+        String san = AttributeDefinitionUtils
+                .getSingleItemAttributeContentValue(CertificateEjbcaServiceImpl.META_SAN, metadata,
+                        StringAttributeContentV2.class)
+                .getData();
         if (StringUtils.isNotBlank(san)) {
             user.setSubjectAltName(san);
         }
 
-        String extension = AttributeDefinitionUtils.getSingleItemAttributeContentValue(CertificateEjbcaServiceImpl.META_EXTENSION, metadata, StringAttributeContentV2.class).getData();
+        String extension = AttributeDefinitionUtils
+                .getSingleItemAttributeContentValue(CertificateEjbcaServiceImpl.META_EXTENSION, metadata,
+                        StringAttributeContentV2.class)
+                .getData();
         EjbcaUtils.setUserExtensions(user, extension);
     }
 
     private void setUserProfiles(UserDataVOWS user, List<RequestAttribute> raProfileAttrs) {
         user.setTokenType("USERGENERATED");
 
-        NameAndIdDto endEntityProfile = AttributeDefinitionUtils.getNameAndIdData(ATTRIBUTE_END_ENTITY_PROFILE, raProfileAttrs);
+        NameAndIdDto endEntityProfile = AttributeDefinitionUtils
+                .getNameAndIdData(ATTRIBUTE_END_ENTITY_PROFILE, raProfileAttrs);
         user.setEndEntityProfileName(endEntityProfile.getName());
 
-        NameAndIdDto certificateProfile = AttributeDefinitionUtils.getNameAndIdData(ATTRIBUTE_CERTIFICATE_PROFILE, raProfileAttrs);
+        NameAndIdDto certificateProfile = AttributeDefinitionUtils
+                .getNameAndIdData(ATTRIBUTE_CERTIFICATE_PROFILE, raProfileAttrs);
         user.setCertificateProfileName(certificateProfile.getName());
 
         NameAndIdDto ca = AttributeDefinitionUtils.getNameAndIdData(ATTRIBUTE_CERTIFICATION_AUTHORITY, raProfileAttrs);
         user.setCaName(ca.getName());
 
         boolean sendNotifications = false;
-        Boolean value = AttributeDefinitionUtils.getSingleItemAttributeContentValue(ATTRIBUTE_SEND_NOTIFICATIONS, raProfileAttrs, BooleanAttributeContentV2.class).getData();
+        Boolean value = AttributeDefinitionUtils
+                .getSingleItemAttributeContentValue(ATTRIBUTE_SEND_NOTIFICATIONS, raProfileAttrs,
+                        BooleanAttributeContentV2.class)
+                .getData();
         if (value != null) {
             sendNotifications = value;
         }
         user.setSendNotification(sendNotifications);
 
         boolean keyRecoverable = false;
-        value = AttributeDefinitionUtils.getSingleItemAttributeContentValue(ATTRIBUTE_KEY_RECOVERABLE, raProfileAttrs, BooleanAttributeContentV2.class).getData();
+        value = AttributeDefinitionUtils
+                .getSingleItemAttributeContentValue(ATTRIBUTE_KEY_RECOVERABLE, raProfileAttrs,
+                        BooleanAttributeContentV2.class)
+                .getData();
         if (value != null) {
             keyRecoverable = value;
         }

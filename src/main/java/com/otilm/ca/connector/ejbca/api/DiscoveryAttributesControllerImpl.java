@@ -5,11 +5,10 @@ import com.otilm.api.interfaces.connector.AttributesController;
 import com.otilm.api.model.client.attribute.RequestAttribute;
 import com.otilm.api.model.common.attribute.common.BaseAttribute;
 import com.otilm.ca.connector.ejbca.service.DiscoveryAttributeService;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/v1/discoveryProvider/{kind}/attributes")

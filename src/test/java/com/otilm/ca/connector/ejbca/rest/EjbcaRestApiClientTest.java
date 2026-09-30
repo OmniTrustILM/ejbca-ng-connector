@@ -17,6 +17,17 @@ import com.otilm.ca.connector.ejbca.dao.entity.AuthorityInstance;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
+import java.io.ByteArrayOutputStream;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.security.KeyStore;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -31,26 +42,24 @@ import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
-import java.io.ByteArrayOutputStream;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.security.KeyStore;
-import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
+import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 
 class EjbcaRestApiClientTest {
 
     @RegisterExtension
-    static WireMockExtension wireMock = WireMockExtension.newInstance()
+    static WireMockExtension wireMock = WireMockExtension
+            .newInstance()
             .options(wireMockConfig().dynamicPort().dynamicHttpsPort())
             .build();
 
@@ -75,7 +84,8 @@ class EjbcaRestApiClientTest {
 
     @Test
     void handleHttpExceptions_2xx_passesThroughMono() {
-        ClientResponse response = ClientResponse.create(HttpStatus.OK)
+        ClientResponse response = ClientResponse
+                .create(HttpStatus.OK)
                 .header("Content-Type", "application/json")
                 .body("{}")
                 .build();
@@ -87,8 +97,8 @@ class EjbcaRestApiClientTest {
     }
 
     /**
-     * Reactor wraps checked exceptions thrown inside a Mono pipeline in a ReactiveException.
-     * Use Exceptions.unwrap() to get the real cause before asserting the type.
+     * Reactor wraps checked exceptions thrown inside a Mono pipeline in a ReactiveException. Use Exceptions.unwrap() to
+     * get the real cause before asserting the type.
      */
     private EjbcaRestApiException unwrapRestApiException(Mono<ClientResponse> mono) {
         try {
@@ -104,13 +114,13 @@ class EjbcaRestApiClientTest {
 
     @Test
     void handleHttpExceptions_4xx_errorsWithEjbcaRestApiException() {
-        ClientResponse response = ClientResponse.create(HttpStatus.BAD_REQUEST)
+        ClientResponse response = ClientResponse
+                .create(HttpStatus.BAD_REQUEST)
                 .header("Content-Type", "application/json")
                 .body("{\"error_code\":400,\"error_message\":\"Bad input\"}")
                 .build();
 
-        EjbcaRestApiException ex = unwrapRestApiException(
-                EjbcaRestApiClient.handleHttpExceptions(response));
+        EjbcaRestApiException ex = unwrapRestApiException(EjbcaRestApiClient.handleHttpExceptions(response));
 
         assertEquals(HttpStatus.BAD_REQUEST, ex.getHttpStatus());
         assertEquals("Bad input", ex.getMessage());
@@ -118,13 +128,13 @@ class EjbcaRestApiClientTest {
 
     @Test
     void handleHttpExceptions_5xx_errorsWithEjbcaRestApiException() {
-        ClientResponse response = ClientResponse.create(HttpStatus.INTERNAL_SERVER_ERROR)
+        ClientResponse response = ClientResponse
+                .create(HttpStatus.INTERNAL_SERVER_ERROR)
                 .header("Content-Type", "application/json")
                 .body("{\"error_code\":500,\"error_message\":\"Server error\"}")
                 .build();
 
-        EjbcaRestApiException ex = unwrapRestApiException(
-                EjbcaRestApiClient.handleHttpExceptions(response));
+        EjbcaRestApiException ex = unwrapRestApiException(EjbcaRestApiClient.handleHttpExceptions(response));
 
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, ex.getHttpStatus());
         assertEquals("Server error", ex.getMessage());
@@ -132,13 +142,13 @@ class EjbcaRestApiClientTest {
 
     @Test
     void handleHttpExceptions_401_errorsWithEjbcaRestApiException() {
-        ClientResponse response = ClientResponse.create(HttpStatus.UNAUTHORIZED)
+        ClientResponse response = ClientResponse
+                .create(HttpStatus.UNAUTHORIZED)
                 .header("Content-Type", "application/json")
                 .body("{\"error_code\":401,\"error_message\":\"Unauthorized\"}")
                 .build();
 
-        EjbcaRestApiException ex = unwrapRestApiException(
-                EjbcaRestApiClient.handleHttpExceptions(response));
+        EjbcaRestApiException ex = unwrapRestApiException(EjbcaRestApiClient.handleHttpExceptions(response));
 
         assertEquals(HttpStatus.UNAUTHORIZED, ex.getHttpStatus());
         assertNotNull(ex.getError());
@@ -182,8 +192,8 @@ class EjbcaRestApiClientTest {
     // ── getRestApiUrl (via private method reflection) ─────────────────────────
 
     /**
-     * Invoke the private getRestApiUrl and unwrap InvocationTargetException so
-     * the test assertions see the actual thrown type.
+     * Invoke the private getRestApiUrl and unwrap InvocationTargetException so the test assertions see the actual
+     * thrown type.
      */
     private String invokeGetRestApiUrl(AuthorityInstance instance) throws Throwable {
         Method method = EjbcaRestApiClient.class.getDeclaredMethod("getRestApiUrl", AuthorityInstance.class);
@@ -291,17 +301,14 @@ class EjbcaRestApiClientTest {
         kpg.initialize(2048);
         java.security.KeyPair kp = kpg.generateKeyPair();
 
-        org.bouncycastle.asn1.x500.X500Name subject =
-                new org.bouncycastle.asn1.x500.X500Name("CN=test");
+        org.bouncycastle.asn1.x500.X500Name subject = new org.bouncycastle.asn1.x500.X500Name("CN=test");
         java.math.BigInteger serial = java.math.BigInteger.valueOf(1L);
         java.util.Date notBefore = new java.util.Date(System.currentTimeMillis() - 1000L);
-        java.util.Date notAfter  = new java.util.Date(System.currentTimeMillis() + 86400_000L);
-        org.bouncycastle.cert.X509v3CertificateBuilder certBuilder =
-                new org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder(
-                        subject, serial, notBefore, notAfter, subject, kp.getPublic());
-        org.bouncycastle.operator.ContentSigner signer =
-                new org.bouncycastle.operator.jcajce.JcaContentSignerBuilder("SHA256withRSA")
-                        .build(kp.getPrivate());
+        java.util.Date notAfter = new java.util.Date(System.currentTimeMillis() + 86400_000L);
+        org.bouncycastle.cert.X509v3CertificateBuilder certBuilder = new org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder(
+                subject, serial, notBefore, notAfter, subject, kp.getPublic());
+        org.bouncycastle.operator.ContentSigner signer = new org.bouncycastle.operator.jcajce.JcaContentSignerBuilder(
+                "SHA256withRSA").build(kp.getPrivate());
         X509Certificate cert = new org.bouncycastle.cert.jcajce.JcaX509CertificateConverter()
                 .getCertificate(certBuilder.build(signer));
 
@@ -369,24 +376,25 @@ class EjbcaRestApiClientTest {
     }
 
     /**
-     * Build a WebClient that trusts any certificate — required for tests that route
-     * through WireMock's self-signed HTTPS listener.
+     * Build a WebClient that trusts any certificate — required for tests that route through WireMock's self-signed
+     * HTTPS listener.
      */
     private WebClient buildInsecureWebClient() throws Exception {
-        SslContext insecureCtx = SslContextBuilder.forClient()
+        SslContext insecureCtx = SslContextBuilder
+                .forClient()
                 .trustManager(InsecureTrustManagerFactory.INSTANCE)
                 .build();
-        HttpClient httpClient = HttpClient.create()
-                .secure(spec -> spec.sslContext(insecureCtx));
-        return WebClient.builder()
+        HttpClient httpClient = HttpClient.create().secure(spec -> spec.sslContext(insecureCtx));
+        return WebClient
+                .builder()
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
                 .filter(ExchangeFilterFunction.ofResponseProcessor(EjbcaRestApiClient::handleHttpExceptions))
                 .build();
     }
 
     /**
-     * Return the HTTPS base URL for WireMock, e.g. "https://localhost:PORT".
-     * WireMockExtension exposes getHttpsPort() for the dynamically allocated HTTPS port.
+     * Return the HTTPS base URL for WireMock, e.g. "https://localhost:PORT". WireMockExtension exposes getHttpsPort()
+     * for the dynamically allocated HTTPS port.
      */
     private String wireMockHttpsBaseUrl() {
         return "https://localhost:" + wireMock.getHttpsPort();
@@ -406,11 +414,11 @@ class EjbcaRestApiClientTest {
     private static final String SEARCH_PATH = "/ejbca/ejbca-rest-api/v2/certificate";
 
     /**
-     * Build a minimal AuthorityInstance whose URL points at the WireMock HTTPS listener.
-     * getRestApiUrl() strips the path from the URL and appends the fixed REST path, so any
-     * path suffix in the supplied URL is intentionally overwritten — only host+port matter.
-     * credentialData is an empty JSON array so AttributeDefinitionUtils.deserialize returns
-     * an empty list → no SSL attributes → injected WebClient's TLS config is used.
+     * Build a minimal AuthorityInstance whose URL points at the WireMock HTTPS listener. getRestApiUrl() strips the
+     * path from the URL and appends the fixed REST path, so any path suffix in the supplied URL is intentionally
+     * overwritten — only host+port matter. credentialData is an empty JSON array so
+     * AttributeDefinitionUtils.deserialize returns an empty list → no SSL attributes → injected WebClient's TLS config
+     * is used.
      */
     private AuthorityInstance buildHttpsInstance() {
         AuthorityInstance instance = new AuthorityInstance();
@@ -422,11 +430,12 @@ class EjbcaRestApiClientTest {
 
     @Test
     void searchCertificates_200_wireMockIsHitAndCompletesWithoutException() throws Exception {
-        wireMock.stubFor(post(urlPathEqualTo(SEARCH_PATH))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
-                        .withBody("{}")));
+        wireMock
+                .stubFor(post(urlPathEqualTo(SEARCH_PATH))
+                        .willReturn(aResponse()
+                                .withStatus(200)
+                                .withHeader("Content-Type", "application/json")
+                                .withBody("{}")));
 
         injectWebClient(buildInsecureWebClient());
 
@@ -440,11 +449,12 @@ class EjbcaRestApiClientTest {
 
     @Test
     void searchCertificates_500_processRequestCatchesEjbcaRestApiException() throws Exception {
-        wireMock.stubFor(post(urlPathEqualTo(SEARCH_PATH))
-                .willReturn(aResponse()
-                        .withStatus(500)
-                        .withHeader("Content-Type", "application/json")
-                        .withBody("{\"error_code\":500,\"error_message\":\"Server error\"}")));
+        wireMock
+                .stubFor(post(urlPathEqualTo(SEARCH_PATH))
+                        .willReturn(aResponse()
+                                .withStatus(500)
+                                .withHeader("Content-Type", "application/json")
+                                .withBody("{\"error_code\":500,\"error_message\":\"Server error\"}")));
 
         injectWebClient(buildInsecureWebClient());
 
@@ -456,11 +466,12 @@ class EjbcaRestApiClientTest {
 
     @Test
     void searchCertificates_404_processRequestCatchesEjbcaRestApiException() throws Exception {
-        wireMock.stubFor(post(urlPathEqualTo(SEARCH_PATH))
-                .willReturn(aResponse()
-                        .withStatus(404)
-                        .withHeader("Content-Type", "application/json")
-                        .withBody("{\"error_code\":404,\"error_message\":\"Not found\"}")));
+        wireMock
+                .stubFor(post(urlPathEqualTo(SEARCH_PATH))
+                        .willReturn(aResponse()
+                                .withStatus(404)
+                                .withHeader("Content-Type", "application/json")
+                                .withBody("{\"error_code\":404,\"error_message\":\"Not found\"}")));
 
         injectWebClient(buildInsecureWebClient());
 

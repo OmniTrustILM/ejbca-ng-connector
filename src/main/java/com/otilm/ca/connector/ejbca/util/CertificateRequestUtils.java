@@ -1,11 +1,17 @@
 package com.otilm.ca.connector.ejbca.util;
 
-import java.io.IOException;
-
 import com.otilm.api.model.core.enums.CertificateRequestFormat;
 import com.otilm.ca.connector.ejbca.request.CertificateRequest;
 import com.otilm.ca.connector.ejbca.request.CrmfCertificateRequest;
 import com.otilm.ca.connector.ejbca.request.Pkcs10CertificateRequest;
+import java.io.IOException;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
+import java.util.StringJoiner;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ASN1Sequence;
@@ -13,9 +19,9 @@ import org.bouncycastle.asn1.ASN1String;
 import org.bouncycastle.asn1.ASN1TaggedObject;
 import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.DERUTF8String;
-import org.bouncycastle.asn1.x500.style.IETFUtils;
 import org.bouncycastle.asn1.pkcs.Attribute;
 import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
+import org.bouncycastle.asn1.x500.style.IETFUtils;
 import org.bouncycastle.asn1.x509.Extension;
 import org.bouncycastle.asn1.x509.Extensions;
 import org.bouncycastle.asn1.x509.GeneralName;
@@ -24,14 +30,6 @@ import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.net.Inet4Address;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.StringJoiner;
 
 public class CertificateRequestUtils {
 
@@ -48,7 +46,8 @@ public class CertificateRequestUtils {
     }
 
     public static JcaPKCS10CertificationRequest csrStringToJcaObject(String csr) throws IOException {
-        csr = csr.replace("-----BEGIN CERTIFICATE REQUEST-----", "")
+        csr = csr
+                .replace("-----BEGIN CERTIFICATE REQUEST-----", "")
                 .replaceAll(System.lineSeparator(), "")
                 .replace("-----END CERTIFICATE REQUEST-----", "");
         byte[] decoded = Base64.getDecoder().decode(csr);
@@ -93,7 +92,8 @@ public class CertificateRequestUtils {
         if (certificateRequest == null || certificateRequest.getFormat() != CertificateRequestFormat.PKCS10) {
             return null;
         }
-        final PKCS10CertificationRequest pkcs10CertificateRequest = new PKCS10CertificationRequest(certificateRequest.getEncoded());
+        final PKCS10CertificationRequest pkcs10CertificateRequest = new PKCS10CertificationRequest(
+                certificateRequest.getEncoded());
         final GeneralNames generalNames = subjectAlternativeNames(pkcs10CertificateRequest);
         if (generalNames == null) {
             return null;
@@ -136,7 +136,8 @@ public class CertificateRequestUtils {
         return switch (generalName.getTagNo()) {
             case GeneralName.dNSName -> new SanEntry("dNSName", generalName.getName().toString());
             case GeneralName.rfc822Name -> new SanEntry("rfc822name", generalName.getName().toString());
-            case GeneralName.uniformResourceIdentifier -> new SanEntry("UNIFORMRESOURCEIDENTIFIER", generalName.getName().toString());
+            case GeneralName.uniformResourceIdentifier ->
+                new SanEntry("UNIFORMRESOURCEIDENTIFIER", generalName.getName().toString());
             case GeneralName.registeredID -> new SanEntry("registeredID", generalName.getName().toString());
             case GeneralName.directoryName -> new SanEntry("DIRECTORYNAME", generalName.getName().toString());
             case GeneralName.iPAddress -> new SanEntry("iPAddress", ipAddress(generalName));
@@ -146,8 +147,8 @@ public class CertificateRequestUtils {
     }
 
     /**
-     * Escapes a value the way EJBCA's subject alternative name parser expects: RFC 2253 rules,
-     * except that {@code =} is left as-is.
+     * Escapes a value the way EJBCA's subject alternative name parser expects: RFC 2253 rules, except that {@code =} is
+     * left as-is.
      */
     private static String escape(String value) {
         return IETFUtils.valueToString(new DERUTF8String(value)).replace("\\=", "=");
@@ -177,7 +178,10 @@ public class CertificateRequestUtils {
             return null;
         }
         final ASN1ObjectIdentifier oid = ASN1ObjectIdentifier.getInstance(sequence.getObjectAt(0));
-        final ASN1Primitive value = ASN1TaggedObject.getInstance(sequence.getObjectAt(1)).getBaseObject().toASN1Primitive();
+        final ASN1Primitive value = ASN1TaggedObject
+                .getInstance(sequence.getObjectAt(1))
+                .getBaseObject()
+                .toASN1Primitive();
         if (OID_MS_UPN.equals(oid)) {
             return stringOtherName("UPN", value);
         }
@@ -198,8 +202,8 @@ public class CertificateRequestUtils {
     }
 
     /**
-     * PermanentIdentifier is a sequence of an optional value and an optional assigner OID,
-     * rendered by EJBCA as {@code value/assigner}.
+     * PermanentIdentifier is a sequence of an optional value and an optional assigner OID, rendered by EJBCA as
+     * {@code value/assigner}.
      */
     private static SanEntry permanentIdentifier(ASN1Primitive value) {
         if (!(value instanceof ASN1Sequence sequence)) {

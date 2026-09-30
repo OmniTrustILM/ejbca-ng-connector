@@ -11,14 +11,17 @@ import com.otilm.api.model.common.attribute.common.content.data.CredentialAttrib
 import com.otilm.api.model.common.attribute.v2.DataAttributeV2;
 import com.otilm.api.model.common.attribute.v2.content.CredentialAttributeContentV2;
 import com.otilm.api.model.common.attribute.v2.content.StringAttributeContentV2;
+import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.List;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(MockitoExtension.class)
 class AttributeServiceImplTest {
@@ -32,16 +35,20 @@ class AttributeServiceImplTest {
         assertNotNull(attrs);
         assertEquals(2, attrs.size());
 
-        BaseAttribute url = attrs.stream()
+        BaseAttribute url = attrs
+                .stream()
                 .filter(a -> AttributeServiceImpl.DATA_ATTRIBUTE_URL_NAME.equals(a.getName()))
-                .findFirst().orElse(null);
+                .findFirst()
+                .orElse(null);
         assertNotNull(url, "url attribute should be present");
         assertEquals(AttributeType.DATA, url.getType());
         assertEquals(AttributeServiceImpl.DATA_ATTRIBUTE_URL_UUID, url.getUuid());
 
-        BaseAttribute credential = attrs.stream()
+        BaseAttribute credential = attrs
+                .stream()
                 .filter(a -> AttributeServiceImpl.DATA_ATTRIBUTE_CREDENTIAL_NAME.equals(a.getName()))
-                .findFirst().orElse(null);
+                .findFirst()
+                .orElse(null);
         assertNotNull(credential, "credential attribute should be present");
         assertEquals(AttributeType.DATA, credential.getType());
     }
@@ -49,9 +56,11 @@ class AttributeServiceImplTest {
     @Test
     void getAttributes_urlAttributeHasCorrectContentTypeAndLabel() {
         List<BaseAttribute> attrs = service.getAttributes("ejbca");
-        DataAttributeV2 url = (DataAttributeV2) attrs.stream()
+        DataAttributeV2 url = (DataAttributeV2) attrs
+                .stream()
                 .filter(a -> AttributeServiceImpl.DATA_ATTRIBUTE_URL_NAME.equals(a.getName()))
-                .findFirst().orElseThrow();
+                .findFirst()
+                .orElseThrow();
 
         assertEquals(AttributeContentType.STRING, url.getContentType());
         assertEquals(AttributeServiceImpl.DATA_ATTRIBUTE_URL_LABEL, url.getProperties().getLabel());
@@ -62,9 +71,11 @@ class AttributeServiceImplTest {
     @Test
     void getAttributes_credentialAttributeHasCallbackAndCredentialContentType() {
         List<BaseAttribute> attrs = service.getAttributes("any");
-        DataAttributeV2 credential = (DataAttributeV2) attrs.stream()
+        DataAttributeV2 credential = (DataAttributeV2) attrs
+                .stream()
                 .filter(a -> AttributeServiceImpl.DATA_ATTRIBUTE_CREDENTIAL_NAME.equals(a.getName()))
-                .findFirst().orElseThrow();
+                .findFirst()
+                .orElseThrow();
 
         assertEquals(AttributeContentType.CREDENTIAL, credential.getContentType());
         AttributeCallback callback = credential.getAttributeCallback();
@@ -84,10 +95,8 @@ class AttributeServiceImplTest {
         // URL attribute: STRING content, required
         RequestAttributeV2 urlAttr = new RequestAttributeV2(
                 UUID.fromString(AttributeServiceImpl.DATA_ATTRIBUTE_URL_UUID),
-                AttributeServiceImpl.DATA_ATTRIBUTE_URL_NAME,
-                AttributeContentType.STRING,
-                List.of(new StringAttributeContentV2("https://ejbca.example.com:8443/ejbca/ws"))
-        );
+                AttributeServiceImpl.DATA_ATTRIBUTE_URL_NAME, AttributeContentType.STRING,
+                List.of(new StringAttributeContentV2("https://ejbca.example.com:8443/ejbca/ws")));
 
         // Credential attribute: CREDENTIAL content, required.
         // Supply a CredentialAttributeContentV2 with a minimal CredentialAttributeContentData
@@ -98,10 +107,8 @@ class AttributeServiceImplTest {
         credData.setKind("SoftKeyStore");
         RequestAttributeV2 credAttr = new RequestAttributeV2(
                 UUID.fromString(AttributeServiceImpl.DATA_ATTRIBUTE_CREDENTIAL_UUID),
-                AttributeServiceImpl.DATA_ATTRIBUTE_CREDENTIAL_NAME,
-                AttributeContentType.CREDENTIAL,
-                List.of(new CredentialAttributeContentV2(credData))
-        );
+                AttributeServiceImpl.DATA_ATTRIBUTE_CREDENTIAL_NAME, AttributeContentType.CREDENTIAL,
+                List.of(new CredentialAttributeContentV2(credData)));
 
         List<RequestAttribute> input = List.of(urlAttr, credAttr);
 
@@ -113,7 +120,6 @@ class AttributeServiceImplTest {
     @Test
     void validateAttributes_emptyList_throwsValidationException() {
         // empty list with required attributes → ValidationException
-        assertThrows(ValidationException.class,
-                () -> service.validateAttributes("ejbca", List.of()));
+        assertThrows(ValidationException.class, () -> service.validateAttributes("ejbca", List.of()));
     }
 }

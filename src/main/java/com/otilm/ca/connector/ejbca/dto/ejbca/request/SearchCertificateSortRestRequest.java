@@ -25,7 +25,8 @@ public class SearchCertificateSortRestRequest {
     }
 
     /**
-     * The set of criteria property values that are expected for SearchCertificateCriteriaRestRequest.property attribute.
+     * The set of criteria property values that are expected for SearchCertificateCriteriaRestRequest.property
+     * attribute.
      */
     public enum SortProperty {
         USERNAME,

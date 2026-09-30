@@ -25,6 +25,14 @@ import com.otilm.ca.connector.ejbca.dto.ejbca.response.SearchCertificatesRestRes
 import com.otilm.ca.connector.ejbca.service.AuthorityInstanceService;
 import com.otilm.ca.connector.ejbca.service.EjbcaService;
 import com.otilm.ca.connector.ejbca.util.LocalAttributeUtil;
+import java.io.IOException;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.Security;
+import java.security.spec.RSAKeyGenParameterSpec;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
 import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.Extension;
@@ -37,22 +45,12 @@ import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.bouncycastle.pkcs.PKCS10CertificationRequestBuilder;
 import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequestBuilder;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.io.IOException;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.Security;
-import java.security.spec.RSAKeyGenParameterSpec;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -78,8 +76,7 @@ class CertificateEjbcaServiceImplTest {
     private EjbcaService ejbcaService;
 
     // A well-known self-signed cert used across revoke / identify tests (CN=www.example.com)
-    private static final String SAMPLE_CERT =
-            "MIIC1TCCAb2gAwIBAgIJANQeIhz8h9A3MA0GCSqGSIb3DQEBBQUAMBoxGDAWBgNVBAMTD3d3dy5leGFtcGxlLmNvbTAeFw0yMjAxMDEwOTUwMDhaFw0zMTEyMzAwOTUwMDhaMBoxGDAWBgNVBAMTD3d3dy5leGFtcGxlLmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALG+wuvOrdMjD5nwhLwmd2+FcO0htFcMi4/Ciu1/9NlHjy55JO+poBih+3JnaJ+u+BY/GCTjbn3RGvC8y2J+1RuAalU0252R0lSWOC2SqUOvUMtOJTufbr/jW0xYk2UePqPj4FX3h3zK3Byw8UaQuUmr9n9acTwyD0oYcxutFm4FqjRZ88eCm7EqNZm+52DmJBHokZPd/z+PLuN6X+Yog5DHS9E1VodHLVVcf3/9KTb3jFhKfNM9y/4pwclRKU1KbjSLStVZmGP3etYYYcFjPswy7zPgWtE8waprQxSJo+Cdqb7+16m69UjaJ1B507xhN8LUjdzZfRJVjSjiP3VKOtMCAwEAAaMeMBwwGgYDVR0RBBMwEYIPd3d3LmV4YW1wbGUuY29tMA0GCSqGSIb3DQEBBQUAA4IBAQAiUmsCNTv/pAxbAB8R9xlarMV/dL42slWJ7bI2e3e03GycVP3eajCfkEKG6XB7aaX4Epn0/jRpEPfplRXkXrxNZ8/bwkwlNN5CiziUcyqVANFC8r/GVlcg+n2+hvu7ZLXmGqBvAJBsbLuvdBKo2iqF4R3BklScDVAHhuXTYwPXd3n7iHEYnuxnGo5yshm6vZ7FKPyIroN9bFc0llJ/n5r4h8WNqaN77M6TycZm4Dlw6EGGM8Bk+IrcRoNE1JLdhIOm3YI5g1zwCprXJ4L+3X6IC20tJUK4PpMGAAdS6ak4/Sq3UM+JxF7oZ2fRCIJrKyfsN3rridYJe0tg5bQnkqmQ";
+    private static final String SAMPLE_CERT = "MIIC1TCCAb2gAwIBAgIJANQeIhz8h9A3MA0GCSqGSIb3DQEBBQUAMBoxGDAWBgNVBAMTD3d3dy5leGFtcGxlLmNvbTAeFw0yMjAxMDEwOTUwMDhaFw0zMTEyMzAwOTUwMDhaMBoxGDAWBgNVBAMTD3d3dy5leGFtcGxlLmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALG+wuvOrdMjD5nwhLwmd2+FcO0htFcMi4/Ciu1/9NlHjy55JO+poBih+3JnaJ+u+BY/GCTjbn3RGvC8y2J+1RuAalU0252R0lSWOC2SqUOvUMtOJTufbr/jW0xYk2UePqPj4FX3h3zK3Byw8UaQuUmr9n9acTwyD0oYcxutFm4FqjRZ88eCm7EqNZm+52DmJBHokZPd/z+PLuN6X+Yog5DHS9E1VodHLVVcf3/9KTb3jFhKfNM9y/4pwclRKU1KbjSLStVZmGP3etYYYcFjPswy7zPgWtE8waprQxSJo+Cdqb7+16m69UjaJ1B507xhN8LUjdzZfRJVjSjiP3VKOtMCAwEAAaMeMBwwGgYDVR0RBBMwEYIPd3d3LmV4YW1wbGUuY29tMA0GCSqGSIb3DQEBBQUAA4IBAQAiUmsCNTv/pAxbAB8R9xlarMV/dL42slWJ7bI2e3e03GycVP3eajCfkEKG6XB7aaX4Epn0/jRpEPfplRXkXrxNZ8/bwkwlNN5CiziUcyqVANFC8r/GVlcg+n2+hvu7ZLXmGqBvAJBsbLuvdBKo2iqF4R3BklScDVAHhuXTYwPXd3n7iHEYnuxnGo5yshm6vZ7FKPyIroN9bFc0llJ/n5r4h8WNqaN77M6TycZm4Dlw6EGGM8Bk+IrcRoNE1JLdhIOm3YI5g1zwCprXJ4L+3X6IC20tJUK4PpMGAAdS6ak4/Sq3UM+JxF7oZ2fRCIJrKyfsN3rridYJe0tg5bQnkqmQ";
 
     // Base64-encoded PKCS#10 CSR with CN=TestUser and SAN=dNSName:test.example.com, generated once
     private static String CSR_WITH_SAN_BASE64;
@@ -94,14 +91,18 @@ class CertificateEjbcaServiceImplTest {
         kpGen.initialize(new RSAKeyGenParameterSpec(2048, RSAKeyGenParameterSpec.F4));
         KeyPair keyPair = kpGen.generateKeyPair();
 
-        ContentSigner signer = new JcaContentSignerBuilder("SHA256withRSA").setProvider("BC").build(keyPair.getPrivate());
+        ContentSigner signer = new JcaContentSignerBuilder("SHA256withRSA")
+                .setProvider("BC")
+                .build(keyPair.getPrivate());
 
         // CSR with CN and SAN
         X500Name subject = new X500Name("CN=TestUser");
-        PKCS10CertificationRequestBuilder builderWithSan = new JcaPKCS10CertificationRequestBuilder(subject, keyPair.getPublic());
+        PKCS10CertificationRequestBuilder builderWithSan = new JcaPKCS10CertificationRequestBuilder(subject,
+                keyPair.getPublic());
         ExtensionsGenerator extGen = new ExtensionsGenerator();
-        extGen.addExtension(Extension.subjectAlternativeName, false,
-                new GeneralNames(new GeneralName(GeneralName.dNSName, "test.example.com")));
+        extGen
+                .addExtension(Extension.subjectAlternativeName, false,
+                        new GeneralNames(new GeneralName(GeneralName.dNSName, "test.example.com")));
         builderWithSan.addAttribute(PKCSObjectIdentifiers.pkcs_9_at_extensionRequest, extGen.generate());
         PKCS10CertificationRequest csrWithSan = builderWithSan.build(signer);
         CSR_WITH_SAN_BASE64 = Base64.getEncoder().encodeToString(csrWithSan.getEncoded());
@@ -110,8 +111,11 @@ class CertificateEjbcaServiceImplTest {
         KeyPairGenerator kpGen2 = KeyPairGenerator.getInstance("RSA", "BC");
         kpGen2.initialize(new RSAKeyGenParameterSpec(2048, RSAKeyGenParameterSpec.F4));
         KeyPair keyPair2 = kpGen2.generateKeyPair();
-        ContentSigner signer2 = new JcaContentSignerBuilder("SHA256withRSA").setProvider("BC").build(keyPair2.getPrivate());
-        PKCS10CertificationRequest csrNoSan = new JcaPKCS10CertificationRequestBuilder(new X500Name("CN=TestUser"), keyPair2.getPublic()).build(signer2);
+        ContentSigner signer2 = new JcaContentSignerBuilder("SHA256withRSA")
+                .setProvider("BC")
+                .build(keyPair2.getPrivate());
+        PKCS10CertificationRequest csrNoSan = new JcaPKCS10CertificationRequestBuilder(new X500Name("CN=TestUser"),
+                keyPair2.getPublic()).build(signer2);
         CSR_NO_SAN_BASE64 = Base64.getEncoder().encodeToString(csrNoSan.getEncoded());
     }
 
@@ -120,8 +124,8 @@ class CertificateEjbcaServiceImplTest {
     @Test
     void issueCertificate_randomUsername_returnsCertWithMeta() throws Exception {
         String uuid = "auth-uuid-1";
-        CertificateSignRequestDto request = buildSignRequest(
-                CSR_WITH_SAN_BASE64, "RANDOM", "", "", "user@example.com", "dNSName=test.example.com", "");
+        CertificateSignRequestDto request = buildSignRequest(CSR_WITH_SAN_BASE64, "RANDOM", "", "", "user@example.com",
+                "dNSName=test.example.com", "");
 
         CertificateDataResponseDto certDto = new CertificateDataResponseDto();
         given(ejbcaService.issueCertificate(anyString(), anyString(), anyString(), anyString(), any()))
@@ -136,14 +140,15 @@ class CertificateEjbcaServiceImplTest {
         assertTrue(result.getMeta().stream().anyMatch(m -> CertificateEjbcaServiceImpl.META_EMAIL.equals(m.getName())));
         assertTrue(result.getMeta().stream().anyMatch(m -> CertificateEjbcaServiceImpl.META_SAN.equals(m.getName())));
         assertTrue(result.getMeta().stream().anyMatch(m -> "ejbcaUsername".equals(m.getName())));
-        verify(ejbcaService).createEndEntity(anyString(), anyString(), anyString(), anyString(), anyString(), any(), any());
+        verify(ejbcaService)
+                .createEndEntity(anyString(), anyString(), anyString(), anyString(), anyString(), any(), any());
     }
 
     @Test
     void issueCertificate_cnUsername_returnsCertWithUsernameFromCn() throws Exception {
         String uuid = "auth-uuid-2";
-        CertificateSignRequestDto request = buildSignRequest(
-                CSR_WITH_SAN_BASE64, "CN", "pre-", "-post", "", "", "ext-data");
+        CertificateSignRequestDto request = buildSignRequest(CSR_WITH_SAN_BASE64, "CN", "pre-", "-post", "", "",
+                "ext-data");
 
         CertificateDataResponseDto certDto = new CertificateDataResponseDto();
         given(ejbcaService.issueCertificate(anyString(), anyString(), anyString(), anyString(), any()))
@@ -157,14 +162,15 @@ class CertificateEjbcaServiceImplTest {
         assertNotNull(meta);
         assertTrue(meta.stream().anyMatch(m -> "ejbcaUsername".equals(m.getName())));
         assertTrue(meta.stream().anyMatch(m -> CertificateEjbcaServiceImpl.META_EXTENSION.equals(m.getName())));
-        verify(ejbcaService).createEndEntity(anyString(), anyString(), anyString(), anyString(), anyString(), any(), any());
+        verify(ejbcaService)
+                .createEndEntity(anyString(), anyString(), anyString(), anyString(), anyString(), any(), any());
     }
 
     @Test
     void issueCertificate_unsupportedMethod_throwsException() {
         String uuid = "auth-uuid-3";
-        CertificateSignRequestDto request = buildSignRequest(
-                CSR_WITH_SAN_BASE64, "UNSUPPORTED_METHOD", "", "", "", "", "");
+        CertificateSignRequestDto request = buildSignRequest(CSR_WITH_SAN_BASE64, "UNSUPPORTED_METHOD", "", "", "", "",
+                "");
 
         assertThrows(IOException.class, () -> certificateEjbcaServiceImpl.issueCertificate(uuid, request));
     }
@@ -172,8 +178,8 @@ class CertificateEjbcaServiceImplTest {
     @Test
     void issueCertificate_allMetaFields_returnsAllFour() throws Exception {
         String uuid = "auth-uuid-4";
-        CertificateSignRequestDto request = buildSignRequest(
-                CSR_WITH_SAN_BASE64, "RANDOM", "", "", "user@example.com", "dNSName=test.example.com", "extdata");
+        CertificateSignRequestDto request = buildSignRequest(CSR_WITH_SAN_BASE64, "RANDOM", "", "", "user@example.com",
+                "dNSName=test.example.com", "extdata");
 
         CertificateDataResponseDto certDto = new CertificateDataResponseDto();
         given(ejbcaService.issueCertificate(anyString(), anyString(), anyString(), anyString(), any()))
@@ -192,8 +198,7 @@ class CertificateEjbcaServiceImplTest {
     @Test
     void issueCertificate_cnWithPrefixAndPostfix_usernameContainsBoth() throws Exception {
         String uuid = "auth-uuid-5";
-        CertificateSignRequestDto request = buildSignRequest(
-                CSR_NO_SAN_BASE64, "CN", "PRE-", "-POST", "", "", "");
+        CertificateSignRequestDto request = buildSignRequest(CSR_NO_SAN_BASE64, "CN", "PRE-", "-POST", "", "", "");
 
         CertificateDataResponseDto certDto = new CertificateDataResponseDto();
         given(ejbcaService.issueCertificate(anyString(), anyString(), anyString(), anyString(), any()))
@@ -201,7 +206,9 @@ class CertificateEjbcaServiceImplTest {
 
         CertificateDataResponseDto result = certificateEjbcaServiceImpl.issueCertificate(uuid, request);
 
-        MetadataAttribute usernameAttr = result.getMeta().stream()
+        MetadataAttribute usernameAttr = result
+                .getMeta()
+                .stream()
                 .filter(m -> "ejbcaUsername".equals(m.getName()))
                 .findFirst()
                 .orElseThrow();
@@ -259,13 +266,16 @@ class CertificateEjbcaServiceImplTest {
         CertificateDataResponseDto certDto = new CertificateDataResponseDto();
         given(ejbcaService.issueCertificate(anyString(), anyString(), anyString(), anyString(), any()))
                 .willReturn(certDto);
-        willThrow(new NotFoundException()).given(ejbcaService).renewEndEntity(anyString(), anyString(), anyString(), anyString(), anyString());
+        willThrow(new NotFoundException())
+                .given(ejbcaService)
+                .renewEndEntity(anyString(), anyString(), anyString(), anyString(), anyString());
 
         CertificateDataResponseDto result = certificateEjbcaServiceImpl.renewCertificate(uuid, request);
 
         assertNotNull(result);
         verify(ejbcaService).renewEndEntity(anyString(), anyString(), anyString(), anyString(), anyString());
-        verify(ejbcaService).createEndEntityWithMeta(anyString(), anyString(), anyString(), anyString(), anyString(), any(), any());
+        verify(ejbcaService)
+                .createEndEntityWithMeta(anyString(), anyString(), anyString(), anyString(), anyString(), any(), any());
     }
 
     // ── revokeCertificate ────────────────────────────────────────────────────
@@ -299,33 +309,39 @@ class CertificateEjbcaServiceImplTest {
     void identifyCertificate_NotKnown() throws Exception {
         String uuid = "dde2cccc-616f-11ec-90d6-0242ac120003";
         given(authorityInstanceService.getRestApiUrl(uuid)).willReturn("https://ejbca.example.com:8443/ejbca/rest");
-        given(ejbcaService.searchCertificates(anyString(), any(), any())).willReturn(getSearchCertificatesRestResponseV2_NoCertificates());
+        given(ejbcaService.searchCertificates(anyString(), any(), any()))
+                .willReturn(getSearchCertificatesRestResponseV2_NoCertificates());
 
-        assertThrows(NotFoundException.class, () -> certificateEjbcaServiceImpl.identifyCertificate(uuid, getCertificateIdentificationRequestDto(12345, "Test")));
+        assertThrows(NotFoundException.class, () -> certificateEjbcaServiceImpl
+                .identifyCertificate(uuid, getCertificateIdentificationRequestDto(12345, "Test")));
     }
 
     @Test
     void identifyCertificate_WrongProfile() throws Exception {
         String uuid = "dde2cccc-616f-11ec-90d6-0242ac120003";
         given(authorityInstanceService.getRestApiUrl(uuid)).willReturn("https://ejbca.example.com:8443/ejbca/rest");
-        given(ejbcaService.searchCertificates(anyString(), any(), any())).willReturn(getSearchCertificatesRestResponseV2_Certificate(12345, "TestProfile"));
+        given(ejbcaService.searchCertificates(anyString(), any(), any()))
+                .willReturn(getSearchCertificatesRestResponseV2_Certificate(12345, "TestProfile"));
 
-        assertThrows(ValidationException.class, () -> certificateEjbcaServiceImpl.identifyCertificate(uuid, getCertificateIdentificationRequestDto(98765, "TestProfile")));
+        assertThrows(ValidationException.class, () -> certificateEjbcaServiceImpl
+                .identifyCertificate(uuid, getCertificateIdentificationRequestDto(98765, "TestProfile")));
     }
 
     @Test
     void identifyCertificate_Ok() throws Exception {
         String uuid = "dde2cccc-616f-11ec-90d6-0242ac120003";
         given(authorityInstanceService.getRestApiUrl(uuid)).willReturn("https://ejbca.example.com:8443/ejbca/rest");
-        given(ejbcaService.searchCertificates(anyString(), any(), any())).willReturn(getSearchCertificatesRestResponseV2_Certificate(123456, "Test"));
+        given(ejbcaService.searchCertificates(anyString(), any(), any()))
+                .willReturn(getSearchCertificatesRestResponseV2_Certificate(123456, "Test"));
 
-        com.otilm.api.model.connector.v2.CertificateIdentificationResponseDto dto =
-                certificateEjbcaServiceImpl.identifyCertificate(uuid, getCertificateIdentificationRequestDto(123456, "Test"));
+        com.otilm.api.model.connector.v2.CertificateIdentificationResponseDto dto = certificateEjbcaServiceImpl
+                .identifyCertificate(uuid, getCertificateIdentificationRequestDto(123456, "Test"));
         assertEquals(1, dto.getMeta().size());
     }
 
     @Test
-    void identifyCertificate_searchCertificatesThrowsNotFoundException_propagatesAsNotFoundException() throws Exception {
+    void identifyCertificate_searchCertificatesThrowsNotFoundException_propagatesAsNotFoundException()
+            throws Exception {
         // Regression guard: when getRestApiConnection throws NotFoundException (unknown authority
         // instance UUID) that exception must reach the caller as NotFoundException (→ HTTP 404),
         // NOT be swallowed into IOException/ValidationException.
@@ -334,15 +350,14 @@ class CertificateEjbcaServiceImplTest {
         given(ejbcaService.searchCertificates(anyString(), any(), any()))
                 .willThrow(new NotFoundException("AuthorityInstance", uuid));
 
-        assertThrows(NotFoundException.class,
-                () -> certificateEjbcaServiceImpl.identifyCertificate(uuid, getCertificateIdentificationRequestDto(1, "Test")));
+        assertThrows(NotFoundException.class, () -> certificateEjbcaServiceImpl
+                .identifyCertificate(uuid, getCertificateIdentificationRequestDto(1, "Test")));
     }
 
     // ── helpers ──────────────────────────────────────────────────────────────
 
-    private CertificateSignRequestDto buildSignRequest(
-            String csrBase64, String genMethod, String prefix, String postfix,
-            String email, String san, String extension) {
+    private CertificateSignRequestDto buildSignRequest(String csrBase64, String genMethod, String prefix,
+            String postfix, String email, String san, String extension) {
         CertificateSignRequestDto dto = new CertificateSignRequestDto();
         dto.setRequest(csrBase64);
         dto.setFormat(CertificateRequestFormat.PKCS10);
@@ -362,8 +377,8 @@ class CertificateEjbcaServiceImplTest {
         return dto;
     }
 
-    private CertificateRenewRequestDto buildRenewRequest(
-            String csrBase64, String ejbcaUsername, String genMethod, String prefix, String postfix) {
+    private CertificateRenewRequestDto buildRenewRequest(String csrBase64, String ejbcaUsername, String genMethod,
+            String prefix, String postfix) {
         CertificateRenewRequestDto dto = new CertificateRenewRequestDto();
         dto.setRequest(csrBase64);
         dto.setFormat(CertificateRequestFormat.PKCS10);
@@ -381,8 +396,8 @@ class CertificateEjbcaServiceImplTest {
         return dto;
     }
 
-    private CertificateRenewRequestDto buildRenewRequestNoUsername(
-            String csrBase64, String genMethod, String prefix, String postfix) {
+    private CertificateRenewRequestDto buildRenewRequestNoUsername(String csrBase64, String genMethod, String prefix,
+            String postfix) {
         CertificateRenewRequestDto dto = new CertificateRenewRequestDto();
         dto.setRequest(csrBase64);
         dto.setFormat(CertificateRequestFormat.PKCS10);
@@ -426,9 +441,9 @@ class CertificateEjbcaServiceImplTest {
         return attr;
     }
 
-    private com.otilm.api.model.connector.v2.CertificateIdentificationRequestDto getCertificateIdentificationRequestDto(int profileId, String profileName) {
-        com.otilm.api.model.connector.v2.CertificateIdentificationRequestDto dto =
-                new com.otilm.api.model.connector.v2.CertificateIdentificationRequestDto();
+    private com.otilm.api.model.connector.v2.CertificateIdentificationRequestDto getCertificateIdentificationRequestDto(
+            int profileId, String profileName) {
+        com.otilm.api.model.connector.v2.CertificateIdentificationRequestDto dto = new com.otilm.api.model.connector.v2.CertificateIdentificationRequestDto();
         List<RequestAttribute> attrs = new java.util.ArrayList<>();
         attrs.add(getEndEntityProfileRequestAttributeV2(profileId, profileName));
         attrs.add(getCertificateProfileRequestAttributeV2(profileId, profileName));
@@ -459,9 +474,11 @@ class CertificateEjbcaServiceImplTest {
         return dto;
     }
 
-    private SearchCertificatesRestResponseV2 getSearchCertificatesRestResponseV2_Certificate(int profileId, String username) {
+    private SearchCertificatesRestResponseV2 getSearchCertificatesRestResponseV2_Certificate(int profileId,
+            String username) {
         SearchCertificatesRestResponseV2 dto = new SearchCertificatesRestResponseV2();
-        CertificateRestResponseV2 certificateRestResponseV2 = CertificateRestResponseV2.builder()
+        CertificateRestResponseV2 certificateRestResponseV2 = CertificateRestResponseV2
+                .builder()
                 .setCertificateProfileId(profileId)
                 .setEndEntityProfileId(profileId)
                 .setUsername(username)
