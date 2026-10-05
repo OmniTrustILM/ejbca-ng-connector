@@ -18,18 +18,22 @@ import com.otilm.ca.connector.ejbca.dao.entity.AuthorityInstance;
 import com.otilm.ca.connector.ejbca.dto.AuthorityInstanceNameAndUuidDto;
 import com.otilm.ca.connector.ejbca.dto.ejbca.request.SearchCertificateCriteriaRestRequest;
 import com.otilm.ca.connector.ejbca.enums.DiscoveryKind;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.BDDMockito.given;
 
 @ExtendWith(MockitoExtension.class)
@@ -136,7 +140,10 @@ class DiscoveryAttributeServiceImplTest {
         assertTrue(groupV2.getAttributeCallback().getCallbackContext().contains("{kind}"),
                 "callback context should contain the {kind} placeholder");
         // at least one mapping carries the kind value
-        boolean hasMappingWithKind = groupV2.getAttributeCallback().getMappings().stream()
+        boolean hasMappingWithKind = groupV2
+                .getAttributeCallback()
+                .getMappings()
+                .stream()
                 .anyMatch(m -> DiscoveryKind.EJBCA.name().equals(m.getValue()));
         assertTrue(hasMappingWithKind, "a callback mapping should carry the kind value");
         assertFalse(groupV2.getAttributeCallback().getMappings().isEmpty());
@@ -159,7 +166,10 @@ class DiscoveryAttributeServiceImplTest {
         List<BaseAttribute> attrs = service.getAttributes(DiscoveryKind.EJBCA_SCHEDULE.name());
         GroupAttributeV2 group = (GroupAttributeV2) attrs.get(2);
         // the literal EJBCA_SCHEDULE value flows via a mapping, not the context template string
-        boolean hasMappingWithKind = group.getAttributeCallback().getMappings().stream()
+        boolean hasMappingWithKind = group
+                .getAttributeCallback()
+                .getMappings()
+                .stream()
                 .anyMatch(m -> DiscoveryKind.EJBCA_SCHEDULE.name().equals(m.getValue()));
         assertTrue(hasMappingWithKind, "a callback mapping should carry the EJBCA_SCHEDULE kind value");
     }
@@ -170,8 +180,7 @@ class DiscoveryAttributeServiceImplTest {
 
     @Test
     void getAttributes_unsupportedKind_throwsValidationException() {
-        assertThrows(ValidationException.class,
-                () -> service.getAttributes("UNKNOWN_KIND"));
+        assertThrows(ValidationException.class, () -> service.getAttributes("UNKNOWN_KIND"));
     }
 
     // -------------------------------------------------------------------------
@@ -186,8 +195,7 @@ class DiscoveryAttributeServiceImplTest {
 
     @Test
     void validateAttributes_unsupportedKind_throwsValidationException() {
-        assertThrows(ValidationException.class,
-                () -> service.validateAttributes("BAD_KIND", List.of()));
+        assertThrows(ValidationException.class, () -> service.validateAttributes("BAD_KIND", List.of()));
     }
 
     @Test
@@ -207,10 +215,8 @@ class DiscoveryAttributeServiceImplTest {
         AuthorityInstanceNameAndUuidDto dto = inst.mapToNameAndUuidDto();
         RequestAttributeV2 instanceAttr = new RequestAttributeV2(
                 UUID.fromString("dce22e96-3335-4181-b90c-c7f887d8d109"),
-                DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_INSTANCE,
-                AttributeContentType.OBJECT,
-                List.of(new ObjectAttributeContentV2(dto.getName(), dto))
-        );
+                DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_INSTANCE, AttributeContentType.OBJECT,
+                List.of(new ObjectAttributeContentV2(dto.getName(), dto)));
 
         List<RequestAttribute> input = List.of(instanceAttr);
 
@@ -221,8 +227,7 @@ class DiscoveryAttributeServiceImplTest {
 
     @Test
     void validateAttributes_nullKindMismatch_throwsValidationException() {
-        assertThrows(ValidationException.class,
-                () -> service.validateAttributes("NOPE", List.of()));
+        assertThrows(ValidationException.class, () -> service.validateAttributes("NOPE", List.of()));
     }
 
     // -------------------------------------------------------------------------
@@ -235,8 +240,8 @@ class DiscoveryAttributeServiceImplTest {
         List<BaseAttributeContentV2<?>> cas = List.of();
         List<BaseAttributeContentV2<?>> eeProfiles = List.of();
 
-        List<BaseAttribute> attrs = service.getInstanceAndKindAttributes(
-                DiscoveryKind.EJBCA.name(), eeProfiles, cas, url);
+        List<BaseAttribute> attrs = service
+                .getInstanceAndKindAttributes(DiscoveryKind.EJBCA.name(), eeProfiles, cas, url);
 
         assertEquals(5, attrs.size(), "EJBCA kind should add issuedAfter → 5 attributes");
     }
@@ -244,8 +249,8 @@ class DiscoveryAttributeServiceImplTest {
     @Test
     void getInstanceAndKindAttributes_ejbca_firstIsRestApiUrl() {
         List<BaseAttributeContentV2<?>> url = List.of(new StringAttributeContentV2("https://ejbca.example.com"));
-        List<BaseAttribute> attrs = service.getInstanceAndKindAttributes(
-                DiscoveryKind.EJBCA.name(), List.of(), List.of(), url);
+        List<BaseAttribute> attrs = service
+                .getInstanceAndKindAttributes(DiscoveryKind.EJBCA.name(), List.of(), List.of(), url);
 
         BaseAttribute first = attrs.get(0);
         assertEquals(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_RESTAPI_URL, first.getName());
@@ -257,8 +262,8 @@ class DiscoveryAttributeServiceImplTest {
 
     @Test
     void getInstanceAndKindAttributes_ejbca_secondIsCaAttribute() {
-        List<BaseAttribute> attrs = service.getInstanceAndKindAttributes(
-                DiscoveryKind.EJBCA.name(), List.of(), List.of(), List.of());
+        List<BaseAttribute> attrs = service
+                .getInstanceAndKindAttributes(DiscoveryKind.EJBCA.name(), List.of(), List.of(), List.of());
 
         BaseAttribute ca = attrs.get(1);
         assertEquals(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_CA, ca.getName());
@@ -270,8 +275,8 @@ class DiscoveryAttributeServiceImplTest {
 
     @Test
     void getInstanceAndKindAttributes_ejbca_thirdIsEndEntityProfile() {
-        List<BaseAttribute> attrs = service.getInstanceAndKindAttributes(
-                DiscoveryKind.EJBCA.name(), List.of(), List.of(), List.of());
+        List<BaseAttribute> attrs = service
+                .getInstanceAndKindAttributes(DiscoveryKind.EJBCA.name(), List.of(), List.of(), List.of());
 
         BaseAttribute eep = attrs.get(2);
         assertEquals(DiscoveryAttributeServiceImpl.ATTRIBUTE_END_ENTITY_PROFILE, eep.getName());
@@ -280,8 +285,8 @@ class DiscoveryAttributeServiceImplTest {
 
     @Test
     void getInstanceAndKindAttributes_ejbca_fourthIsStatus() {
-        List<BaseAttribute> attrs = service.getInstanceAndKindAttributes(
-                DiscoveryKind.EJBCA.name(), List.of(), List.of(), List.of());
+        List<BaseAttribute> attrs = service
+                .getInstanceAndKindAttributes(DiscoveryKind.EJBCA.name(), List.of(), List.of(), List.of());
 
         BaseAttribute status = attrs.get(3);
         assertEquals(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_STATUS, status.getName());
@@ -297,32 +302,23 @@ class DiscoveryAttributeServiceImplTest {
         // The discovery "Certificate status" options must match exactly the status values that
         // EJBCA's REST certificate-search API accepts, a set that is stable across every EJBCA
         // version the connector supports from 7.8 onward.
-        Set<String> expected = Set.of(
-                "CERT_ACTIVE",
-                "CERT_NOTIFIEDABOUTEXPIRATION",
-                "CERT_REVOKED",
-                "REVOCATION_REASON_UNSPECIFIED",
-                "REVOCATION_REASON_KEYCOMPROMISE",
-                "REVOCATION_REASON_CACOMPROMISE",
-                "REVOCATION_REASON_AFFILIATIONCHANGED",
-                "REVOCATION_REASON_SUPERSEDED",
-                "REVOCATION_REASON_CESSATIONOFOPERATION",
-                "REVOCATION_REASON_CERTIFICATEHOLD",
-                "REVOCATION_REASON_REMOVEFROMCRL",
-                "REVOCATION_REASON_PRIVILEGESWITHDRAWN",
-                "REVOCATION_REASON_AACOMPROMISE"
-        );
+        Set<String> expected = Set
+                .of("CERT_ACTIVE", "CERT_NOTIFIEDABOUTEXPIRATION", "CERT_REVOKED", "REVOCATION_REASON_UNSPECIFIED",
+                        "REVOCATION_REASON_KEYCOMPROMISE", "REVOCATION_REASON_CACOMPROMISE",
+                        "REVOCATION_REASON_AFFILIATIONCHANGED", "REVOCATION_REASON_SUPERSEDED",
+                        "REVOCATION_REASON_CESSATIONOFOPERATION", "REVOCATION_REASON_CERTIFICATEHOLD",
+                        "REVOCATION_REASON_REMOVEFROMCRL", "REVOCATION_REASON_PRIVILEGESWITHDRAWN",
+                        "REVOCATION_REASON_AACOMPROMISE");
 
-        List<BaseAttribute> attrs = service.getInstanceAndKindAttributes(
-                DiscoveryKind.EJBCA.name(), List.of(), List.of(), List.of());
+        List<BaseAttribute> attrs = service
+                .getInstanceAndKindAttributes(DiscoveryKind.EJBCA.name(), List.of(), List.of(), List.of());
 
-        DataAttributeV2 statusData = (DataAttributeV2) attrs.stream()
+        DataAttributeV2 statusData = (DataAttributeV2) attrs
+                .stream()
                 .filter(a -> DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_STATUS.equals(a.getName()))
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("status attribute not found"));
-        List<String> offered = statusData.getContent().stream()
-                .map(c -> (String) c.getData())
-                .toList();
+        List<String> offered = statusData.getContent().stream().map(c -> (String) c.getData()).toList();
 
         // No duplicates in the offered options.
         assertEquals(Set.copyOf(offered).size(), offered.size(),
@@ -333,8 +329,8 @@ class DiscoveryAttributeServiceImplTest {
 
     @Test
     void getInstanceAndKindAttributes_ejbca_fifthIsIssuedAfter() {
-        List<BaseAttribute> attrs = service.getInstanceAndKindAttributes(
-                DiscoveryKind.EJBCA.name(), List.of(), List.of(), List.of());
+        List<BaseAttribute> attrs = service
+                .getInstanceAndKindAttributes(DiscoveryKind.EJBCA.name(), List.of(), List.of(), List.of());
 
         BaseAttribute last = attrs.get(4);
         assertEquals(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_ISSUED_AFTER, last.getName());
@@ -350,16 +346,16 @@ class DiscoveryAttributeServiceImplTest {
 
     @Test
     void getInstanceAndKindAttributes_ejbcaSchedule_returnsFiveAttributes() {
-        List<BaseAttribute> attrs = service.getInstanceAndKindAttributes(
-                DiscoveryKind.EJBCA_SCHEDULE.name(), List.of(), List.of(), List.of());
+        List<BaseAttribute> attrs = service
+                .getInstanceAndKindAttributes(DiscoveryKind.EJBCA_SCHEDULE.name(), List.of(), List.of(), List.of());
 
         assertEquals(5, attrs.size(), "EJBCA_SCHEDULE should add issuedDaysBefore → 5 attributes");
     }
 
     @Test
     void getInstanceAndKindAttributes_ejbcaSchedule_fifthIsIssuedDaysBefore() {
-        List<BaseAttribute> attrs = service.getInstanceAndKindAttributes(
-                DiscoveryKind.EJBCA_SCHEDULE.name(), List.of(), List.of(), List.of());
+        List<BaseAttribute> attrs = service
+                .getInstanceAndKindAttributes(DiscoveryKind.EJBCA_SCHEDULE.name(), List.of(), List.of(), List.of());
 
         BaseAttribute last = attrs.get(4);
         assertEquals(DiscoveryAttributeServiceImpl.ATTRIBUTE_ISSUED_DAYS_BEFORE, last.getName());
@@ -374,20 +370,22 @@ class DiscoveryAttributeServiceImplTest {
 
     @Test
     void getInstanceAndKindAttributes_ejbcaSchedule_doesNotContainIssuedAfter() {
-        List<BaseAttribute> attrs = service.getInstanceAndKindAttributes(
-                DiscoveryKind.EJBCA_SCHEDULE.name(), List.of(), List.of(), List.of());
+        List<BaseAttribute> attrs = service
+                .getInstanceAndKindAttributes(DiscoveryKind.EJBCA_SCHEDULE.name(), List.of(), List.of(), List.of());
 
-        boolean hasIssuedAfter = attrs.stream()
+        boolean hasIssuedAfter = attrs
+                .stream()
                 .anyMatch(a -> DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_ISSUED_AFTER.equals(a.getName()));
         assertFalse(hasIssuedAfter, "EJBCA_SCHEDULE must not include issuedAfter");
     }
 
     @Test
     void getInstanceAndKindAttributes_ejbca_doesNotContainIssuedDaysBefore() {
-        List<BaseAttribute> attrs = service.getInstanceAndKindAttributes(
-                DiscoveryKind.EJBCA.name(), List.of(), List.of(), List.of());
+        List<BaseAttribute> attrs = service
+                .getInstanceAndKindAttributes(DiscoveryKind.EJBCA.name(), List.of(), List.of(), List.of());
 
-        boolean hasDaysBefore = attrs.stream()
+        boolean hasDaysBefore = attrs
+                .stream()
                 .anyMatch(a -> DiscoveryAttributeServiceImpl.ATTRIBUTE_ISSUED_DAYS_BEFORE.equals(a.getName()));
         assertFalse(hasDaysBefore, "EJBCA must not include issuedDaysBefore");
     }
@@ -401,8 +399,8 @@ class DiscoveryAttributeServiceImplTest {
         List<BaseAttributeContentV2<?>> urlContent = new ArrayList<>();
         urlContent.add(new StringAttributeContentV2("https://my-ejbca:8443"));
 
-        List<BaseAttribute> attrs = service.getInstanceAndKindAttributes(
-                DiscoveryKind.EJBCA.name(), List.of(), List.of(), urlContent);
+        List<BaseAttribute> attrs = service
+                .getInstanceAndKindAttributes(DiscoveryKind.EJBCA.name(), List.of(), List.of(), urlContent);
 
         DataAttributeV2 urlAttr = (DataAttributeV2) attrs.get(0);
         assertEquals(1, urlAttr.getContent().size());
@@ -415,8 +413,8 @@ class DiscoveryAttributeServiceImplTest {
         AuthorityInstanceNameAndUuidDto caDto = new AuthorityInstanceNameAndUuidDto("MyCA", "ca-uuid");
         List<BaseAttributeContentV2<?>> casContent = List.of(new ObjectAttributeContentV2("MyCA", caDto));
 
-        List<BaseAttribute> attrs = service.getInstanceAndKindAttributes(
-                DiscoveryKind.EJBCA.name(), List.of(), casContent, List.of());
+        List<BaseAttribute> attrs = service
+                .getInstanceAndKindAttributes(DiscoveryKind.EJBCA.name(), List.of(), casContent, List.of());
 
         DataAttributeV2 caAttr = (DataAttributeV2) attrs.get(1);
         assertEquals(1, caAttr.getContent().size());
@@ -427,8 +425,8 @@ class DiscoveryAttributeServiceImplTest {
         AuthorityInstanceNameAndUuidDto eeDto = new AuthorityInstanceNameAndUuidDto("MyProfile", "prof-uuid");
         List<BaseAttributeContentV2<?>> eeContent = List.of(new ObjectAttributeContentV2("MyProfile", eeDto));
 
-        List<BaseAttribute> attrs = service.getInstanceAndKindAttributes(
-                DiscoveryKind.EJBCA.name(), eeContent, List.of(), List.of());
+        List<BaseAttribute> attrs = service
+                .getInstanceAndKindAttributes(DiscoveryKind.EJBCA.name(), eeContent, List.of(), List.of());
 
         DataAttributeV2 eeAttr = (DataAttributeV2) attrs.get(2);
         assertEquals(1, eeAttr.getContent().size());

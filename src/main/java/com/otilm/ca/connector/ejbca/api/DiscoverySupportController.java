@@ -16,14 +16,13 @@ import com.otilm.ca.connector.ejbca.service.EjbcaService;
 import com.otilm.ca.connector.ejbca.service.EndEntityProfileEjbcaService;
 import com.otilm.ca.connector.ejbca.util.EjbcaVersion;
 import com.otilm.ca.connector.ejbca.util.LocalAttributeUtil;
+import java.util.ArrayList;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @RestController
 @RequestMapping("/v1/discoveryProvider")
@@ -55,7 +54,8 @@ public class DiscoverySupportController {
     }
 
     @GetMapping(path = "/{ejbcaInstanceName}/ejbcaVersion", produces = "application/json")
-    public EjbcaVersionResponseDto getEjbcaVersion(@PathVariable String ejbcaInstanceName) throws NotFoundException, AlreadyExistException {
+    public EjbcaVersionResponseDto getEjbcaVersion(@PathVariable String ejbcaInstanceName)
+            throws NotFoundException, AlreadyExistException {
         EjbcaVersion ejbcaVersion = ejbcaService.getEjbcaVersion(ejbcaInstanceName);
 
         if (ejbcaVersion.getMajorVersion() < 9) {
@@ -68,13 +68,15 @@ public class DiscoverySupportController {
     }
 
     @GetMapping(path = "/{ejbcaInstanceUuid}/listEndEntityProfiles", produces = "application/json")
-    public List<ObjectAttributeContentV2> listEndEntityProfiles(@PathVariable String ejbcaInstanceUuid) throws NotFoundException {
+    public List<ObjectAttributeContentV2> listEndEntityProfiles(@PathVariable String ejbcaInstanceUuid)
+            throws NotFoundException {
         checkEjbcaVersion(ejbcaInstanceUuid);
 
         List<NameAndIdDto> endEntityProfiles = endEntityProfileEjbcaService.listEndEntityProfiles(ejbcaInstanceUuid);
         List<ObjectAttributeContentV2> contentList = new ArrayList<>();
         for (NameAndIdDto endEntityProfile : endEntityProfiles) {
-            ObjectAttributeContentV2 content = new ObjectAttributeContentV2(endEntityProfile.getName(), endEntityProfile);
+            ObjectAttributeContentV2 content = new ObjectAttributeContentV2(endEntityProfile.getName(),
+                    endEntityProfile);
             contentList.add(content);
         }
         return contentList;
@@ -97,14 +99,15 @@ public class DiscoverySupportController {
     }
 
     @GetMapping(path = "/{ejbcaInstanceUuid}/{kind}/configuration", produces = "application/json")
-    public List<BaseAttribute> configuration(
-            @PathVariable String ejbcaInstanceUuid, @PathVariable String kind) throws NotFoundException {
+    public List<BaseAttribute> configuration(@PathVariable String ejbcaInstanceUuid, @PathVariable String kind)
+            throws NotFoundException {
         checkEjbcaVersion(ejbcaInstanceUuid);
 
         List<NameAndIdDto> endEntityProfiles = endEntityProfileEjbcaService.listEndEntityProfiles(ejbcaInstanceUuid);
         List<BaseAttributeContentV2<?>> eeProfilesContent = new ArrayList<>();
         for (NameAndIdDto endEntityProfile : endEntityProfiles) {
-            ObjectAttributeContentV2 content = new ObjectAttributeContentV2(endEntityProfile.getName(), endEntityProfile);
+            ObjectAttributeContentV2 content = new ObjectAttributeContentV2(endEntityProfile.getName(),
+                    endEntityProfile);
             eeProfilesContent.add(content);
         }
 

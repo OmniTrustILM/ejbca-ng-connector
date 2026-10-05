@@ -1,0 +1,7 @@
+# Commits skipped by `git blame`, so lines are attributed to their real authors.
+#
+# GitHub's blame view honours this file on its own. Locally, the parent POM points
+# `blame.ignoreRevsFile` here on the first Maven build of a clone.
+
+# Format the sources and expand wildcard imports
+56c693113084f9c5daa0015d042bfd83c8438e81

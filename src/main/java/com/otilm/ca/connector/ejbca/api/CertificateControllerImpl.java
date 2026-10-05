@@ -8,20 +8,26 @@ import com.otilm.api.interfaces.connector.v2.CertificateController;
 import com.otilm.api.model.client.attribute.RequestAttribute;
 import com.otilm.api.model.common.attribute.common.AttributeType;
 import com.otilm.api.model.common.attribute.common.BaseAttribute;
-import com.otilm.api.model.common.attribute.common.DataAttribute;
 import com.otilm.api.model.common.attribute.common.content.AttributeContentType;
-import com.otilm.api.model.common.attribute.v2.DataAttributeV2;
 import com.otilm.api.model.common.attribute.common.properties.DataAttributeProperties;
-import com.otilm.api.model.connector.v2.*;
+import com.otilm.api.model.common.attribute.v2.DataAttributeV2;
+import com.otilm.api.model.connector.v2.CertRevocationDto;
+import com.otilm.api.model.connector.v2.CertificateDataResponseDto;
+import com.otilm.api.model.connector.v2.CertificateIdentificationRequestDto;
+import com.otilm.api.model.connector.v2.CertificateIdentificationResponseDto;
+import com.otilm.api.model.connector.v2.CertificateOperationCancelRequestDto;
+import com.otilm.api.model.connector.v2.CertificateOperationStatusRequestDto;
+import com.otilm.api.model.connector.v2.CertificateOperationStatusResponseDto;
+import com.otilm.api.model.connector.v2.CertificateRenewRequestDto;
+import com.otilm.api.model.connector.v2.CertificateSignRequestDto;
 import com.otilm.ca.connector.ejbca.service.CertificateEjbcaService;
-import org.springframework.http.ResponseEntity;
 import com.otilm.core.util.AttributeDefinitionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.web.bind.annotation.RestController;
-
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class CertificateControllerImpl implements CertificateController {
@@ -68,7 +74,9 @@ public class CertificateControllerImpl implements CertificateController {
         DataAttributeV2 san = new DataAttributeV2();
         san.setUuid(ATTRIBUTE_SAN_UUID);
         san.setName(ATTRIBUTE_SAN);
-        san.setDescription("Comma separated Subject Alternative Names. If present, it will override the SANs in the CSR");
+        san
+                .setDescription(
+                        "Comma separated Subject Alternative Names. If present, it will override the SANs in the CSR");
         san.setType(AttributeType.DATA);
         san.setContentType(AttributeContentType.STRING);
         DataAttributeProperties sanProperties = new DataAttributeProperties();
@@ -101,14 +109,14 @@ public class CertificateControllerImpl implements CertificateController {
     }
 
     @Override
-    public void validateIssueCertificateAttributes(String uuid, List<RequestAttribute> attributes) throws ValidationException {
-        AttributeDefinitionUtils.validateAttributes(
-                listIssueCertificateAttributes(uuid),
-                attributes);
+    public void validateIssueCertificateAttributes(String uuid, List<RequestAttribute> attributes)
+            throws ValidationException {
+        AttributeDefinitionUtils.validateAttributes(listIssueCertificateAttributes(uuid), attributes);
     }
 
     @Override
-    public ResponseEntity<CertificateDataResponseDto> issueCertificate(String uuid, CertificateSignRequestDto request) throws NotFoundException, CertificateOperationException, CertificateRequestException {
+    public ResponseEntity<CertificateDataResponseDto> issueCertificate(String uuid, CertificateSignRequestDto request)
+            throws NotFoundException, CertificateOperationException, CertificateRequestException {
         try {
             return ResponseEntity.ok(certificateEjbcaService.issueCertificate(uuid, request));
         } catch (NotFoundException e) {
@@ -121,7 +129,8 @@ public class CertificateControllerImpl implements CertificateController {
     }
 
     @Override
-    public ResponseEntity<CertificateDataResponseDto> renewCertificate(String uuid, CertificateRenewRequestDto request) throws NotFoundException, CertificateOperationException, CertificateRequestException {
+    public ResponseEntity<CertificateDataResponseDto> renewCertificate(String uuid, CertificateRenewRequestDto request)
+            throws NotFoundException, CertificateOperationException, CertificateRequestException {
         try {
             return ResponseEntity.ok(certificateEjbcaService.renewCertificate(uuid, request));
         } catch (NotFoundException e) {
@@ -139,14 +148,14 @@ public class CertificateControllerImpl implements CertificateController {
     }
 
     @Override
-    public void validateRevokeCertificateAttributes(String uuid, List<RequestAttribute> attributes) throws ValidationException {
-        AttributeDefinitionUtils.validateAttributes(
-                listRevokeCertificateAttributes(uuid),
-                attributes);
+    public void validateRevokeCertificateAttributes(String uuid, List<RequestAttribute> attributes)
+            throws ValidationException {
+        AttributeDefinitionUtils.validateAttributes(listRevokeCertificateAttributes(uuid), attributes);
     }
 
     @Override
-    public ResponseEntity<Void> revokeCertificate(String uuid, CertRevocationDto request) throws NotFoundException, CertificateOperationException {
+    public ResponseEntity<Void> revokeCertificate(String uuid, CertRevocationDto request)
+            throws NotFoundException, CertificateOperationException {
         try {
             certificateEjbcaService.revokeCertificate(uuid, request);
         } catch (NotFoundException | AccessDeniedException e) {
@@ -160,27 +169,32 @@ public class CertificateControllerImpl implements CertificateController {
     }
 
     @Override
-    public CertificateOperationStatusResponseDto getIssueCertificateStatus(String uuid, CertificateOperationStatusRequestDto request) throws NotFoundException {
+    public CertificateOperationStatusResponseDto getIssueCertificateStatus(String uuid,
+            CertificateOperationStatusRequestDto request) throws NotFoundException {
         throw new UnsupportedOperationException("getIssueCertificateStatus is not supported");
     }
 
     @Override
-    public void cancelIssueCertificate(String uuid, CertificateOperationCancelRequestDto request) throws NotFoundException, ValidationException {
+    public void cancelIssueCertificate(String uuid, CertificateOperationCancelRequestDto request)
+            throws NotFoundException, ValidationException {
         throw new UnsupportedOperationException("cancelIssueCertificate is not supported");
     }
 
     @Override
-    public void cancelRevokeCertificate(String uuid, CertificateOperationCancelRequestDto request) throws NotFoundException, ValidationException {
+    public void cancelRevokeCertificate(String uuid, CertificateOperationCancelRequestDto request)
+            throws NotFoundException, ValidationException {
         throw new UnsupportedOperationException("cancelRevokeCertificate is not supported");
     }
 
     @Override
-    public CertificateOperationStatusResponseDto getRevokeCertificateStatus(String uuid, CertificateOperationStatusRequestDto request) throws NotFoundException {
+    public CertificateOperationStatusResponseDto getRevokeCertificateStatus(String uuid,
+            CertificateOperationStatusRequestDto request) throws NotFoundException {
         throw new UnsupportedOperationException("getRevokeCertificateStatus is not supported");
     }
 
     @Override
-    public CertificateIdentificationResponseDto identifyCertificate(String uuid, CertificateIdentificationRequestDto request) throws NotFoundException, ValidationException {
+    public CertificateIdentificationResponseDto identifyCertificate(String uuid,
+            CertificateIdentificationRequestDto request) throws NotFoundException, ValidationException {
         return certificateEjbcaService.identifyCertificate(uuid, request);
     }
 }

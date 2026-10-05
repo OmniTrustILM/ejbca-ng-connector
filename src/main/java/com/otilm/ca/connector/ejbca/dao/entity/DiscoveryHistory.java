@@ -1,11 +1,18 @@
 package com.otilm.ca.connector.ejbca.dao.entity;
 
 import com.otilm.api.model.core.discovery.DiscoveryStatus;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
+import java.io.Serializable;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
-
-import jakarta.persistence.*;
-import java.io.Serializable;
 
 @Entity
 @Table(name = "discovery_history")
@@ -17,7 +24,7 @@ public class DiscoveryHistory implements Serializable {
     @SequenceGenerator(name = "discovery_seq", sequenceName = "discovery_id_seq", allocationSize = 1)
     private Long id;
 
-    @Column(name="uuid")
+    @Column(name = "uuid")
     private String uuid;
 
     @Column(name = "name")
@@ -32,8 +39,11 @@ public class DiscoveryHistory implements Serializable {
 
     @Override
     public String toString() {
-        return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE).append("id", id).append("name", name)
-                .append("status", status).toString();
+        return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE)
+                .append("id", id)
+                .append("name", name)
+                .append("status", status)
+                .toString();
     }
 
     public Long getId() {

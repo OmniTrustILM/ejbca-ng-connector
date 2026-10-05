@@ -4,14 +4,22 @@ import com.otilm.api.model.common.attribute.common.BaseAttribute;
 import com.otilm.api.model.connector.authority.AuthorityProviderInstanceDto;
 import com.otilm.ca.connector.ejbca.dto.AuthorityInstanceNameAndUuidDto;
 import com.otilm.core.util.AttributeDefinitionUtils;
+import jakarta.persistence.Basic;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
-import jakarta.persistence.*;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "authority_instance")
@@ -36,7 +44,7 @@ public class AuthorityInstance {
     @Column(name = "credential_uuid")
     private String credentialUuid;
 
-    //    @Lob
+    // @Lob
     @Basic(fetch = FetchType.LAZY)
     @Column(name = "credential_data", length = 40960)
     private String credentialData;
@@ -49,7 +57,7 @@ public class AuthorityInstance {
     @LastModifiedDate
     protected LocalDateTime updated;
 
-    @Column(name="attributes")
+    @Column(name = "attributes")
     private String attributes;
 
     public Long getId() {
@@ -146,8 +154,12 @@ public class AuthorityInstance {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         AuthorityInstance that = (AuthorityInstance) o;
         return new EqualsBuilder().append(id, that.id).isEquals();
     }

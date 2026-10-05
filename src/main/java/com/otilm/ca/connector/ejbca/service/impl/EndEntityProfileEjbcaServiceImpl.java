@@ -8,12 +8,11 @@ import com.otilm.ca.connector.ejbca.ws.AuthorizationDeniedException_Exception;
 import com.otilm.ca.connector.ejbca.ws.EjbcaException_Exception;
 import com.otilm.ca.connector.ejbca.ws.EjbcaWS;
 import com.otilm.ca.connector.ejbca.ws.NameAndId;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 @Transactional
@@ -36,9 +35,7 @@ public class EndEntityProfileEjbcaServiceImpl implements EndEntityProfileEjbcaSe
                 throw new NotFoundException("EndEntityProfile on ca", uuid);
             }
 
-            return endEntityProfiles.stream()
-                    .map(p -> new NameAndIdDto(p.getId(), p.getName()))
-                    .toList();
+            return endEntityProfiles.stream().map(p -> new NameAndIdDto(p.getId(), p.getName())).toList();
         } catch (AuthorizationDeniedException_Exception e) {
             throw new AccessDeniedException("Authorization denied on EJBCA", e);
         } catch (EjbcaException_Exception e) {

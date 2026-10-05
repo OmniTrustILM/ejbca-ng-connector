@@ -3,13 +3,14 @@ package com.otilm.ca.connector.ejbca.util;
 import com.otilm.api.model.common.NameAndIdDto;
 import com.otilm.api.model.common.attribute.v2.content.BaseAttributeContentV2;
 import com.otilm.api.model.common.attribute.v2.content.ObjectAttributeContentV2;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(MockitoExtension.class)
 class LocalAttributeUtilTest {
@@ -37,10 +38,7 @@ class LocalAttributeUtilTest {
 
     @Test
     void convertFromNameAndId_multipleEntries() {
-        List<NameAndIdDto> input = List.of(
-                new NameAndIdDto(1, "Alpha"),
-                new NameAndIdDto(2, "Beta")
-        );
+        List<NameAndIdDto> input = List.of(new NameAndIdDto(1, "Alpha"), new NameAndIdDto(2, "Beta"));
 
         List<ObjectAttributeContentV2> result = LocalAttributeUtil.convertFromNameAndId(input);
 
@@ -70,11 +68,8 @@ class LocalAttributeUtilTest {
 
     @Test
     void convertFromNameAndIdToBase_multipleEntries_preservesOrder() {
-        List<NameAndIdDto> input = List.of(
-                new NameAndIdDto(100, "First"),
-                new NameAndIdDto(200, "Second"),
-                new NameAndIdDto(300, "Third")
-        );
+        List<NameAndIdDto> input = List
+                .of(new NameAndIdDto(100, "First"), new NameAndIdDto(200, "Second"), new NameAndIdDto(300, "Third"));
 
         List<BaseAttributeContentV2<?>> result = LocalAttributeUtil.convertFromNameAndIdToBase(input);
 

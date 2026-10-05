@@ -11,27 +11,34 @@ import com.otilm.ca.connector.ejbca.EjbcaException;
 import com.otilm.ca.connector.ejbca.dto.ejbca.request.SearchCertificatesRestRequestV2;
 import com.otilm.ca.connector.ejbca.dto.ejbca.response.SearchCertificatesRestResponseV2;
 import com.otilm.ca.connector.ejbca.util.EjbcaVersion;
-import com.otilm.ca.connector.ejbca.ws.*;
-import org.springframework.security.access.AccessDeniedException;
-
+import com.otilm.ca.connector.ejbca.ws.Certificate;
 import java.io.IOException;
 import java.util.List;
+import org.springframework.security.access.AccessDeniedException;
 
 public interface EjbcaService {
 
-    void createEndEntity(String authorityUuid, String username, String password, String subjectDn, String subjectAltName, List<RequestAttribute> raProfileAttributes, List<RequestAttribute> issueAttributes) throws NotFoundException, AlreadyExistException, EjbcaException;
+    void createEndEntity(String authorityUuid, String username, String password, String subjectDn,
+            String subjectAltName, List<RequestAttribute> raProfileAttributes, List<RequestAttribute> issueAttributes)
+            throws NotFoundException, AlreadyExistException, EjbcaException;
 
-    void createEndEntityWithMeta(String authorityUuid, String username, String password, String subjectDn, String subjectAltName, List<RequestAttribute> raProfileAttributes, List<MetadataAttribute> metadata) throws NotFoundException, AlreadyExistException;
+    void createEndEntityWithMeta(String authorityUuid, String username, String password, String subjectDn,
+            String subjectAltName, List<RequestAttribute> raProfileAttributes, List<MetadataAttribute> metadata)
+            throws NotFoundException, AlreadyExistException;
 
-    void renewEndEntity(String authorityUuid, String username, String password, String subjectDn, String subjectAltName) throws NotFoundException;
+    void renewEndEntity(String authorityUuid, String username, String password, String subjectDn, String subjectAltName)
+            throws NotFoundException;
 
-    CertificateDataResponseDto issueCertificate(String authorityUuid, String username, String password, String certificateRequest, CertificateRequestFormat requestFormat) throws NotFoundException;
+    CertificateDataResponseDto issueCertificate(String authorityUuid, String username, String password,
+            String certificateRequest, CertificateRequestFormat requestFormat) throws NotFoundException;
 
-    void revokeCertificate(String uuid, String issuerDn, String serialNumber, int revocationReason) throws NotFoundException, AccessDeniedException;
+    void revokeCertificate(String uuid, String issuerDn, String serialNumber, int revocationReason)
+            throws NotFoundException, AccessDeniedException;
 
     EjbcaVersion getEjbcaVersion(String authorityInstanceUuid) throws NotFoundException;
 
-    SearchCertificatesRestResponseV2 searchCertificates(String authorityInstanceUuid, String restUrl, SearchCertificatesRestRequestV2 request) throws NotFoundException, IOException;
+    SearchCertificatesRestResponseV2 searchCertificates(String authorityInstanceUuid, String restUrl,
+            SearchCertificatesRestRequestV2 request) throws NotFoundException, IOException;
 
     List<NameAndIdDto> getAvailableCas(String authorityInstanceUuid) throws NotFoundException;
 

@@ -15,15 +15,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SearchCertificatesRestResponseV2 {
-    
+
     private List<CertificateRestResponseV2> certificates = new ArrayList<>();
 
     @JsonProperty("pagination_summary")
     private PaginationSummary paginationSummary;
 
-    public SearchCertificatesRestResponseV2() {}
+    public SearchCertificatesRestResponseV2() {
+    }
 
-    public SearchCertificatesRestResponseV2(List<CertificateRestResponseV2> certificates, PaginationSummary paginationSummary) {
+    public SearchCertificatesRestResponseV2(List<CertificateRestResponseV2> certificates,
+            PaginationSummary paginationSummary) {
         this.certificates = certificates;
         this.paginationSummary = paginationSummary;
     }

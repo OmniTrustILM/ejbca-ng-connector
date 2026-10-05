@@ -3,24 +3,22 @@ package com.otilm.ca.connector.ejbca.service.impl;
 import com.otilm.api.model.client.attribute.RequestAttribute;
 import com.otilm.api.model.common.attribute.common.AttributeType;
 import com.otilm.api.model.common.attribute.common.BaseAttribute;
-import com.otilm.api.model.common.attribute.common.DataAttribute;
 import com.otilm.api.model.common.attribute.common.callback.AttributeCallback;
 import com.otilm.api.model.common.attribute.common.callback.AttributeCallbackMapping;
 import com.otilm.api.model.common.attribute.common.callback.AttributeValueTarget;
 import com.otilm.api.model.common.attribute.common.content.AttributeContentType;
-import com.otilm.api.model.common.attribute.v2.DataAttributeV2;
 import com.otilm.api.model.common.attribute.common.properties.DataAttributeProperties;
+import com.otilm.api.model.common.attribute.v2.DataAttributeV2;
 import com.otilm.ca.connector.ejbca.service.AttributeService;
 import com.otilm.core.util.AttributeDefinitionUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-
 import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 
 @Service
 @Transactional
@@ -39,10 +37,10 @@ public class AttributeServiceImpl implements AttributeService {
     public static final String DATA_ATTRIBUTE_CREDENTIAL_LABEL = "Credential";
     public static final String DATA_ATTRIBUTE_CREDENTIAL_DESCRIPTION = "SoftKeyStore Credential representing EJBCA administrator for the communication";
 
-	@Override
-	public List<BaseAttribute> getAttributes(String kind) {
-		logger.debug("Getting the attributes for {}", kind);
-		List<BaseAttribute> attrs = new ArrayList<>();
+    @Override
+    public List<BaseAttribute> getAttributes(String kind) {
+        logger.debug("Getting the attributes for {}", kind);
+        List<BaseAttribute> attrs = new ArrayList<>();
 
         DataAttributeV2 url = new DataAttributeV2();
         url.setUuid(DATA_ATTRIBUTE_URL_UUID);
@@ -76,29 +74,28 @@ public class AttributeServiceImpl implements AttributeService {
         credential.setProperties(credentialProperties);
 
         Set<AttributeCallbackMapping> mappings = new HashSet<>();
-        mappings.add(new AttributeCallbackMapping(
-                "credentialKind",
-                AttributeValueTarget.PATH_VARIABLE,
-                "SoftKeyStore"));
+        mappings
+                .add(new AttributeCallbackMapping("credentialKind", AttributeValueTarget.PATH_VARIABLE,
+                        "SoftKeyStore"));
 
         AttributeCallback listCredentialCallback = new AttributeCallback();
         listCredentialCallback.setCallbackContext("core/getCredentials");
         listCredentialCallback.setCallbackMethod("GET");
         listCredentialCallback.setMappings(mappings);
         credential.setAttributeCallback(listCredentialCallback);
-        
+
         attrs.add(credential);
 
         return attrs;
-	}
+    }
 
-	@Override
-	public boolean validateAttributes(String kind, List<RequestAttribute> attributes) {
+    @Override
+    public boolean validateAttributes(String kind, List<RequestAttribute> attributes) {
         if (attributes == null) {
             return false;
         }
 
-		AttributeDefinitionUtils.validateAttributes(getAttributes(kind), attributes);
+        AttributeDefinitionUtils.validateAttributes(getAttributes(kind), attributes);
         return true;
-	}
+    }
 }

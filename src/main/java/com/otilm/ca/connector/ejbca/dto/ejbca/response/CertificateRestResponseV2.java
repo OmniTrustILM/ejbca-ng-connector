@@ -5,95 +5,112 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
- * A class representing general information about a certificate and its CertificateData 
- * for the usage as REST response.
+ * A class representing general information about a certificate and its CertificateData for the usage as REST response.
  */
-@JsonPropertyOrder({ "fingerprint", "cAFingerprint", "certificateProfileId", "endEntityProfileId", 
-    "expireDate", "issuerDN", "notBefore", "revocationDate", "revocationReason", "serialNumber", 
-    "status", "subjectAltName", "subjectDN", "subjectKeyId", "tag", "type", "updateTime", "username", 
-    "certificate", "certificateRequest", "crlPartitionIndex" })
+@JsonPropertyOrder({
+        "fingerprint",
+        "cAFingerprint",
+        "certificateProfileId",
+        "endEntityProfileId",
+        "expireDate",
+        "issuerDN",
+        "notBefore",
+        "revocationDate",
+        "revocationReason",
+        "serialNumber",
+        "status",
+        "subjectAltName",
+        "subjectDN",
+        "subjectKeyId",
+        "tag",
+        "type",
+        "updateTime",
+        "username",
+        "certificate",
+        "certificateRequest",
+        "crlPartitionIndex"})
 public class CertificateRestResponseV2 {
-    
+
     @JsonInclude(JsonInclude.Include.ALWAYS)
     @JsonProperty("fingerprint")
     private String fingerprint;
-    
+
     @JsonInclude(JsonInclude.Include.ALWAYS)
     @JsonProperty("cAFingerprint")
     private String caFingerprint;
-    
+
     @JsonInclude(JsonInclude.Include.ALWAYS)
     @JsonProperty("issuerDN")
     private String issuerDN;
-    
+
     @JsonInclude(JsonInclude.Include.ALWAYS)
     @JsonProperty("subjectDN")
     private String subjectDN;
-    
+
     @JsonInclude(JsonInclude.Include.ALWAYS)
     @JsonProperty("subjectAltName")
     private String subjectAltName;
-    
+
     @JsonInclude(JsonInclude.Include.ALWAYS)
     @JsonProperty("subjectKeyId")
     private String subjectKeyId;
-    
+
     @JsonInclude(JsonInclude.Include.ALWAYS)
     @JsonProperty("certificateProfileId")
     private Integer certificateProfileId;
-    
+
     @JsonInclude(JsonInclude.Include.ALWAYS)
     @JsonProperty("endEntityProfileId")
     private Integer endEntityProfileId;
-    
+
     @JsonInclude(JsonInclude.Include.ALWAYS)
     @JsonProperty("notBefore")
     private Long notBefore;
-    
+
     @JsonInclude(JsonInclude.Include.ALWAYS)
     @JsonProperty("expireDate")
     private Long expireDate;
-    
+
     @JsonInclude(JsonInclude.Include.ALWAYS)
     @JsonProperty("revocationDate")
     private Long revocationDate = -1L;
-    
+
     @JsonInclude(JsonInclude.Include.ALWAYS)
     @JsonProperty("revocationReason")
     private Integer revocationReason = -1;
-    
+
     @JsonInclude(JsonInclude.Include.ALWAYS)
     @JsonProperty("serialNumber")
     private String serialNumber;
-    
+
     @JsonInclude(JsonInclude.Include.ALWAYS)
     @JsonProperty("status")
     private Integer status;
-    
+
     @JsonInclude(JsonInclude.Include.ALWAYS)
     @JsonProperty("tag")
     private String tag;
-    
+
     @JsonInclude(JsonInclude.Include.ALWAYS)
     @JsonProperty("type")
     private Integer type;
-    
+
     @JsonInclude(JsonInclude.Include.ALWAYS)
     @JsonProperty("udpateTime")
     private Long updateTime;
-    
+
     @JsonInclude(JsonInclude.Include.ALWAYS)
     @JsonProperty("username")
     private String username;
-    
+
     @JsonInclude(JsonInclude.Include.ALWAYS)
     @JsonProperty("base64Cert")
     private byte[] certificate;
-    
+
     @JsonInclude(JsonInclude.Include.ALWAYS)
     @JsonProperty("certificateRequest")
     private String certificateRequest;
-    
+
     @JsonInclude(JsonInclude.Include.ALWAYS)
     @JsonProperty("crlPartitionIndex")
     private Integer crlPartitionIndex;
@@ -122,7 +139,8 @@ public class CertificateRestResponseV2 {
         this.crlPartitionIndex = builder.crlPartitionIndex;
     }
 
-    public CertificateRestResponseV2() {}
+    public CertificateRestResponseV2() {
+    }
 
     /**
      * Return a builder instance for this class.
@@ -137,7 +155,7 @@ public class CertificateRestResponseV2 {
         // Base64 serialized string as byte array --> already done here.
         return certificate;
     }
-    
+
     public String getFingerprint() {
         return fingerprint;
     }
@@ -217,9 +235,9 @@ public class CertificateRestResponseV2 {
     public String getSerialNumber() {
         return serialNumber;
     }
-    
+
     public static class CertificateRestResponseBuilderV2 {
-        
+
         private String fingerprint;
         private String cAFingerprint;
         private String issuerDN;
@@ -241,7 +259,7 @@ public class CertificateRestResponseV2 {
         private byte[] certificate;
         private String certificateRequest;
         private Integer crlPartitionIndex;
-        
+
         private CertificateRestResponseBuilderV2() {
         }
 
@@ -249,57 +267,57 @@ public class CertificateRestResponseV2 {
             this.fingerprint = fingerprint;
             return this;
         }
-        
+
         public CertificateRestResponseBuilderV2 setCAFingerprint(String cAFingerprint) {
             this.cAFingerprint = cAFingerprint;
             return this;
         }
-        
+
         public CertificateRestResponseBuilderV2 setIssuerDN(String issuerDN) {
             this.issuerDN = issuerDN;
             return this;
         }
-        
+
         public CertificateRestResponseBuilderV2 setSubjectDN(String subjectDN) {
             this.subjectDN = subjectDN;
             return this;
         }
-        
+
         public CertificateRestResponseBuilderV2 setSubjectAltName(String san) {
             this.subjectAltName = san;
             return this;
         }
-        
+
         public CertificateRestResponseBuilderV2 setSubjectKeyId(String subjectKeyId) {
             this.subjectKeyId = subjectKeyId;
             return this;
         }
-        
+
         public CertificateRestResponseBuilderV2 setCertificateProfileId(Integer id) {
             this.certificateProfileId = id;
             return this;
         }
-        
+
         public CertificateRestResponseBuilderV2 setEndEntityProfileId(Integer id) {
             this.endEntityProfileId = id;
             return this;
         }
-        
+
         public CertificateRestResponseBuilderV2 setNotBefore(Long millies) {
             this.notBefore = millies;
             return this;
         }
-        
+
         public CertificateRestResponseBuilderV2 setExpireDate(Long millies) {
             this.expireDate = millies;
             return this;
         }
-        
+
         public CertificateRestResponseBuilderV2 setRevocationDate(Long millies) {
             this.revocationDate = millies;
             return this;
         }
-        
+
         public CertificateRestResponseBuilderV2 setRevocationReason(Integer reason) {
             this.revocationReason = reason;
             return this;
@@ -314,17 +332,17 @@ public class CertificateRestResponseV2 {
             this.status = status;
             return this;
         }
-        
+
         public CertificateRestResponseBuilderV2 setTag(String tag) {
             this.tag = tag;
             return this;
         }
-        
+
         public CertificateRestResponseBuilderV2 setType(Integer type) {
             this.type = type;
             return this;
         }
-        
+
         public CertificateRestResponseBuilderV2 setUpdateTime(Long millies) {
             this.updateTime = millies;
             return this;
@@ -334,22 +352,22 @@ public class CertificateRestResponseV2 {
             this.username = username;
             return this;
         }
-        
+
         public CertificateRestResponseBuilderV2 setCertificate(byte[] certificate) {
             this.certificate = certificate;
             return this;
         }
-        
+
         public CertificateRestResponseBuilderV2 setCertificateRequest(String certificateRequest) {
             this.certificateRequest = certificateRequest;
             return this;
         }
-        
+
         public CertificateRestResponseBuilderV2 setCrlPartitionIndex(Integer index) {
             this.crlPartitionIndex = index;
             return this;
         }
-        
+
         public CertificateRestResponseV2 build() {
             return new CertificateRestResponseV2(this);
         }

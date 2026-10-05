@@ -3,11 +3,16 @@ package com.otilm.ca.connector.ejbca.dao.entity;
 import com.otilm.api.model.common.attribute.common.MetadataAttribute;
 import com.otilm.api.model.connector.discovery.DiscoveryProviderCertificateDataDto;
 import com.otilm.core.util.AttributeDefinitionUtils;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
+import java.io.Serializable;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
-
-import jakarta.persistence.*;
-import java.io.Serializable;
 
 @Entity
 @Table(name = "discovery_certificate")
@@ -16,7 +21,8 @@ public class Certificate implements Serializable {
     @Id
     @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "discovery_certificate_seq")
-    @SequenceGenerator(name = "discovery_certificate_seq", sequenceName = "discovery_certificate_id_seq", allocationSize = 1)
+    @SequenceGenerator(name = "discovery_certificate_seq", sequenceName = "discovery_certificate_id_seq",
+            allocationSize = 1)
     private Long id;
 
     @Column(name = "uuid")
@@ -41,9 +47,7 @@ public class Certificate implements Serializable {
 
     @Override
     public String toString() {
-        return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE)
-                .append("id", id)
-                .toString();
+        return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE).append("id", id).toString();
     }
 
     public Long getId() {
@@ -86,4 +90,3 @@ public class Certificate implements Serializable {
         this.meta = meta;
     }
 }
-

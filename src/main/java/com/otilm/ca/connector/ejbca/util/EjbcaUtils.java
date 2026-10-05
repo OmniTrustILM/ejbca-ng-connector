@@ -4,11 +4,14 @@ import com.otilm.api.exception.ValidationException;
 import com.otilm.api.model.core.authority.EndEntityDto;
 import com.otilm.api.model.core.authority.EndEntityExtendedInfoDto;
 import com.otilm.api.model.core.authority.EndEntityStatus;
-import com.otilm.ca.connector.ejbca.ws.*;
-import org.apache.commons.lang3.StringUtils;
-
+import com.otilm.ca.connector.ejbca.ws.ExtendedInformationWS;
+import com.otilm.ca.connector.ejbca.ws.MatchType;
+import com.otilm.ca.connector.ejbca.ws.MatchWith;
+import com.otilm.ca.connector.ejbca.ws.UserDataVOWS;
+import com.otilm.ca.connector.ejbca.ws.UserMatch;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.commons.lang3.StringUtils;
 
 public class EjbcaUtils {
 
@@ -40,7 +43,8 @@ public class EjbcaUtils {
         userDetailDTO.setSubjectAltName(userDataVOWS.getSubjectAltName());
         userDetailDTO.setStatus(EndEntityStatus.fromCode(userDataVOWS.getStatus()));
         if (userDataVOWS.getExtendedInformation() != null) {
-            List<EndEntityExtendedInfoDto> extendedInformationList = userDataVOWS.getExtendedInformation()
+            List<EndEntityExtendedInfoDto> extendedInformationList = userDataVOWS
+                    .getExtendedInformation()
                     .stream()
                     .map(i -> new EndEntityExtendedInfoDto(i.getName(), i.getValue()))
                     .toList();

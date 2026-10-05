@@ -15,16 +15,15 @@ import com.otilm.ca.connector.ejbca.dao.AuthorityInstanceRepository;
 import com.otilm.ca.connector.ejbca.dao.entity.AuthorityInstance;
 import com.otilm.ca.connector.ejbca.service.AttributeService;
 import com.otilm.ca.connector.ejbca.ws.EjbcaWS;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.reactive.function.client.WebClient;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -200,7 +199,8 @@ class AuthorityInstanceServiceImplTest {
 
     @Test
     void createAuthorityInstance_throwsValidationException_whenConnectionFails() {
-        List<RequestAttribute> attrs = buildInstanceAttributes("https://ejbca.example.com:8443/ejbca/ejbcaws/ejbcaws?wsdl", "cred-uuid");
+        List<RequestAttribute> attrs = buildInstanceAttributes(
+                "https://ejbca.example.com:8443/ejbca/ejbcaws/ejbcaws?wsdl", "cred-uuid");
         when(authorityInstanceRepository.findByName("newCA")).thenReturn(Optional.empty());
         when(attributeService.validateAttributes("EJBCA", attrs)).thenReturn(true);
         when(attributeService.getAttributes("EJBCA")).thenReturn(List.of());
@@ -216,7 +216,8 @@ class AuthorityInstanceServiceImplTest {
 
     @Test
     void createAuthorityInstance_savesInstanceAndCachesConnection_onSuccess() throws AlreadyExistException {
-        List<RequestAttribute> attrs = buildInstanceAttributes("https://ejbca.example.com:8443/ejbca/ejbcaws/ejbcaws?wsdl", "cred-uuid");
+        List<RequestAttribute> attrs = buildInstanceAttributes(
+                "https://ejbca.example.com:8443/ejbca/ejbcaws/ejbcaws?wsdl", "cred-uuid");
         EjbcaWS ejbcaWS = mock(EjbcaWS.class);
         when(authorityInstanceRepository.findByName("newCA")).thenReturn(Optional.empty());
         when(attributeService.validateAttributes("EJBCA", attrs)).thenReturn(true);
@@ -266,7 +267,8 @@ class AuthorityInstanceServiceImplTest {
     @Test
     void updateAuthorityInstance_throwsValidationException_whenConnectionFails() {
         AuthorityInstance existing = authorityInstance(5L, "uuid-upd", "existingCA");
-        List<RequestAttribute> attrs = buildInstanceAttributes("https://ejbca.example.com:8443/ejbca/ejbcaws/ejbcaws?wsdl", "cred-uuid");
+        List<RequestAttribute> attrs = buildInstanceAttributes(
+                "https://ejbca.example.com:8443/ejbca/ejbcaws/ejbcaws?wsdl", "cred-uuid");
         when(authorityInstanceRepository.findByUuid("uuid-upd")).thenReturn(Optional.of(existing));
         when(attributeService.validateAttributes("EJBCA", attrs)).thenReturn(true);
         when(attributeService.getAttributes("EJBCA")).thenReturn(List.of());
@@ -283,7 +285,8 @@ class AuthorityInstanceServiceImplTest {
     @Test
     void updateAuthorityInstance_savesInstanceAndReplacesConnection_onSuccess() throws NotFoundException {
         AuthorityInstance existing = authorityInstance(5L, "uuid-upd", "existingCA");
-        List<RequestAttribute> attrs = buildInstanceAttributes("https://ejbca.example.com:8443/ejbca/ejbcaws/ejbcaws?wsdl", "cred-uuid");
+        List<RequestAttribute> attrs = buildInstanceAttributes(
+                "https://ejbca.example.com:8443/ejbca/ejbcaws/ejbcaws?wsdl", "cred-uuid");
         EjbcaWS ejbcaWS = mock(EjbcaWS.class);
         when(authorityInstanceRepository.findByUuid("uuid-upd")).thenReturn(Optional.of(existing));
         when(attributeService.validateAttributes("EJBCA", attrs)).thenReturn(true);
@@ -388,9 +391,8 @@ class AuthorityInstanceServiceImplTest {
     }
 
     /**
-     * Builds a minimal RequestAttributeV2 list with a STRING "url" attribute and a
-     * CREDENTIAL "credential" attribute — sufficient for
-     * AttributeDefinitionUtils.getSingleItemAttributeContentValue("url", ...) and
+     * Builds a minimal RequestAttributeV2 list with a STRING "url" attribute and a CREDENTIAL "credential" attribute —
+     * sufficient for AttributeDefinitionUtils.getSingleItemAttributeContentValue("url", ...) and
      * AttributeDefinitionUtils.getCredentialContent("credential", ...) to work.
      */
     private static List<RequestAttribute> buildInstanceAttributes(String url, String credentialUuid) {
