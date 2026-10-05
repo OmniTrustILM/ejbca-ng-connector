@@ -88,13 +88,16 @@ public class CertificateRequestUtils {
         };
     }
 
+    /**
+     * Formats the supported subject alternative names of a PKCS#10 or CRMF request for EJBCA.
+     *
+     * @return the formatted names, or {@code null} if the request carries no supported subject alternative name
+     */
     public static String getEjbcaSanExtension(CertificateRequest certificateRequest) throws IOException {
-        if (certificateRequest == null || certificateRequest.getFormat() != CertificateRequestFormat.PKCS10) {
+        if (certificateRequest == null) {
             return null;
         }
-        final PKCS10CertificationRequest pkcs10CertificateRequest = new PKCS10CertificationRequest(
-                certificateRequest.getEncoded());
-        final GeneralNames generalNames = subjectAlternativeNames(pkcs10CertificateRequest);
+        final GeneralNames generalNames = subjectAlternativeNames(certificateRequest);
         if (generalNames == null) {
             return null;
         }
@@ -108,6 +111,19 @@ public class CertificateRequestUtils {
             }
         }
         return parts.isEmpty() ? null : String.join(SAN_SEPARATOR, parts);
+    }
+
+    private static GeneralNames subjectAlternativeNames(CertificateRequest certificateRequest) throws IOException {
+        if (certificateRequest instanceof CrmfCertificateRequest crmf) {
+            final Extensions extensions = crmf.getCertTemplateExtensions();
+            return extensions == null
+                    ? null
+                    : GeneralNames.fromExtensions(extensions, Extension.subjectAlternativeName);
+        }
+        if (certificateRequest.getFormat() == CertificateRequestFormat.PKCS10) {
+            return subjectAlternativeNames(new PKCS10CertificationRequest(certificateRequest.getEncoded()));
+        }
+        return null;
     }
 
     private static GeneralNames subjectAlternativeNames(PKCS10CertificationRequest csr) {
