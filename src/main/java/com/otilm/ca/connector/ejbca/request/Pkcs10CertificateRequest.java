@@ -2,10 +2,9 @@ package com.otilm.ca.connector.ejbca.request;
 
 import com.otilm.api.model.core.enums.CertificateRequestFormat;
 import com.otilm.ca.connector.ejbca.exception.CertificateRequestException;
+import java.io.IOException;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequest;
-
-import java.io.IOException;
 
 public class Pkcs10CertificateRequest implements CertificateRequest {
 

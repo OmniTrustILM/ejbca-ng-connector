@@ -6,15 +6,15 @@ import com.otilm.api.exception.NotFoundException;
 import com.otilm.api.model.client.attribute.RequestAttribute;
 import com.otilm.api.model.client.attribute.RequestAttributeV2;
 import com.otilm.api.model.common.NameAndIdDto;
-import com.otilm.api.model.common.attribute.common.MetadataAttribute;
-import com.otilm.api.model.common.attribute.v2.MetadataAttributeV2;
-import com.otilm.api.model.common.attribute.v2.content.BooleanAttributeContentV2;
-import com.otilm.api.model.common.attribute.v2.content.StringAttributeContentV2;
 import com.otilm.api.model.common.attribute.common.AttributeType;
+import com.otilm.api.model.common.attribute.common.MetadataAttribute;
 import com.otilm.api.model.common.attribute.common.content.AttributeContentType;
 import com.otilm.api.model.common.attribute.common.properties.DataAttributeProperties;
 import com.otilm.api.model.common.attribute.common.properties.MetadataAttributeProperties;
 import com.otilm.api.model.common.attribute.v2.DataAttributeV2;
+import com.otilm.api.model.common.attribute.v2.MetadataAttributeV2;
+import com.otilm.api.model.common.attribute.v2.content.BooleanAttributeContentV2;
+import com.otilm.api.model.common.attribute.v2.content.StringAttributeContentV2;
 import com.otilm.api.model.connector.v2.CertificateDataResponseDto;
 import com.otilm.api.model.core.enums.CertificateRequestFormat;
 import com.otilm.ca.connector.ejbca.EjbcaException;
@@ -23,7 +23,25 @@ import com.otilm.ca.connector.ejbca.dto.ejbca.request.SearchCertificatesRestRequ
 import com.otilm.ca.connector.ejbca.dto.ejbca.response.SearchCertificatesRestResponseV2;
 import com.otilm.ca.connector.ejbca.service.AuthorityInstanceService;
 import com.otilm.ca.connector.ejbca.util.LocalAttributeUtil;
-import com.otilm.ca.connector.ejbca.ws.*;
+import com.otilm.ca.connector.ejbca.ws.AuthorizationDeniedException;
+import com.otilm.ca.connector.ejbca.ws.AuthorizationDeniedException_Exception;
+import com.otilm.ca.connector.ejbca.ws.CADoesntExistsException;
+import com.otilm.ca.connector.ejbca.ws.CADoesntExistsException_Exception;
+import com.otilm.ca.connector.ejbca.ws.Certificate;
+import com.otilm.ca.connector.ejbca.ws.CertificateResponse;
+import com.otilm.ca.connector.ejbca.ws.EjbcaException_Exception;
+import com.otilm.ca.connector.ejbca.ws.EjbcaWS;
+import com.otilm.ca.connector.ejbca.ws.EndEntityProfileNotFoundException;
+import com.otilm.ca.connector.ejbca.ws.EndEntityProfileNotFoundException_Exception;
+import com.otilm.ca.connector.ejbca.ws.NameAndId;
+import com.otilm.ca.connector.ejbca.ws.NotFoundException_Exception;
+import com.otilm.ca.connector.ejbca.ws.UserDataVOWS;
+import com.otilm.ca.connector.ejbca.ws.UserDoesntFullfillEndEntityProfile;
+import com.otilm.ca.connector.ejbca.ws.UserDoesntFullfillEndEntityProfile_Exception;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,16 +51,18 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
-import static org.junit.jupiter.api.Assertions.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.BDDMockito.given;
@@ -54,9 +74,7 @@ import static org.mockito.Mockito.verify;
 class EjbcaServiceImplTest {
 
     @RegisterExtension
-    static WireMockExtension wireMock = WireMockExtension.newInstance()
-            .options(wireMockConfig().dynamicPort())
-            .build();
+    static WireMockExtension wireMock = WireMockExtension.newInstance().options(wireMockConfig().dynamicPort()).build();
 
     @Mock
     AuthorityInstanceService authorityInstanceService;
@@ -94,12 +112,14 @@ class EjbcaServiceImplTest {
     }
 
     private EndEntityProfileNotFoundException_Exception endEntityProfileNotFoundException() {
-        return new EndEntityProfileNotFoundException_Exception("profile not found", new EndEntityProfileNotFoundException());
+        return new EndEntityProfileNotFoundException_Exception("profile not found",
+                new EndEntityProfileNotFoundException());
     }
 
     private UserDoesntFullfillEndEntityProfile_Exception userDoesntFullfillException() {
         // Message must have a ": " separator because EjbcaServiceImpl does getMessage().split(": ")[1]
-        return new UserDoesntFullfillEndEntityProfile_Exception("prefix: profile validation failed", new UserDoesntFullfillEndEntityProfile());
+        return new UserDoesntFullfillEndEntityProfile_Exception("prefix: profile validation failed",
+                new UserDoesntFullfillEndEntityProfile());
     }
 
     /**
@@ -256,9 +276,9 @@ class EjbcaServiceImplTest {
     void createEndEntity_newUser_callsEditUser() throws Exception {
         given(ejbcaWS.findUser(any())).willReturn(null);
 
-        assertDoesNotThrow(() -> service.createEndEntity(
-                UUID, "newUser", "pass", "CN=newUser", "",
-                buildRaProfileAttributes(), buildIssueAttributes()));
+        assertDoesNotThrow(() -> service
+                .createEndEntity(UUID, "newUser", "pass", "CN=newUser", "", buildRaProfileAttributes(),
+                        buildIssueAttributes()));
 
         verify(ejbcaWS).editUser(any());
     }
@@ -267,9 +287,10 @@ class EjbcaServiceImplTest {
     void createEndEntity_existingUser_throwsAlreadyExistException() throws Exception {
         given(ejbcaWS.findUser(any())).willReturn(List.of(buildUserDataVOWS("existingUser")));
 
-        assertThrows(AlreadyExistException.class, () -> service.createEndEntity(
-                UUID, "existingUser", "pass", "CN=existingUser", "",
-                buildRaProfileAttributes(), buildIssueAttributes()));
+        assertThrows(AlreadyExistException.class,
+                () -> service
+                        .createEndEntity(UUID, "existingUser", "pass", "CN=existingUser", "",
+                                buildRaProfileAttributes(), buildIssueAttributes()));
     }
 
     @Test
@@ -277,9 +298,10 @@ class EjbcaServiceImplTest {
         given(ejbcaWS.findUser(any())).willReturn(null);
         willThrow(authDeniedException()).given(ejbcaWS).editUser(any());
 
-        assertThrows(AccessDeniedException.class, () -> service.createEndEntity(
-                UUID, "newUser", "pass", "CN=newUser", "",
-                buildRaProfileAttributes(), buildIssueAttributes()));
+        assertThrows(AccessDeniedException.class,
+                () -> service
+                        .createEndEntity(UUID, "newUser", "pass", "CN=newUser", "", buildRaProfileAttributes(),
+                                buildIssueAttributes()));
     }
 
     @Test
@@ -287,9 +309,10 @@ class EjbcaServiceImplTest {
         given(ejbcaWS.findUser(any())).willReturn(null);
         willThrow(caDoesntExistException()).given(ejbcaWS).editUser(any());
 
-        assertThrows(NotFoundException.class, () -> service.createEndEntity(
-                UUID, "newUser", "pass", "CN=newUser", "",
-                buildRaProfileAttributes(), buildIssueAttributes()));
+        assertThrows(NotFoundException.class,
+                () -> service
+                        .createEndEntity(UUID, "newUser", "pass", "CN=newUser", "", buildRaProfileAttributes(),
+                                buildIssueAttributes()));
     }
 
     @Test
@@ -297,9 +320,10 @@ class EjbcaServiceImplTest {
         given(ejbcaWS.findUser(any())).willReturn(null);
         willThrow(userDoesntFullfillException()).given(ejbcaWS).editUser(any());
 
-        assertThrows(EjbcaException.class, () -> service.createEndEntity(
-                UUID, "newUser", "pass", "CN=newUser", "",
-                buildRaProfileAttributes(), buildIssueAttributes()));
+        assertThrows(EjbcaException.class,
+                () -> service
+                        .createEndEntity(UUID, "newUser", "pass", "CN=newUser", "", buildRaProfileAttributes(),
+                                buildIssueAttributes()));
     }
 
     @Test
@@ -307,9 +331,10 @@ class EjbcaServiceImplTest {
         given(ejbcaWS.findUser(any())).willReturn(null);
         willThrow(new RuntimeException("unexpected")).given(ejbcaWS).editUser(any());
 
-        assertThrows(IllegalStateException.class, () -> service.createEndEntity(
-                UUID, "newUser", "pass", "CN=newUser", "",
-                buildRaProfileAttributes(), buildIssueAttributes()));
+        assertThrows(IllegalStateException.class,
+                () -> service
+                        .createEndEntity(UUID, "newUser", "pass", "CN=newUser", "", buildRaProfileAttributes(),
+                                buildIssueAttributes()));
     }
 
     // ── createEndEntityWithMeta ───────────────────────────────────────────────
@@ -318,9 +343,9 @@ class EjbcaServiceImplTest {
     void createEndEntityWithMeta_newUser_callsEditUser() throws Exception {
         given(ejbcaWS.findUser(any())).willReturn(null);
 
-        assertDoesNotThrow(() -> service.createEndEntityWithMeta(
-                UUID, "newUser", "pass", "CN=newUser", "",
-                buildRaProfileAttributes(), buildMetadataAttributes()));
+        assertDoesNotThrow(() -> service
+                .createEndEntityWithMeta(UUID, "newUser", "pass", "CN=newUser", "", buildRaProfileAttributes(),
+                        buildMetadataAttributes()));
 
         verify(ejbcaWS).editUser(any());
     }
@@ -329,9 +354,10 @@ class EjbcaServiceImplTest {
     void createEndEntityWithMeta_existingUser_throwsAlreadyExistException() throws Exception {
         given(ejbcaWS.findUser(any())).willReturn(List.of(buildUserDataVOWS("existingUser")));
 
-        assertThrows(AlreadyExistException.class, () -> service.createEndEntityWithMeta(
-                UUID, "existingUser", "pass", "CN=existingUser", "",
-                buildRaProfileAttributes(), buildMetadataAttributes()));
+        assertThrows(AlreadyExistException.class,
+                () -> service
+                        .createEndEntityWithMeta(UUID, "existingUser", "pass", "CN=existingUser", "",
+                                buildRaProfileAttributes(), buildMetadataAttributes()));
     }
 
     @Test
@@ -339,9 +365,10 @@ class EjbcaServiceImplTest {
         given(ejbcaWS.findUser(any())).willReturn(null);
         willThrow(authDeniedException()).given(ejbcaWS).editUser(any());
 
-        assertThrows(AccessDeniedException.class, () -> service.createEndEntityWithMeta(
-                UUID, "newUser", "pass", "CN=newUser", "",
-                buildRaProfileAttributes(), buildMetadataAttributes()));
+        assertThrows(AccessDeniedException.class,
+                () -> service
+                        .createEndEntityWithMeta(UUID, "newUser", "pass", "CN=newUser", "", buildRaProfileAttributes(),
+                                buildMetadataAttributes()));
     }
 
     @Test
@@ -349,9 +376,10 @@ class EjbcaServiceImplTest {
         given(ejbcaWS.findUser(any())).willReturn(null);
         willThrow(caDoesntExistException()).given(ejbcaWS).editUser(any());
 
-        assertThrows(NotFoundException.class, () -> service.createEndEntityWithMeta(
-                UUID, "newUser", "pass", "CN=newUser", "",
-                buildRaProfileAttributes(), buildMetadataAttributes()));
+        assertThrows(NotFoundException.class,
+                () -> service
+                        .createEndEntityWithMeta(UUID, "newUser", "pass", "CN=newUser", "", buildRaProfileAttributes(),
+                                buildMetadataAttributes()));
     }
 
     @Test
@@ -359,9 +387,10 @@ class EjbcaServiceImplTest {
         given(ejbcaWS.findUser(any())).willReturn(null);
         willThrow(new RuntimeException("unexpected")).given(ejbcaWS).editUser(any());
 
-        assertThrows(IllegalStateException.class, () -> service.createEndEntityWithMeta(
-                UUID, "newUser", "pass", "CN=newUser", "",
-                buildRaProfileAttributes(), buildMetadataAttributes()));
+        assertThrows(IllegalStateException.class,
+                () -> service
+                        .createEndEntityWithMeta(UUID, "newUser", "pass", "CN=newUser", "", buildRaProfileAttributes(),
+                                buildMetadataAttributes()));
     }
 
     // ── renewEndEntity ────────────────────────────────────────────────────────
@@ -379,7 +408,8 @@ class EjbcaServiceImplTest {
     void renewEndEntity_noSuchUser_throwsNotFoundException() throws Exception {
         given(ejbcaWS.findUser(any())).willReturn(null);
 
-        assertThrows(NotFoundException.class, () -> service.renewEndEntity(UUID, "unknownUser", "newPass", "CN=unknownUser", ""));
+        assertThrows(NotFoundException.class,
+                () -> service.renewEndEntity(UUID, "unknownUser", "newPass", "CN=unknownUser", ""));
     }
 
     @Test
@@ -387,7 +417,8 @@ class EjbcaServiceImplTest {
         given(ejbcaWS.findUser(any())).willReturn(List.of(buildUserDataVOWS("existingUser")));
         willThrow(authDeniedException()).given(ejbcaWS).editUser(any());
 
-        assertThrows(AccessDeniedException.class, () -> service.renewEndEntity(UUID, "existingUser", "newPass", "CN=existingUser", ""));
+        assertThrows(AccessDeniedException.class,
+                () -> service.renewEndEntity(UUID, "existingUser", "newPass", "CN=existingUser", ""));
     }
 
     @Test
@@ -395,7 +426,8 @@ class EjbcaServiceImplTest {
         given(ejbcaWS.findUser(any())).willReturn(List.of(buildUserDataVOWS("existingUser")));
         willThrow(caDoesntExistException()).given(ejbcaWS).editUser(any());
 
-        assertThrows(NotFoundException.class, () -> service.renewEndEntity(UUID, "existingUser", "newPass", "CN=existingUser", ""));
+        assertThrows(NotFoundException.class,
+                () -> service.renewEndEntity(UUID, "existingUser", "newPass", "CN=existingUser", ""));
     }
 
     @Test
@@ -403,7 +435,8 @@ class EjbcaServiceImplTest {
         given(ejbcaWS.findUser(any())).willReturn(List.of(buildUserDataVOWS("existingUser")));
         willThrow(new RuntimeException("unexpected")).given(ejbcaWS).editUser(any());
 
-        assertThrows(IllegalStateException.class, () -> service.renewEndEntity(UUID, "existingUser", "newPass", "CN=existingUser", ""));
+        assertThrows(IllegalStateException.class,
+                () -> service.renewEndEntity(UUID, "existingUser", "newPass", "CN=existingUser", ""));
     }
 
     // ── issueCertificate (PKCS10) ─────────────────────────────────────────────
@@ -412,7 +445,8 @@ class EjbcaServiceImplTest {
     void issueCertificate_pkcs10_happyPath() throws Exception {
         given(ejbcaWS.pkcs10Request(any(), any(), any(), any(), any())).willReturn(buildCertificateResponse());
 
-        CertificateDataResponseDto result = service.issueCertificate(UUID, "user", "pass", "CSRDATA", CertificateRequestFormat.PKCS10);
+        CertificateDataResponseDto result = service
+                .issueCertificate(UUID, "user", "pass", "CSRDATA", CertificateRequestFormat.PKCS10);
 
         assertNotNull(result);
         assertEquals("TEST_CERT_DATA", result.getCertificateData());
@@ -422,28 +456,32 @@ class EjbcaServiceImplTest {
     void issueCertificate_pkcs10_authDenied_throwsAccessDeniedException() throws Exception {
         given(ejbcaWS.pkcs10Request(any(), any(), any(), any(), any())).willThrow(authDeniedException());
 
-        assertThrows(AccessDeniedException.class, () -> service.issueCertificate(UUID, "user", "pass", "CSRDATA", CertificateRequestFormat.PKCS10));
+        assertThrows(AccessDeniedException.class,
+                () -> service.issueCertificate(UUID, "user", "pass", "CSRDATA", CertificateRequestFormat.PKCS10));
     }
 
     @Test
     void issueCertificate_pkcs10_caDoesntExist_throwsNotFoundException() throws Exception {
         given(ejbcaWS.pkcs10Request(any(), any(), any(), any(), any())).willThrow(caDoesntExistException());
 
-        assertThrows(NotFoundException.class, () -> service.issueCertificate(UUID, "user", "pass", "CSRDATA", CertificateRequestFormat.PKCS10));
+        assertThrows(NotFoundException.class,
+                () -> service.issueCertificate(UUID, "user", "pass", "CSRDATA", CertificateRequestFormat.PKCS10));
     }
 
     @Test
     void issueCertificate_pkcs10_notFound_throwsNotFoundException() throws Exception {
         given(ejbcaWS.pkcs10Request(any(), any(), any(), any(), any())).willThrow(notFoundException());
 
-        assertThrows(NotFoundException.class, () -> service.issueCertificate(UUID, "user", "pass", "CSRDATA", CertificateRequestFormat.PKCS10));
+        assertThrows(NotFoundException.class,
+                () -> service.issueCertificate(UUID, "user", "pass", "CSRDATA", CertificateRequestFormat.PKCS10));
     }
 
     @Test
     void issueCertificate_pkcs10_otherException_throwsIllegalStateException() throws Exception {
         given(ejbcaWS.pkcs10Request(any(), any(), any(), any(), any())).willThrow(new RuntimeException("unexpected"));
 
-        assertThrows(IllegalStateException.class, () -> service.issueCertificate(UUID, "user", "pass", "CSRDATA", CertificateRequestFormat.PKCS10));
+        assertThrows(IllegalStateException.class,
+                () -> service.issueCertificate(UUID, "user", "pass", "CSRDATA", CertificateRequestFormat.PKCS10));
     }
 
     // ── issueCertificate (CRMF) ───────────────────────────────────────────────
@@ -452,7 +490,8 @@ class EjbcaServiceImplTest {
     void issueCertificate_crmf_happyPath() throws Exception {
         given(ejbcaWS.crmfRequest(any(), any(), any(), any(), any())).willReturn(buildCertificateResponse());
 
-        CertificateDataResponseDto result = service.issueCertificate(UUID, "user", "pass", "CRMFDATA", CertificateRequestFormat.CRMF);
+        CertificateDataResponseDto result = service
+                .issueCertificate(UUID, "user", "pass", "CRMFDATA", CertificateRequestFormat.CRMF);
 
         assertNotNull(result);
         assertEquals("TEST_CERT_DATA", result.getCertificateData());
@@ -462,28 +501,32 @@ class EjbcaServiceImplTest {
     void issueCertificate_crmf_authDenied_throwsAccessDeniedException() throws Exception {
         given(ejbcaWS.crmfRequest(any(), any(), any(), any(), any())).willThrow(authDeniedException());
 
-        assertThrows(AccessDeniedException.class, () -> service.issueCertificate(UUID, "user", "pass", "CRMFDATA", CertificateRequestFormat.CRMF));
+        assertThrows(AccessDeniedException.class,
+                () -> service.issueCertificate(UUID, "user", "pass", "CRMFDATA", CertificateRequestFormat.CRMF));
     }
 
     @Test
     void issueCertificate_crmf_caDoesntExist_throwsNotFoundException() throws Exception {
         given(ejbcaWS.crmfRequest(any(), any(), any(), any(), any())).willThrow(caDoesntExistException());
 
-        assertThrows(NotFoundException.class, () -> service.issueCertificate(UUID, "user", "pass", "CRMFDATA", CertificateRequestFormat.CRMF));
+        assertThrows(NotFoundException.class,
+                () -> service.issueCertificate(UUID, "user", "pass", "CRMFDATA", CertificateRequestFormat.CRMF));
     }
 
     @Test
     void issueCertificate_crmf_notFound_throwsNotFoundException() throws Exception {
         given(ejbcaWS.crmfRequest(any(), any(), any(), any(), any())).willThrow(notFoundException());
 
-        assertThrows(NotFoundException.class, () -> service.issueCertificate(UUID, "user", "pass", "CRMFDATA", CertificateRequestFormat.CRMF));
+        assertThrows(NotFoundException.class,
+                () -> service.issueCertificate(UUID, "user", "pass", "CRMFDATA", CertificateRequestFormat.CRMF));
     }
 
     @Test
     void issueCertificate_crmf_otherException_throwsIllegalStateException() throws Exception {
         given(ejbcaWS.crmfRequest(any(), any(), any(), any(), any())).willThrow(new RuntimeException("unexpected"));
 
-        assertThrows(IllegalStateException.class, () -> service.issueCertificate(UUID, "user", "pass", "CRMFDATA", CertificateRequestFormat.CRMF));
+        assertThrows(IllegalStateException.class,
+                () -> service.issueCertificate(UUID, "user", "pass", "CRMFDATA", CertificateRequestFormat.CRMF));
     }
 
     // ── revokeCertificate ─────────────────────────────────────────────────────
@@ -643,11 +686,12 @@ class EjbcaServiceImplTest {
     @Test
     void searchCertificates_200_returnsParsedResponse() throws Exception {
         String responseJson = "{\"certificates\":[],\"pagination_summary\":{\"total_count\":0}}";
-        wireMock.stubFor(post(urlEqualTo("/v2/certificate/search"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
-                        .withBody(responseJson)));
+        wireMock
+                .stubFor(post(urlEqualTo("/v2/certificate/search"))
+                        .willReturn(aResponse()
+                                .withStatus(200)
+                                .withHeader("Content-Type", "application/json")
+                                .withBody(responseJson)));
 
         WebClient webClient = WebClient.builder().build();
         given(authorityInstanceService.getRestApiConnection(UUID)).willReturn(webClient);
@@ -664,11 +708,12 @@ class EjbcaServiceImplTest {
 
     @Test
     void searchCertificates_500_throwsException() throws Exception {
-        wireMock.stubFor(post(urlEqualTo("/v2/certificate/search"))
-                .willReturn(aResponse()
-                        .withStatus(500)
-                        .withHeader("Content-Type", "application/json")
-                        .withBody("{\"error_message\":\"Internal Server Error\"}")));
+        wireMock
+                .stubFor(post(urlEqualTo("/v2/certificate/search"))
+                        .willReturn(aResponse()
+                                .withStatus(500)
+                                .withHeader("Content-Type", "application/json")
+                                .withBody("{\"error_message\":\"Internal Server Error\"}")));
 
         WebClient webClient = WebClient.builder().build();
         given(authorityInstanceService.getRestApiConnection(UUID)).willReturn(webClient);
@@ -681,11 +726,12 @@ class EjbcaServiceImplTest {
 
     @Test
     void searchCertificates_401_throwsException() throws Exception {
-        wireMock.stubFor(post(urlEqualTo("/v2/certificate/search"))
-                .willReturn(aResponse()
-                        .withStatus(401)
-                        .withHeader("Content-Type", "application/json")
-                        .withBody("{\"error_message\":\"Unauthorized\"}")));
+        wireMock
+                .stubFor(post(urlEqualTo("/v2/certificate/search"))
+                        .willReturn(aResponse()
+                                .withStatus(401)
+                                .withHeader("Content-Type", "application/json")
+                                .withBody("{\"error_message\":\"Unauthorized\"}")));
 
         WebClient webClient = WebClient.builder().build();
         given(authorityInstanceService.getRestApiConnection(UUID)).willReturn(webClient);
@@ -705,7 +751,6 @@ class EjbcaServiceImplTest {
 
         SearchCertificatesRestRequestV2 request = new SearchCertificatesRestRequestV2();
 
-        assertThrows(NotFoundException.class,
-                () -> service.searchCertificates(UUID, "http://irrelevant", request));
+        assertThrows(NotFoundException.class, () -> service.searchCertificates(UUID, "http://irrelevant", request));
     }
 }

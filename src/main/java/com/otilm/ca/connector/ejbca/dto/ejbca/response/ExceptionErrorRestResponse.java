@@ -9,7 +9,8 @@ public class ExceptionErrorRestResponse {
     @JsonProperty("error_message")
     private String errorMessage;
 
-    public ExceptionErrorRestResponse() {}
+    public ExceptionErrorRestResponse() {
+    }
 
     private ExceptionErrorRestResponse(final int errorCode, final String errorMessage) {
         this.errorCode = errorCode;

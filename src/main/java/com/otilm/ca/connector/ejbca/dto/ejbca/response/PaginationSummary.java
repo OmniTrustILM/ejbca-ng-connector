@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 /**
  * JSON output for pagination summary.
  */
-@JsonPropertyOrder({ "page_size", "current_page", "total_certs" })
+@JsonPropertyOrder({"page_size", "current_page", "total_certs"})
 public class PaginationSummary {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -17,7 +17,7 @@ public class PaginationSummary {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("page_size")
     private Integer pageSize;
-    
+
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("current_page")
     private Integer currentPage;
@@ -30,7 +30,7 @@ public class PaginationSummary {
         super();
         this.totalCerts = totalCerts;
     }
-    
+
     public PaginationSummary(final Integer pageSize, final Integer currentPage) {
         super();
         this.pageSize = pageSize;
@@ -61,15 +61,15 @@ public class PaginationSummary {
         this.currentPage = currentPage;
     }
 
-//    /**
-//     * Returns the number of pages starting at 1 or null if totalCerts is null.
-//     * 
-//     * @return the number of pages.
-//     */
-//    @JsonInclude(JsonInclude.Include.NON_NULL)
-//    @JsonProperty("pages")
-//    public Integer getPages() {
-//        return (totalCerts != null && pageSize != null) ? (int) (totalCerts / pageSize) + 1 : null;
-//    }
+    // /**
+    // * Returns the number of pages starting at 1 or null if totalCerts is null.
+    // *
+    // * @return the number of pages.
+    // */
+    // @JsonInclude(JsonInclude.Include.NON_NULL)
+    // @JsonProperty("pages")
+    // public Integer getPages() {
+    // return (totalCerts != null && pageSize != null) ? (int) (totalCerts / pageSize) + 1 : null;
+    // }
 
 }

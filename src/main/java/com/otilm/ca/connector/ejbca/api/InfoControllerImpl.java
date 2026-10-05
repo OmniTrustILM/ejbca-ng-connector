@@ -5,15 +5,14 @@ import com.otilm.api.model.client.connector.InfoResponse;
 import com.otilm.api.model.core.connector.FunctionGroupCode;
 import com.otilm.ca.connector.ejbca.EndpointsListener;
 import com.otilm.ca.connector.ejbca.enums.DiscoveryKind;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RestController;
-
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.stream.Stream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class InfoControllerImpl implements InfoController {
@@ -32,16 +31,13 @@ public class InfoControllerImpl implements InfoController {
         List<String> kinds = List.of("EJBCA");
         EnumSet.allOf(DiscoveryKind.class);
         List<InfoResponse> functions = new ArrayList<>();
-        functions.add(new InfoResponse(
-                kinds,
-                FunctionGroupCode.AUTHORITY_PROVIDER,
-                endpointsListener.getEndpoints(FunctionGroupCode.AUTHORITY_PROVIDER))
-        );
-        functions.add(new InfoResponse(
-                Stream.of(DiscoveryKind.values()).map(Enum::name).toList(),
-                FunctionGroupCode.DISCOVERY_PROVIDER,
-                endpointsListener.getEndpoints(FunctionGroupCode.DISCOVERY_PROVIDER))
-        );
+        functions
+                .add(new InfoResponse(kinds, FunctionGroupCode.AUTHORITY_PROVIDER,
+                        endpointsListener.getEndpoints(FunctionGroupCode.AUTHORITY_PROVIDER)));
+        functions
+                .add(new InfoResponse(Stream.of(DiscoveryKind.values()).map(Enum::name).toList(),
+                        FunctionGroupCode.DISCOVERY_PROVIDER,
+                        endpointsListener.getEndpoints(FunctionGroupCode.DISCOVERY_PROVIDER)));
 
         return functions;
     }

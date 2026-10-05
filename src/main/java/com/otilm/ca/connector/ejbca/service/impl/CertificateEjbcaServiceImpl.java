@@ -7,10 +7,16 @@ import com.otilm.api.model.common.NameAndIdDto;
 import com.otilm.api.model.common.attribute.common.AttributeType;
 import com.otilm.api.model.common.attribute.common.MetadataAttribute;
 import com.otilm.api.model.common.attribute.common.content.AttributeContentType;
+import com.otilm.api.model.common.attribute.common.properties.MetadataAttributeProperties;
 import com.otilm.api.model.common.attribute.v2.MetadataAttributeV2;
 import com.otilm.api.model.common.attribute.v2.content.StringAttributeContentV2;
-import com.otilm.api.model.common.attribute.common.properties.MetadataAttributeProperties;
-import com.otilm.api.model.connector.v2.*;
+import com.otilm.api.model.connector.v2.CertRevocationDto;
+import com.otilm.api.model.connector.v2.CertificateDataResponseDto;
+import com.otilm.api.model.connector.v2.CertificateIdentificationRequestDto;
+import com.otilm.api.model.connector.v2.CertificateIdentificationResponseDto;
+import com.otilm.api.model.connector.v2.CertificateRenewRequestDto;
+import com.otilm.api.model.connector.v2.CertificateSignRequestDto;
+import com.otilm.ca.connector.ejbca.EjbcaException;
 import com.otilm.ca.connector.ejbca.api.AuthorityInstanceControllerImpl;
 import com.otilm.ca.connector.ejbca.api.CertificateControllerImpl;
 import com.otilm.ca.connector.ejbca.dto.ejbca.request.Pagination;
@@ -18,15 +24,21 @@ import com.otilm.ca.connector.ejbca.dto.ejbca.request.SearchCertificateCriteriaR
 import com.otilm.ca.connector.ejbca.dto.ejbca.request.SearchCertificatesRestRequestV2;
 import com.otilm.ca.connector.ejbca.dto.ejbca.response.CertificateRestResponseV2;
 import com.otilm.ca.connector.ejbca.dto.ejbca.response.SearchCertificatesRestResponseV2;
-import com.otilm.ca.connector.ejbca.EjbcaException;
 import com.otilm.ca.connector.ejbca.enums.UsernameGenMethod;
 import com.otilm.ca.connector.ejbca.request.CertificateRequest;
 import com.otilm.ca.connector.ejbca.service.AuthorityInstanceService;
 import com.otilm.ca.connector.ejbca.service.CertificateEjbcaService;
 import com.otilm.ca.connector.ejbca.service.EjbcaService;
-import com.otilm.ca.connector.ejbca.util.CertificateUtil;
 import com.otilm.ca.connector.ejbca.util.CertificateRequestUtils;
+import com.otilm.ca.connector.ejbca.util.CertificateUtil;
 import com.otilm.core.util.AttributeDefinitionUtils;
+import java.io.IOException;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.x500.RDN;
@@ -38,14 +50,8 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
-import java.security.SecureRandom;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import static com.otilm.ca.connector.ejbca.api.AuthorityInstanceControllerImpl.*;
+import static com.otilm.ca.connector.ejbca.api.AuthorityInstanceControllerImpl.ATTRIBUTE_CERTIFICATE_PROFILE;
+import static com.otilm.ca.connector.ejbca.api.AuthorityInstanceControllerImpl.ATTRIBUTE_END_ENTITY_PROFILE;
 
 @Service
 @Transactional
@@ -72,14 +78,24 @@ public class CertificateEjbcaServiceImpl implements CertificateEjbcaService {
     }
 
     @Override
-    public CertificateDataResponseDto issueCertificate(String uuid, CertificateSignRequestDto request) throws IOException, EjbcaException, NotFoundException, AlreadyExistException {
+    public CertificateDataResponseDto issueCertificate(String uuid, CertificateSignRequestDto request)
+            throws IOException, EjbcaException, NotFoundException, AlreadyExistException {
         // generate username based on the request
-        String usernameGenMethod = AttributeDefinitionUtils.getSingleItemAttributeContentValue(AuthorityInstanceControllerImpl.ATTRIBUTE_USERNAME_GEN_METHOD, request.getRaProfileAttributes(), StringAttributeContentV2.class).getData();
-        String usernamePrefix = AttributeDefinitionUtils.getSingleItemAttributeContentValue(AuthorityInstanceControllerImpl.ATTRIBUTE_USERNAME_PREFIX, request.getRaProfileAttributes(), StringAttributeContentV2.class).getData();
-        String usernamePostfix = AttributeDefinitionUtils.getSingleItemAttributeContentValue(AuthorityInstanceControllerImpl.ATTRIBUTE_USERNAME_POSTFIX, request.getRaProfileAttributes(), StringAttributeContentV2.class).getData();
+        String usernameGenMethod = AttributeDefinitionUtils
+                .getSingleItemAttributeContentValue(AuthorityInstanceControllerImpl.ATTRIBUTE_USERNAME_GEN_METHOD,
+                        request.getRaProfileAttributes(), StringAttributeContentV2.class)
+                .getData();
+        String usernamePrefix = AttributeDefinitionUtils
+                .getSingleItemAttributeContentValue(AuthorityInstanceControllerImpl.ATTRIBUTE_USERNAME_PREFIX,
+                        request.getRaProfileAttributes(), StringAttributeContentV2.class)
+                .getData();
+        String usernamePostfix = AttributeDefinitionUtils
+                .getSingleItemAttributeContentValue(AuthorityInstanceControllerImpl.ATTRIBUTE_USERNAME_POSTFIX,
+                        request.getRaProfileAttributes(), StringAttributeContentV2.class)
+                .getData();
 
-        CertificateRequest certificateRequest = CertificateRequestUtils.createCertificateRequest(
-                Base64.getDecoder().decode(request.getRequest()), request.getFormat());
+        CertificateRequest certificateRequest = CertificateRequestUtils
+                .createCertificateRequest(Base64.getDecoder().decode(request.getRequest()), request.getFormat());
 
         String username = generateUsername(usernameGenMethod, usernamePrefix, usernamePostfix, certificateRequest);
         String subjectDn = certificateRequest.getSubject().toString();
@@ -87,36 +103,60 @@ public class CertificateEjbcaServiceImpl implements CertificateEjbcaService {
         String password = username;
 
         // try to create end entity and issue certificate
-        ejbcaService.createEndEntity(uuid, username, password, subjectDn, subjectAltName, request.getRaProfileAttributes(), request.getAttributes());
+        ejbcaService
+                .createEndEntity(uuid, username, password, subjectDn, subjectAltName, request.getRaProfileAttributes(),
+                        request.getAttributes());
         // issue certificate
-        CertificateDataResponseDto certificate = ejbcaService.issueCertificate(uuid, username, password, Base64.getEncoder().encodeToString(certificateRequest.getEncoded()), request.getFormat());
+        CertificateDataResponseDto certificate = ejbcaService
+                .issueCertificate(uuid, username, password,
+                        Base64.getEncoder().encodeToString(certificateRequest.getEncoded()), request.getFormat());
 
-        certificate.setMeta(getIssueMetadata(
-                username,
-                AttributeDefinitionUtils.getSingleItemAttributeContentValue(CertificateControllerImpl.ATTRIBUTE_EMAIL, request.getAttributes(), StringAttributeContentV2.class).getData(),
-                AttributeDefinitionUtils.getSingleItemAttributeContentValue(CertificateControllerImpl.ATTRIBUTE_SAN, request.getAttributes(), StringAttributeContentV2.class).getData(),
-                AttributeDefinitionUtils.getSingleItemAttributeContentValue(CertificateControllerImpl.ATTRIBUTE_EXTENSION, request.getAttributes(), StringAttributeContentV2.class).getData()
-        ));
+        certificate
+                .setMeta(getIssueMetadata(username,
+                        AttributeDefinitionUtils
+                                .getSingleItemAttributeContentValue(CertificateControllerImpl.ATTRIBUTE_EMAIL,
+                                        request.getAttributes(), StringAttributeContentV2.class)
+                                .getData(),
+                        AttributeDefinitionUtils
+                                .getSingleItemAttributeContentValue(CertificateControllerImpl.ATTRIBUTE_SAN,
+                                        request.getAttributes(), StringAttributeContentV2.class)
+                                .getData(),
+                        AttributeDefinitionUtils
+                                .getSingleItemAttributeContentValue(CertificateControllerImpl.ATTRIBUTE_EXTENSION,
+                                        request.getAttributes(), StringAttributeContentV2.class)
+                                .getData()));
 
         return certificate;
     }
 
     @Override
-    public CertificateDataResponseDto renewCertificate(String uuid, CertificateRenewRequestDto request) throws IOException, EjbcaException, NotFoundException, AlreadyExistException {
-        CertificateRequest certificateRequest = CertificateRequestUtils.createCertificateRequest(
-                Base64.getDecoder().decode(request.getRequest()), request.getFormat());
+    public CertificateDataResponseDto renewCertificate(String uuid, CertificateRenewRequestDto request)
+            throws IOException, EjbcaException, NotFoundException, AlreadyExistException {
+        CertificateRequest certificateRequest = CertificateRequestUtils
+                .createCertificateRequest(Base64.getDecoder().decode(request.getRequest()), request.getFormat());
 
         List<MetadataAttribute> metadata = request.getMeta();
 
         // check if we have the username in the metadata, and if not, generate username
         String username = null;
         if (!request.getMeta().isEmpty()) {
-            username = AttributeDefinitionUtils.getSingleItemAttributeContentValue(META_EJBCA_USERNAME, metadata, StringAttributeContentV2.class).getData();
+            username = AttributeDefinitionUtils
+                    .getSingleItemAttributeContentValue(META_EJBCA_USERNAME, metadata, StringAttributeContentV2.class)
+                    .getData();
         }
         if (StringUtils.isBlank(username)) {
-            String usernameGenMethod = AttributeDefinitionUtils.getSingleItemAttributeContentValue(AuthorityInstanceControllerImpl.ATTRIBUTE_USERNAME_GEN_METHOD, request.getRaProfileAttributes(), StringAttributeContentV2.class).getData();
-            String usernamePrefix = AttributeDefinitionUtils.getSingleItemAttributeContentValue(AuthorityInstanceControllerImpl.ATTRIBUTE_USERNAME_PREFIX, request.getRaProfileAttributes(), StringAttributeContentV2.class).getData();
-            String usernamePostfix = AttributeDefinitionUtils.getSingleItemAttributeContentValue(AuthorityInstanceControllerImpl.ATTRIBUTE_USERNAME_POSTFIX, request.getRaProfileAttributes(), StringAttributeContentV2.class).getData();
+            String usernameGenMethod = AttributeDefinitionUtils
+                    .getSingleItemAttributeContentValue(AuthorityInstanceControllerImpl.ATTRIBUTE_USERNAME_GEN_METHOD,
+                            request.getRaProfileAttributes(), StringAttributeContentV2.class)
+                    .getData();
+            String usernamePrefix = AttributeDefinitionUtils
+                    .getSingleItemAttributeContentValue(AuthorityInstanceControllerImpl.ATTRIBUTE_USERNAME_PREFIX,
+                            request.getRaProfileAttributes(), StringAttributeContentV2.class)
+                    .getData();
+            String usernamePostfix = AttributeDefinitionUtils
+                    .getSingleItemAttributeContentValue(AuthorityInstanceControllerImpl.ATTRIBUTE_USERNAME_POSTFIX,
+                            request.getRaProfileAttributes(), StringAttributeContentV2.class)
+                    .getData();
             username = generateUsername(usernameGenMethod, usernamePrefix, usernamePostfix, certificateRequest);
         }
 
@@ -128,11 +168,15 @@ public class CertificateEjbcaServiceImpl implements CertificateEjbcaService {
             // update end entity
             ejbcaService.renewEndEntity(uuid, username, password, subjectDn, subjectAltName);
         } catch (NotFoundException e) {
-            ejbcaService.createEndEntityWithMeta(uuid, username, password, subjectDn, subjectAltName, request.getRaProfileAttributes(), metadata);
+            ejbcaService
+                    .createEndEntityWithMeta(uuid, username, password, subjectDn, subjectAltName,
+                            request.getRaProfileAttributes(), metadata);
         }
 
         // issue certificate
-        CertificateDataResponseDto certificate = ejbcaService.issueCertificate(uuid, username, password, Base64.getEncoder().encodeToString(certificateRequest.getEncoded()), request.getFormat());
+        CertificateDataResponseDto certificate = ejbcaService
+                .issueCertificate(uuid, username, password,
+                        Base64.getEncoder().encodeToString(certificateRequest.getEncoded()), request.getFormat());
 
         List<MetadataAttribute> meta = new ArrayList<>();
         meta.addAll(metadata.stream().filter(e -> !e.getName().equals(META_EJBCA_USERNAME)).toList());
@@ -223,7 +267,7 @@ public class CertificateEjbcaServiceImpl implements CertificateEjbcaService {
             attributes.add(sanAttribute);
         }
 
-        //Extension
+        // Extension
         if (StringUtils.isNotBlank(extensions)) {
             MetadataAttributeV2 extensionAttribute = new MetadataAttributeV2();
             extensionAttribute.setUuid("b42abe38-60fd-11ed-9b6a-0242ac120002");
@@ -244,7 +288,8 @@ public class CertificateEjbcaServiceImpl implements CertificateEjbcaService {
         return attributes;
     }
 
-    private String generateUsername(String usernameGenMethod, String usernamePrefix, String usernamePostfix, CertificateRequest csr) throws IOException {
+    private String generateUsername(String usernameGenMethod, String usernamePrefix, String usernamePostfix,
+            CertificateRequest csr) throws IOException {
         String username;
         if (usernameGenMethod.equals(UsernameGenMethod.RANDOM.name())) {
             byte[] r = new byte[8];
@@ -289,13 +334,22 @@ public class CertificateEjbcaServiceImpl implements CertificateEjbcaService {
     }
 
     @Override
-    public CertificateIdentificationResponseDto identifyCertificate(String uuid, CertificateIdentificationRequestDto request) throws NotFoundException, ValidationException {
+    public CertificateIdentificationResponseDto identifyCertificate(String uuid,
+            CertificateIdentificationRequestDto request) throws NotFoundException, ValidationException {
         // load and parse data we need to identify the certificate
-        NameAndIdDto endEntityProfile = AttributeDefinitionUtils.getNameAndIdData(ATTRIBUTE_END_ENTITY_PROFILE, request.getRaProfileAttributes());
-        NameAndIdDto certificateProfile = AttributeDefinitionUtils.getNameAndIdData(ATTRIBUTE_CERTIFICATE_PROFILE, request.getRaProfileAttributes());
-        //NameAndIdDto certificationAuthority = AttributeDefinitionUtils.getNameAndIdData(ATTRIBUTE_CERTIFICATION_AUTHORITY, request.getRaProfileAttributes());
-        //Boolean sendNotifications = AttributeDefinitionUtils.getSingleItemAttributeContentValue(ATTRIBUTE_SEND_NOTIFICATIONS, request.getRaProfileAttributes(), BooleanAttributeContent.class).getData();
-        //Boolean keyRecoverable = AttributeDefinitionUtils.getSingleItemAttributeContentValue(ATTRIBUTE_KEY_RECOVERABLE, request.getRaProfileAttributes(), BooleanAttributeContent.class).getData();
+        NameAndIdDto endEntityProfile = AttributeDefinitionUtils
+                .getNameAndIdData(ATTRIBUTE_END_ENTITY_PROFILE, request.getRaProfileAttributes());
+        NameAndIdDto certificateProfile = AttributeDefinitionUtils
+                .getNameAndIdData(ATTRIBUTE_CERTIFICATE_PROFILE, request.getRaProfileAttributes());
+        // NameAndIdDto certificationAuthority =
+        // AttributeDefinitionUtils.getNameAndIdData(ATTRIBUTE_CERTIFICATION_AUTHORITY,
+        // request.getRaProfileAttributes());
+        // Boolean sendNotifications =
+        // AttributeDefinitionUtils.getSingleItemAttributeContentValue(ATTRIBUTE_SEND_NOTIFICATIONS,
+        // request.getRaProfileAttributes(), BooleanAttributeContent.class).getData();
+        // Boolean keyRecoverable =
+        // AttributeDefinitionUtils.getSingleItemAttributeContentValue(ATTRIBUTE_KEY_RECOVERABLE,
+        // request.getRaProfileAttributes(), BooleanAttributeContent.class).getData();
         String restApiUrl = authorityInstanceService.getRestApiUrl(uuid);
         String sn;
         try {
@@ -336,9 +390,9 @@ public class CertificateEjbcaServiceImpl implements CertificateEjbcaService {
             throw new ValidationException("More than one certificate found with serial number: " + sn);
         } else { // check the properties of the certificate
             CertificateRestResponseV2 certificate = response.getCertificates().get(0);
-            if (certificate.getEndEntityProfileId() == endEntityProfile.getId() &&
-                    certificate.getCertificateProfileId() == certificateProfile.getId()
-                // CA check omitted: it is already enforced by the RA Profile
+            if (certificate.getEndEntityProfileId() == endEntityProfile.getId()
+                    && certificate.getCertificateProfileId() == certificateProfile.getId()
+            // CA check omitted: it is already enforced by the RA Profile
             ) {
                 CertificateIdentificationResponseDto responseDto = new CertificateIdentificationResponseDto();
 
@@ -348,7 +402,8 @@ public class CertificateEjbcaServiceImpl implements CertificateEjbcaService {
                 responseDto.setMeta(meta);
                 return responseDto;
             } else {
-                throw new ValidationException("Certificate found with serial number: " + sn + " but it does not match according to RA Profile attributes");
+                throw new ValidationException("Certificate found with serial number: " + sn
+                        + " but it does not match according to RA Profile attributes");
             }
         }
     }

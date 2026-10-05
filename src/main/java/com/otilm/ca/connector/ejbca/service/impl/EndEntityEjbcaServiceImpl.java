@@ -5,20 +5,32 @@ import com.otilm.api.exception.NotFoundException;
 import com.otilm.api.model.client.attribute.ResponseAttribute;
 import com.otilm.api.model.common.NameAndIdDto;
 import com.otilm.api.model.common.attribute.v2.content.BooleanAttributeContentV2;
-import com.otilm.api.model.core.authority.*;
+import com.otilm.api.model.core.authority.AddEndEntityRequestDto;
+import com.otilm.api.model.core.authority.BaseEndEntityRequestDto;
+import com.otilm.api.model.core.authority.CertificateRevocationReason;
+import com.otilm.api.model.core.authority.EditEndEntityRequestDto;
+import com.otilm.api.model.core.authority.EndEntityDto;
+import com.otilm.api.model.core.authority.EndEntityExtendedInfoDto;
 import com.otilm.ca.connector.ejbca.service.AuthorityInstanceService;
 import com.otilm.ca.connector.ejbca.service.EndEntityEjbcaService;
 import com.otilm.ca.connector.ejbca.util.EjbcaUtils;
-import com.otilm.ca.connector.ejbca.ws.*;
+import com.otilm.ca.connector.ejbca.ws.AuthorizationDeniedException_Exception;
+import com.otilm.ca.connector.ejbca.ws.CADoesntExistsException_Exception;
+import com.otilm.ca.connector.ejbca.ws.EjbcaWS;
+import com.otilm.ca.connector.ejbca.ws.EndEntityProfileNotFoundException_Exception;
+import com.otilm.ca.connector.ejbca.ws.ExtendedInformationWS;
+import com.otilm.ca.connector.ejbca.ws.NotFoundException_Exception;
+import com.otilm.ca.connector.ejbca.ws.UserDataVOWS;
+import com.otilm.ca.connector.ejbca.ws.UserMatch;
 import com.otilm.core.util.AttributeDefinitionUtils;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
 import static com.otilm.ca.connector.ejbca.api.AuthorityInstanceControllerImpl.ATTRIBUTE_CERTIFICATE_PROFILE;
 import static com.otilm.ca.connector.ejbca.api.AuthorityInstanceControllerImpl.ATTRIBUTE_CERTIFICATION_AUTHORITY;
 import static com.otilm.ca.connector.ejbca.api.AuthorityInstanceControllerImpl.ATTRIBUTE_END_ENTITY_PROFILE;
@@ -45,7 +57,8 @@ public class EndEntityEjbcaServiceImpl implements EndEntityEjbcaService {
     }
 
     @Override
-    public EndEntityDto getEndEntity(String uuid, String endEntityProfileName, String endEntityName) throws NotFoundException {
+    public EndEntityDto getEndEntity(String uuid, String endEntityProfileName, String endEntityName)
+            throws NotFoundException {
         EjbcaWS ejbcaWS = authorityInstanceService.getConnection(uuid);
 
         UserDataVOWS user = getUser(ejbcaWS, endEntityName);
@@ -56,7 +69,8 @@ public class EndEntityEjbcaServiceImpl implements EndEntityEjbcaService {
     }
 
     @Override
-    public void createEndEntity(String uuid, String endEntityProfileName, AddEndEntityRequestDto request) throws NotFoundException, AlreadyExistException {
+    public void createEndEntity(String uuid, String endEntityProfileName, AddEndEntityRequestDto request)
+            throws NotFoundException, AlreadyExistException {
         EjbcaWS ejbcaWS = authorityInstanceService.getConnection(uuid);
 
         if (getUser(ejbcaWS, request.getUsername()) != null) {
@@ -78,7 +92,8 @@ public class EndEntityEjbcaServiceImpl implements EndEntityEjbcaService {
     }
 
     @Override
-    public void updateEndEntity(String uuid, String endEntityProfileName, String endEntityName, EditEndEntityRequestDto request) throws NotFoundException {
+    public void updateEndEntity(String uuid, String endEntityProfileName, String endEntityName,
+            EditEndEntityRequestDto request) throws NotFoundException {
         EjbcaWS ejbcaWS = authorityInstanceService.getConnection(uuid);
 
         UserDataVOWS user = getUser(ejbcaWS, endEntityName);
@@ -103,7 +118,8 @@ public class EndEntityEjbcaServiceImpl implements EndEntityEjbcaService {
     }
 
     @Override
-    public void revokeAndDeleteEndEntity(String uuid, String endEntityProfileName, String endEntityName) throws NotFoundException {
+    public void revokeAndDeleteEndEntity(String uuid, String endEntityProfileName, String endEntityName)
+            throws NotFoundException {
         EjbcaWS ejbcaWS = authorityInstanceService.getConnection(uuid);
 
         UserDataVOWS user = getUser(ejbcaWS, endEntityName);
@@ -178,21 +194,33 @@ public class EndEntityEjbcaServiceImpl implements EndEntityEjbcaService {
     private void prepareEndEntity(UserDataVOWS user, BaseEndEntityRequestDto request, String username) {
         List<ResponseAttribute> raProfileAttrs = request.getRaProfile().getAttributes();
 
-        NameAndIdDto endEntityProfile = AttributeDefinitionUtils.getObjectAttributeContentData(ATTRIBUTE_END_ENTITY_PROFILE, raProfileAttrs, NameAndIdDto.class).get(0);
+        NameAndIdDto endEntityProfile = AttributeDefinitionUtils
+                .getObjectAttributeContentData(ATTRIBUTE_END_ENTITY_PROFILE, raProfileAttrs, NameAndIdDto.class)
+                .get(0);
         user.setEndEntityProfileName(endEntityProfile.getName());
 
-        NameAndIdDto certificateProfile = AttributeDefinitionUtils.getObjectAttributeContentData(ATTRIBUTE_CERTIFICATE_PROFILE, raProfileAttrs, NameAndIdDto.class).get(0);
+        NameAndIdDto certificateProfile = AttributeDefinitionUtils
+                .getObjectAttributeContentData(ATTRIBUTE_CERTIFICATE_PROFILE, raProfileAttrs, NameAndIdDto.class)
+                .get(0);
         user.setCertificateProfileName(certificateProfile.getName());
 
-        NameAndIdDto ca = AttributeDefinitionUtils.getObjectAttributeContentData(ATTRIBUTE_CERTIFICATION_AUTHORITY, raProfileAttrs, NameAndIdDto.class).get(0);
+        NameAndIdDto ca = AttributeDefinitionUtils
+                .getObjectAttributeContentData(ATTRIBUTE_CERTIFICATION_AUTHORITY, raProfileAttrs, NameAndIdDto.class)
+                .get(0);
         user.setCaName(ca.getName());
 
-        Boolean sendNotifications = AttributeDefinitionUtils.getSingleItemAttributeContentValue(ATTRIBUTE_SEND_NOTIFICATIONS, raProfileAttrs, BooleanAttributeContentV2.class).getData();
+        Boolean sendNotifications = AttributeDefinitionUtils
+                .getSingleItemAttributeContentValue(ATTRIBUTE_SEND_NOTIFICATIONS, raProfileAttrs,
+                        BooleanAttributeContentV2.class)
+                .getData();
         if (sendNotifications != null) {
             user.setSendNotification(sendNotifications);
         }
 
-        Boolean keyRecoverable = AttributeDefinitionUtils.getSingleItemAttributeContentValue(ATTRIBUTE_KEY_RECOVERABLE, raProfileAttrs, BooleanAttributeContentV2.class).getData();
+        Boolean keyRecoverable = AttributeDefinitionUtils
+                .getSingleItemAttributeContentValue(ATTRIBUTE_KEY_RECOVERABLE, raProfileAttrs,
+                        BooleanAttributeContentV2.class)
+                .getData();
         if (keyRecoverable != null) {
             user.setKeyRecoverable(keyRecoverable);
         }

@@ -12,10 +12,6 @@ public interface DiscoveryAttributeService {
 
     boolean validateAttributes(String kind, List<RequestAttribute> attributes);
 
-    List<BaseAttribute> getInstanceAndKindAttributes(
-            String kind,
-            List<BaseAttributeContentV2<?>> eeProfilesContent,
-            List<BaseAttributeContentV2<?>> casContent,
-            List<BaseAttributeContentV2<?>> urlContent
-    );
+    List<BaseAttribute> getInstanceAndKindAttributes(String kind, List<BaseAttributeContentV2<?>> eeProfilesContent,
+            List<BaseAttributeContentV2<?>> casContent, List<BaseAttributeContentV2<?>> urlContent);
 }

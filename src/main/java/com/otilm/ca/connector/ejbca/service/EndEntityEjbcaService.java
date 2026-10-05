@@ -16,9 +16,11 @@ public interface EndEntityEjbcaService {
 
     EndEntityDto getEndEntity(String uuid, String endEntityProfileName, String endEntityName) throws NotFoundException;
 
-    void createEndEntity(String uuid, String endEntityProfileName, AddEndEntityRequestDto request) throws NotFoundException, AlreadyExistException;
+    void createEndEntity(String uuid, String endEntityProfileName, AddEndEntityRequestDto request)
+            throws NotFoundException, AlreadyExistException;
 
-    void updateEndEntity(String uuid, String endEntityProfileName, String endEntityName, EditEndEntityRequestDto request) throws NotFoundException;
+    void updateEndEntity(String uuid, String endEntityProfileName, String endEntityName,
+            EditEndEntityRequestDto request) throws NotFoundException;
 
     void revokeAndDeleteEndEntity(String uuid, String endEntityProfileName, String username) throws NotFoundException;
 

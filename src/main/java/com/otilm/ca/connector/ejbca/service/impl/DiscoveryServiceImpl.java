@@ -5,12 +5,12 @@ import com.otilm.api.model.common.NameAndIdDto;
 import com.otilm.api.model.common.attribute.common.AttributeType;
 import com.otilm.api.model.common.attribute.common.MetadataAttribute;
 import com.otilm.api.model.common.attribute.common.content.AttributeContentType;
+import com.otilm.api.model.common.attribute.common.properties.MetadataAttributeProperties;
 import com.otilm.api.model.common.attribute.v2.MetadataAttributeV2;
 import com.otilm.api.model.common.attribute.v2.content.BaseAttributeContentV2;
 import com.otilm.api.model.common.attribute.v2.content.DateTimeAttributeContentV2;
 import com.otilm.api.model.common.attribute.v2.content.IntegerAttributeContentV2;
 import com.otilm.api.model.common.attribute.v2.content.StringAttributeContentV2;
-import com.otilm.api.model.common.attribute.common.properties.MetadataAttributeProperties;
 import com.otilm.api.model.connector.discovery.DiscoveryDataRequestDto;
 import com.otilm.api.model.connector.discovery.DiscoveryProviderDto;
 import com.otilm.api.model.connector.discovery.DiscoveryRequestDto;
@@ -30,16 +30,6 @@ import com.otilm.ca.connector.ejbca.service.DiscoveryService;
 import com.otilm.ca.connector.ejbca.service.EjbcaService;
 import com.otilm.ca.connector.ejbca.util.EjbcaVersion;
 import com.otilm.core.util.AttributeDefinitionUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Service;
-
 import jakarta.transaction.Transactional;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
@@ -49,6 +39,15 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
 
 @Service
 @Transactional
@@ -103,8 +102,15 @@ public class DiscoveryServiceImpl implements DiscoveryService {
             dto.setCertificateData(new ArrayList<>());
             dto.setTotalCertificatesDiscovered(0);
         } else {
-            Pageable page = PageRequest.of(request.getPageNumber() <= 0 ? 0 : request.getPageNumber() - 1, request.getItemsPerPage(), Sort.by(Sort.Direction.ASC, "id"));
-            dto.setCertificateData(certificateRepository.findAllByDiscoveryId(history.getId(), page).stream().map(Certificate::mapToDto).toList());
+            Pageable page = PageRequest
+                    .of(request.getPageNumber() <= 0 ? 0 : request.getPageNumber() - 1, request.getItemsPerPage(),
+                            Sort.by(Sort.Direction.ASC, "id"));
+            dto
+                    .setCertificateData(certificateRepository
+                            .findAllByDiscoveryId(history.getId(), page)
+                            .stream()
+                            .map(Certificate::mapToDto)
+                            .toList());
         }
         return dto;
     }
@@ -120,7 +126,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
     private List<MetadataAttribute> getReasonMeta(String exception) {
         List<MetadataAttribute> attributes = new ArrayList<>();
 
-        //Exception Reason
+        // Exception Reason
         MetadataAttributeV2 attribute = new MetadataAttributeV2();
         attribute.setName("reason");
         attribute.setUuid("abc0412a-60f6-11ed-9b6a-0242ac120002");
@@ -143,10 +149,19 @@ public class DiscoveryServiceImpl implements DiscoveryService {
         logger.info("Discovery initiated for the request with name {}", request.getName());
 
         final AuthorityInstanceNameAndUuidDto instance = resolveInstance(request);
-        final String restApiUrl = AttributeDefinitionUtils.getSingleItemAttributeContentValue(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_RESTAPI_URL, request.getAttributes(), StringAttributeContentV2.class).getData();
-        final List<NameAndIdDto> cas = AttributeDefinitionUtils.getObjectAttributeContentDataList(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_CA, request.getAttributes(), NameAndIdDto.class);
-        final List<NameAndIdDto> eeProfiles = AttributeDefinitionUtils.getObjectAttributeContentDataList(DiscoveryAttributeServiceImpl.ATTRIBUTE_END_ENTITY_PROFILE, request.getAttributes(), NameAndIdDto.class);
-        final List<String> statuses = AttributeDefinitionUtils.getAttributeContentValueList(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_STATUS, request.getAttributes(), BaseAttributeContentV2.class);
+        final String restApiUrl = AttributeDefinitionUtils
+                .getSingleItemAttributeContentValue(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_RESTAPI_URL,
+                        request.getAttributes(), StringAttributeContentV2.class)
+                .getData();
+        final List<NameAndIdDto> cas = AttributeDefinitionUtils
+                .getObjectAttributeContentDataList(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_CA,
+                        request.getAttributes(), NameAndIdDto.class);
+        final List<NameAndIdDto> eeProfiles = AttributeDefinitionUtils
+                .getObjectAttributeContentDataList(DiscoveryAttributeServiceImpl.ATTRIBUTE_END_ENTITY_PROFILE,
+                        request.getAttributes(), NameAndIdDto.class);
+        final List<String> statuses = AttributeDefinitionUtils
+                .getAttributeContentValueList(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_STATUS,
+                        request.getAttributes(), BaseAttributeContentV2.class);
         final ZonedDateTime issuedAfter = resolveIssuedAfter(request);
 
         SearchCertificatesRestRequestV2 searchRequest = prepareSearchRequest(cas, eeProfiles, statuses, issuedAfter);
@@ -154,7 +169,9 @@ public class DiscoveryServiceImpl implements DiscoveryService {
         // behaviour of the EJBCA REST API for searching certificates differs between versions
         // we need to check the version and decide on the implementation
         EjbcaVersion ejbcaVersion = ejbcaService.getEjbcaVersion(instance.getUuid());
-        logger.debug("Searching for certificates in EJBCA version {}, with page size {}", ejbcaVersion.getVersion(), ejbcaSearchPageSize);
+        logger
+                .debug("Searching for certificates in EJBCA version {}, with page size {}", ejbcaVersion.getVersion(),
+                        ejbcaSearchPageSize);
 
         int searchVersion = resolveSearchVersion(ejbcaVersion);
         int certificatesFound = runPagedSearch(instance.getUuid(), restApiUrl, searchRequest, history, searchVersion);
@@ -166,15 +183,24 @@ public class DiscoveryServiceImpl implements DiscoveryService {
     }
 
     private AuthorityInstanceNameAndUuidDto resolveInstance(DiscoveryRequestDto request) {
-        return AttributeDefinitionUtils.getObjectAttributeContentData(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_INSTANCE, request.getAttributes(), AuthorityInstanceNameAndUuidDto.class).get(0);
+        return AttributeDefinitionUtils
+                .getObjectAttributeContentData(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_INSTANCE,
+                        request.getAttributes(), AuthorityInstanceNameAndUuidDto.class)
+                .get(0);
     }
 
     private ZonedDateTime resolveIssuedAfter(DiscoveryRequestDto request) {
         if (request.getKind().equals("EJBCA")) {
-            return AttributeDefinitionUtils.getSingleItemAttributeContentValue(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_ISSUED_AFTER, request.getAttributes(), DateTimeAttributeContentV2.class).getData();
+            return AttributeDefinitionUtils
+                    .getSingleItemAttributeContentValue(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_ISSUED_AFTER,
+                            request.getAttributes(), DateTimeAttributeContentV2.class)
+                    .getData();
         }
         if (request.getKind().equals("EJBCA-SCHEDULE")) {
-            Integer issuedDaysBefore = AttributeDefinitionUtils.getSingleItemAttributeContentValue(DiscoveryAttributeServiceImpl.ATTRIBUTE_ISSUED_DAYS_BEFORE, request.getAttributes(), IntegerAttributeContentV2.class).getData();
+            Integer issuedDaysBefore = AttributeDefinitionUtils
+                    .getSingleItemAttributeContentValue(DiscoveryAttributeServiceImpl.ATTRIBUTE_ISSUED_DAYS_BEFORE,
+                            request.getAttributes(), IntegerAttributeContentV2.class)
+                    .getData();
             return ZonedDateTime.now(ZoneOffset.UTC).minusDays(issuedDaysBefore);
         }
         return null;
@@ -192,7 +218,8 @@ public class DiscoveryServiceImpl implements DiscoveryService {
         }
     }
 
-    private int runPagedSearch(String instanceUuid, String restApiUrl, SearchCertificatesRestRequestV2 searchRequest, DiscoveryHistory history, int searchVersion) throws Exception {
+    private int runPagedSearch(String instanceUuid, String restApiUrl, SearchCertificatesRestRequestV2 searchRequest,
+            DiscoveryHistory history, int searchVersion) throws Exception {
         int certificatesFound = 0;
         SearchCertificatesRestResponseV2 searchResponse;
         if (searchVersion == 2) {
@@ -200,11 +227,15 @@ public class DiscoveryServiceImpl implements DiscoveryService {
             do {
                 logger.info("Request: {}", searchRequest);
                 searchResponse = ejbcaService.searchCertificates(instanceUuid, restApiUrl, searchRequest);
-                logger.info("Page: {}, Found {}", searchResponse.getPaginationSummary().getCurrentPage(), searchResponse.getCertificates().size());
+                logger
+                        .info("Page: {}, Found {}", searchResponse.getPaginationSummary().getCurrentPage(),
+                                searchResponse.getCertificates().size());
                 if (searchResponse.getCertificates().isEmpty()) {
                     break;
                 }
-                searchRequest.getPagination().setCurrentPage(searchResponse.getPaginationSummary().getCurrentPage() + 1);
+                searchRequest
+                        .getPagination()
+                        .setCurrentPage(searchResponse.getPaginationSummary().getCurrentPage() + 1);
                 parseAndCreateCertificateEntry(searchResponse, history);
                 certificatesFound = certificatesFound + searchResponse.getCertificates().size();
                 logger.info("Before while: isEmpty: {}", searchResponse.getCertificates().isEmpty());
@@ -216,7 +247,9 @@ public class DiscoveryServiceImpl implements DiscoveryService {
                 if (searchResponse.getCertificates().isEmpty()) {
                     break;
                 }
-                searchRequest.getPagination().setCurrentPage(searchResponse.getPaginationSummary().getCurrentPage() + 1);
+                searchRequest
+                        .getPagination()
+                        .setCurrentPage(searchResponse.getPaginationSummary().getCurrentPage() + 1);
                 parseAndCreateCertificateEntry(searchResponse, history);
                 certificatesFound = certificatesFound + searchResponse.getCertificates().size();
             } while (searchResponse.getPaginationSummary().getTotalCerts() == null);
@@ -227,7 +260,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
     private List<MetadataAttribute> getDiscoveryMeta(Integer totalCertificates) {
         List<MetadataAttribute> attributes = new ArrayList<>();
 
-        //Total Certificates
+        // Total Certificates
         MetadataAttributeV2 attribute = new MetadataAttributeV2();
         attribute.setName("totalCertificates");
         attribute.setUuid("20add2d6-60f7-11ed-9b6a-0242ac120002");
@@ -245,10 +278,8 @@ public class DiscoveryServiceImpl implements DiscoveryService {
         return attributes;
     }
 
-    private SearchCertificatesRestRequestV2 prepareSearchRequest(
-            List<NameAndIdDto> cas, List<NameAndIdDto> eeProfiles,
-            List<String> statuses, ZonedDateTime issuedAfter
-    ) {
+    private SearchCertificatesRestRequestV2 prepareSearchRequest(List<NameAndIdDto> cas, List<NameAndIdDto> eeProfiles,
+            List<String> statuses, ZonedDateTime issuedAfter) {
         SearchCertificatesRestRequestV2 request = new SearchCertificatesRestRequestV2();
 
         Pagination pagination = new Pagination();
@@ -312,9 +343,11 @@ public class DiscoveryServiceImpl implements DiscoveryService {
         return request;
     }
 
-    private void parseAndCreateCertificateEntry(SearchCertificatesRestResponseV2 searchResponse, DiscoveryHistory discoveryHistory) throws NullPointerException {
-        logger.info("Parsing {} certificates from page {} in discovery {}",
-                searchResponse.getCertificates().size(), searchResponse.getPaginationSummary().getCurrentPage(), discoveryHistory.getName());
+    private void parseAndCreateCertificateEntry(SearchCertificatesRestResponseV2 searchResponse,
+            DiscoveryHistory discoveryHistory) throws NullPointerException {
+        logger
+                .info("Parsing {} certificates from page {} in discovery {}", searchResponse.getCertificates().size(),
+                        searchResponse.getPaginationSummary().getCurrentPage(), discoveryHistory.getName());
 
         for (CertificateRestResponseV2 certificateRestResponseV2 : searchResponse.getCertificates()) {
             Certificate cert = new Certificate();
@@ -323,21 +356,22 @@ public class DiscoveryServiceImpl implements DiscoveryService {
             cert.setDiscoveryId(discoveryHistory.getId());
             cert.setBase64Content(new String(certificateRestResponseV2.getCertificate(), StandardCharsets.UTF_8));
 
-            cert.setMeta(AttributeDefinitionUtils.serialize(getCertificateMeta(
-                    certificateRestResponseV2.getCertificateProfileId().toString(),
-                    certificateRestResponseV2.getEndEntityProfileId().toString(),
-                    certificateRestResponseV2.getUsername(),
-                    discoveryHistory.getName()
-            )));
+            cert
+                    .setMeta(AttributeDefinitionUtils
+                            .serialize(
+                                    getCertificateMeta(certificateRestResponseV2.getCertificateProfileId().toString(),
+                                            certificateRestResponseV2.getEndEntityProfileId().toString(),
+                                            certificateRestResponseV2.getUsername(), discoveryHistory.getName())));
 
             certificateRepository.save(cert);
         }
     }
 
-    private List<MetadataAttribute> getCertificateMeta(String certificateProfileId, String endEntityProfileId, String username, String discoveryName) {
+    private List<MetadataAttribute> getCertificateMeta(String certificateProfileId, String endEntityProfileId,
+            String username, String discoveryName) {
         List<MetadataAttribute> attributes = new ArrayList<>();
 
-        //Certificate Profile ID
+        // Certificate Profile ID
         MetadataAttributeV2 attribute = new MetadataAttributeV2();
         attribute.setName("certificateProfileId");
         attribute.setUuid("df2fb570-60fd-11ed-9b6a-0242ac120002");
@@ -353,7 +387,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
         attribute.setContent(List.of(new StringAttributeContentV2(certificateProfileId)));
         attributes.add(attribute);
 
-        //End Entity Profile ID
+        // End Entity Profile ID
         MetadataAttributeV2 endEntityProfileIdAttribute = new MetadataAttributeV2();
         endEntityProfileIdAttribute.setName("endEntityProfileId");
         endEntityProfileIdAttribute.setUuid("df2fb93a-60fd-11ed-9b6a-0242ac120002");
@@ -369,7 +403,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
         endEntityProfileIdAttribute.setContent(List.of(new StringAttributeContentV2(endEntityProfileId)));
         attributes.add(endEntityProfileIdAttribute);
 
-        //Username
+        // Username
         MetadataAttributeV2 usernameAttribute = new MetadataAttributeV2();
         usernameAttribute.setName("username");
         usernameAttribute.setUuid("df2fbaa2-60fd-11ed-9b6a-0242ac120002");
@@ -385,7 +419,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
         usernameAttribute.setContent(List.of(new StringAttributeContentV2(username)));
         attributes.add(usernameAttribute);
 
-        //Discovery Source
+        // Discovery Source
         MetadataAttributeV2 discoverySourceAttribute = new MetadataAttributeV2();
         discoverySourceAttribute.setName("discoverySource");
         discoverySourceAttribute.setUuid("df2fbebc-60fd-11ed-9b6a-0242ac120002");
@@ -401,7 +435,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
         discoverySourceAttribute.setContent(List.of(new StringAttributeContentV2("EJBCA-NG")));
         attributes.add(discoverySourceAttribute);
 
-        //Discovery Name
+        // Discovery Name
         MetadataAttributeV2 discoveryNameAttribute = new MetadataAttributeV2();
         discoveryNameAttribute.setName("discoveryName");
         discoveryNameAttribute.setUuid("df2fbffc-60fd-11ed-9b6a-0242ac120002");

@@ -3,12 +3,27 @@ package com.otilm.ca.connector.ejbca.util;
 import com.otilm.api.model.core.enums.CertificateRequestFormat;
 import com.otilm.ca.connector.ejbca.request.CertificateRequest;
 import com.otilm.ca.connector.ejbca.request.Pkcs10CertificateRequest;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.Security;
+import java.security.spec.RSAKeyGenParameterSpec;
+import java.util.Base64;
+import java.util.List;
 import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.DERUTF8String;
 import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.bouncycastle.asn1.x500.X500Name;
-import org.bouncycastle.asn1.x509.*;
+import org.bouncycastle.asn1.x509.Extension;
+import org.bouncycastle.asn1.x509.Extensions;
+import org.bouncycastle.asn1.x509.ExtensionsGenerator;
+import org.bouncycastle.asn1.x509.GeneralName;
+import org.bouncycastle.asn1.x509.GeneralNames;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.OperatorCreationException;
@@ -22,14 +37,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.io.IOException;
-import java.net.InetAddress;
-import java.security.*;
-import java.security.spec.RSAKeyGenParameterSpec;
-import java.util.Base64;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 class CertificateRequestUtilsTest {
@@ -39,7 +52,8 @@ class CertificateRequestUtilsTest {
     private KeyPair sharedKeyPair;
 
     @BeforeEach
-    void setUp() throws NoSuchAlgorithmException, NoSuchProviderException, InvalidAlgorithmParameterException, IOException, OperatorCreationException {
+    void setUp() throws NoSuchAlgorithmException, NoSuchProviderException, InvalidAlgorithmParameterException,
+            IOException, OperatorCreationException {
         // install BouncyCastle provider
         Security.addProvider(new BouncyCastleProvider());
 
@@ -49,9 +63,12 @@ class CertificateRequestUtilsTest {
         sharedKeyPair = kpGen.generateKeyPair();
 
         X500Name subject = new X500Name("CN=Test");
-        PKCS10CertificationRequestBuilder requestBuilder = new JcaPKCS10CertificationRequestBuilder(subject, sharedKeyPair.getPublic());
+        PKCS10CertificationRequestBuilder requestBuilder = new JcaPKCS10CertificationRequestBuilder(subject,
+                sharedKeyPair.getPublic());
         ExtensionsGenerator extGen = new ExtensionsGenerator();
-        extGen.addExtension(Extension.subjectAlternativeName, false, new GeneralNames(new GeneralName(GeneralName.dNSName, "test.example.com")));
+        extGen
+                .addExtension(Extension.subjectAlternativeName, false,
+                        new GeneralNames(new GeneralName(GeneralName.dNSName, "test.example.com")));
         Extensions extensions = extGen.generate();
         requestBuilder.addAttribute(PKCSObjectIdentifiers.pkcs_9_at_extensionRequest, extensions);
         String sigAlg = "SHA256withRSA";
@@ -62,13 +79,17 @@ class CertificateRequestUtilsTest {
         KeyPairGenerator kpGen2 = KeyPairGenerator.getInstance("RSA", "BC");
         kpGen2.initialize(new RSAKeyGenParameterSpec(2048, RSAKeyGenParameterSpec.F4));
         KeyPair keyPair2 = kpGen2.generateKeyPair();
-        ContentSigner signer2 = new JcaContentSignerBuilder("SHA256withRSA").setProvider("BC").build(keyPair2.getPrivate());
-        pkcs10NoSan = new JcaPKCS10CertificationRequestBuilder(new X500Name("CN=NoSan"), keyPair2.getPublic()).build(signer2);
+        ContentSigner signer2 = new JcaContentSignerBuilder("SHA256withRSA")
+                .setProvider("BC")
+                .build(keyPair2.getPrivate());
+        pkcs10NoSan = new JcaPKCS10CertificationRequestBuilder(new X500Name("CN=NoSan"), keyPair2.getPublic())
+                .build(signer2);
     }
 
     @Test
     void test() throws IOException {
-        CertificateRequest certificateRequest = CertificateRequestUtils.createCertificateRequest(pkcs10CertificationRequest.getEncoded(), CertificateRequestFormat.PKCS10);
+        CertificateRequest certificateRequest = CertificateRequestUtils
+                .createCertificateRequest(pkcs10CertificationRequest.getEncoded(), CertificateRequestFormat.PKCS10);
         String ejbcaSanString = CertificateRequestUtils.getEjbcaSanExtension(certificateRequest);
 
         Assertions.assertEquals("dNSName=test.example.com", ejbcaSanString);
@@ -76,8 +97,8 @@ class CertificateRequestUtilsTest {
 
     @Test
     void createCertificateRequest_pkcs10_returnsPkcs10Request() throws IOException {
-        CertificateRequest request = CertificateRequestUtils.createCertificateRequest(
-                pkcs10CertificationRequest.getEncoded(), CertificateRequestFormat.PKCS10);
+        CertificateRequest request = CertificateRequestUtils
+                .createCertificateRequest(pkcs10CertificationRequest.getEncoded(), CertificateRequestFormat.PKCS10);
 
         assertNotNull(request);
         assertEquals(CertificateRequestFormat.PKCS10, request.getFormat());
@@ -91,18 +112,20 @@ class CertificateRequestUtilsTest {
         kpGen.initialize(new RSAKeyGenParameterSpec(2048, RSAKeyGenParameterSpec.F4));
         KeyPair keyPair = kpGen.generateKeyPair();
 
-        org.bouncycastle.cert.crmf.jcajce.JcaCertificateRequestMessageBuilder builder =
-                new org.bouncycastle.cert.crmf.jcajce.JcaCertificateRequestMessageBuilder(java.math.BigInteger.ONE);
+        org.bouncycastle.cert.crmf.jcajce.JcaCertificateRequestMessageBuilder builder = new org.bouncycastle.cert.crmf.jcajce.JcaCertificateRequestMessageBuilder(
+                java.math.BigInteger.ONE);
         builder.setPublicKey(keyPair.getPublic());
         builder.setSubject(new X500Name("CN=CrmfTest"));
-        builder.setProofOfPossessionSigningKeySigner(
-                new JcaContentSignerBuilder("SHA256withRSA").setProvider("BC").build(keyPair.getPrivate()));
+        builder
+                .setProofOfPossessionSigningKeySigner(
+                        new JcaContentSignerBuilder("SHA256withRSA").setProvider("BC").build(keyPair.getPrivate()));
 
-        org.bouncycastle.asn1.crmf.CertReqMsg certReqMsg =
-                org.bouncycastle.asn1.crmf.CertReqMsg.getInstance(builder.build().getEncoded());
+        org.bouncycastle.asn1.crmf.CertReqMsg certReqMsg = org.bouncycastle.asn1.crmf.CertReqMsg
+                .getInstance(builder.build().getEncoded());
         byte[] crmfBytes = new org.bouncycastle.asn1.crmf.CertReqMessages(certReqMsg).getEncoded();
 
-        CertificateRequest request = CertificateRequestUtils.createCertificateRequest(crmfBytes, CertificateRequestFormat.CRMF);
+        CertificateRequest request = CertificateRequestUtils
+                .createCertificateRequest(crmfBytes, CertificateRequestFormat.CRMF);
 
         assertNotNull(request);
         assertEquals(CertificateRequestFormat.CRMF, request.getFormat());
@@ -110,8 +133,8 @@ class CertificateRequestUtilsTest {
 
     @Test
     void getEjbcaSanExtension_noSan_returnsNull() throws IOException {
-        CertificateRequest request = CertificateRequestUtils.createCertificateRequest(
-                pkcs10NoSan.getEncoded(), CertificateRequestFormat.PKCS10);
+        CertificateRequest request = CertificateRequestUtils
+                .createCertificateRequest(pkcs10NoSan.getEncoded(), CertificateRequestFormat.PKCS10);
 
         String san = CertificateRequestUtils.getEjbcaSanExtension(request);
 
@@ -128,9 +151,8 @@ class CertificateRequestUtilsTest {
     @Test
     void csrStringToJcaObject_withPemHeaders_parsesSuccessfully() throws Exception {
         String base64 = Base64.getEncoder().encodeToString(pkcs10CertificationRequest.getEncoded());
-        String pemWithHeaders = "-----BEGIN CERTIFICATE REQUEST-----" + System.lineSeparator()
-                + base64 + System.lineSeparator()
-                + "-----END CERTIFICATE REQUEST-----";
+        String pemWithHeaders = "-----BEGIN CERTIFICATE REQUEST-----" + System.lineSeparator() + base64
+                + System.lineSeparator() + "-----END CERTIFICATE REQUEST-----";
 
         JcaPKCS10CertificationRequest result = CertificateRequestUtils.csrStringToJcaObject(pemWithHeaders);
 
@@ -176,9 +198,12 @@ class CertificateRequestUtilsTest {
     @Test
     void extractSanFromCsr_otherName_returnsOtherNameBranch() throws Exception {
         // Build a minimal otherName: OID + value wrapped as DERSequence
-        org.bouncycastle.asn1.ASN1ObjectIdentifier oid = new org.bouncycastle.asn1.ASN1ObjectIdentifier("1.3.6.1.4.1.99999.1");
-        org.bouncycastle.asn1.ASN1Encodable value = new org.bouncycastle.asn1.DERTaggedObject(true, 0, new DERUTF8String("testValue"));
-        GeneralName otherNameGn = new GeneralName(GeneralName.otherName, new DERSequence(new org.bouncycastle.asn1.ASN1Encodable[]{oid, value}));
+        org.bouncycastle.asn1.ASN1ObjectIdentifier oid = new org.bouncycastle.asn1.ASN1ObjectIdentifier(
+                "1.3.6.1.4.1.99999.1");
+        org.bouncycastle.asn1.ASN1Encodable value = new org.bouncycastle.asn1.DERTaggedObject(true, 0,
+                new DERUTF8String("testValue"));
+        GeneralName otherNameGn = new GeneralName(GeneralName.otherName,
+                new DERSequence(new org.bouncycastle.asn1.ASN1Encodable[]{oid, value}));
 
         JcaPKCS10CertificationRequest jcaReq = buildCsrWithSans(otherNameGn);
 
@@ -203,32 +228,32 @@ class CertificateRequestUtilsTest {
 
     @Test
     void getEjbcaSanExtension_ipv4_returnsDottedQuad() throws Exception {
-        assertEquals("iPAddress=192.168.1.1", ejbcaSan(
-                new GeneralName(GeneralName.iPAddress, new DEROctetString(InetAddress.getByName("192.168.1.1").getAddress()))));
+        assertEquals("iPAddress=192.168.1.1", ejbcaSan(new GeneralName(GeneralName.iPAddress,
+                new DEROctetString(InetAddress.getByName("192.168.1.1").getAddress()))));
     }
 
     @Test
     void getEjbcaSanExtension_ipv6_returnsUncompressedGroups() throws Exception {
-        assertEquals("iPAddress=2001:db8:0:0:0:0:0:1", ejbcaSan(
-                new GeneralName(GeneralName.iPAddress, new DEROctetString(InetAddress.getByName("2001:db8::1").getAddress()))));
+        assertEquals("iPAddress=2001:db8:0:0:0:0:0:1", ejbcaSan(new GeneralName(GeneralName.iPAddress,
+                new DEROctetString(InetAddress.getByName("2001:db8::1").getAddress()))));
     }
 
     @Test
     void getEjbcaSanExtension_rfc822Name_usesLowerCaseKey() throws Exception {
-        assertEquals("rfc822name=user@example.com", ejbcaSan(
-                new GeneralName(GeneralName.rfc822Name, "user@example.com")));
+        assertEquals("rfc822name=user@example.com",
+                ejbcaSan(new GeneralName(GeneralName.rfc822Name, "user@example.com")));
     }
 
     @Test
     void getEjbcaSanExtension_uri_usesUpperCaseKey() throws Exception {
-        assertEquals("UNIFORMRESOURCEIDENTIFIER=https://example.com/x", ejbcaSan(
-                new GeneralName(GeneralName.uniformResourceIdentifier, "https://example.com/x")));
+        assertEquals("UNIFORMRESOURCEIDENTIFIER=https://example.com/x",
+                ejbcaSan(new GeneralName(GeneralName.uniformResourceIdentifier, "https://example.com/x")));
     }
 
     @Test
     void getEjbcaSanExtension_directoryName_escapesCommas() throws Exception {
-        assertEquals("DIRECTORYNAME=CN=Dir\\,O=Org", ejbcaSan(
-                new GeneralName(GeneralName.directoryName, new X500Name("CN=Dir,O=Org"))));
+        assertEquals("DIRECTORYNAME=CN=Dir\\,O=Org",
+                ejbcaSan(new GeneralName(GeneralName.directoryName, new X500Name("CN=Dir,O=Org"))));
     }
 
     @Test
@@ -264,12 +289,13 @@ class CertificateRequestUtilsTest {
 
     @Test
     void getEjbcaSanExtension_multipleNames_joinsPreservingOrder() throws Exception {
-        JcaPKCS10CertificationRequest csr = buildCsrWithSans(
-                new GeneralName(GeneralName.dNSName, "a.example.com"),
+        JcaPKCS10CertificationRequest csr = buildCsrWithSans(new GeneralName(GeneralName.dNSName, "a.example.com"),
                 new GeneralName(GeneralName.rfc822Name, "u@example.com"),
-                new GeneralName(GeneralName.iPAddress, new DEROctetString(InetAddress.getByName("10.0.0.1").getAddress())),
+                new GeneralName(GeneralName.iPAddress,
+                        new DEROctetString(InetAddress.getByName("10.0.0.1").getAddress())),
                 new GeneralName(GeneralName.dNSName, "b.example.com"));
-        CertificateRequest request = CertificateRequestUtils.createCertificateRequest(csr.getEncoded(), CertificateRequestFormat.PKCS10);
+        CertificateRequest request = CertificateRequestUtils
+                .createCertificateRequest(csr.getEncoded(), CertificateRequestFormat.PKCS10);
 
         assertEquals("dNSName=a.example.com, rfc822name=u@example.com, iPAddress=10.0.0.1, dNSName=b.example.com",
                 CertificateRequestUtils.getEjbcaSanExtension(request));
@@ -280,7 +306,8 @@ class CertificateRequestUtilsTest {
         JcaPKCS10CertificationRequest csr = buildCsrWithSans(
                 new GeneralName(GeneralName.x400Address, new DERSequence()),
                 new GeneralName(GeneralName.dNSName, "kept.example.com"));
-        CertificateRequest request = CertificateRequestUtils.createCertificateRequest(csr.getEncoded(), CertificateRequestFormat.PKCS10);
+        CertificateRequest request = CertificateRequestUtils
+                .createCertificateRequest(csr.getEncoded(), CertificateRequestFormat.PKCS10);
 
         assertEquals("dNSName=kept.example.com", CertificateRequestUtils.getEjbcaSanExtension(request));
     }
@@ -290,40 +317,41 @@ class CertificateRequestUtilsTest {
         KeyPairGenerator kpGen = KeyPairGenerator.getInstance("RSA", "BC");
         kpGen.initialize(new RSAKeyGenParameterSpec(2048, RSAKeyGenParameterSpec.F4));
         KeyPair keyPair = kpGen.generateKeyPair();
-        org.bouncycastle.cert.crmf.jcajce.JcaCertificateRequestMessageBuilder builder =
-                new org.bouncycastle.cert.crmf.jcajce.JcaCertificateRequestMessageBuilder(java.math.BigInteger.ONE);
+        org.bouncycastle.cert.crmf.jcajce.JcaCertificateRequestMessageBuilder builder = new org.bouncycastle.cert.crmf.jcajce.JcaCertificateRequestMessageBuilder(
+                java.math.BigInteger.ONE);
         builder.setPublicKey(keyPair.getPublic());
         builder.setSubject(new X500Name("CN=CrmfSan"));
-        builder.setProofOfPossessionSigningKeySigner(
-                new JcaContentSignerBuilder("SHA256withRSA").setProvider("BC").build(keyPair.getPrivate()));
-        org.bouncycastle.asn1.crmf.CertReqMsg certReqMsg =
-                org.bouncycastle.asn1.crmf.CertReqMsg.getInstance(builder.build().getEncoded());
+        builder
+                .setProofOfPossessionSigningKeySigner(
+                        new JcaContentSignerBuilder("SHA256withRSA").setProvider("BC").build(keyPair.getPrivate()));
+        org.bouncycastle.asn1.crmf.CertReqMsg certReqMsg = org.bouncycastle.asn1.crmf.CertReqMsg
+                .getInstance(builder.build().getEncoded());
         byte[] crmfBytes = new org.bouncycastle.asn1.crmf.CertReqMessages(certReqMsg).getEncoded();
 
-        CertificateRequest request = CertificateRequestUtils.createCertificateRequest(crmfBytes, CertificateRequestFormat.CRMF);
+        CertificateRequest request = CertificateRequestUtils
+                .createCertificateRequest(crmfBytes, CertificateRequestFormat.CRMF);
 
         assertNull(CertificateRequestUtils.getEjbcaSanExtension(request));
     }
-
 
     // ---- escaping: EJBCA's parser is comma/plus delimited, so values must be escaped ----
 
     @Test
     void getEjbcaSanExtension_uriWithComma_escapesTheComma() throws Exception {
-        assertEquals("UNIFORMRESOURCEIDENTIFIER=https://example.test/a\\,b", ejbcaSan(
-                new GeneralName(GeneralName.uniformResourceIdentifier, "https://example.test/a,b")));
+        assertEquals("UNIFORMRESOURCEIDENTIFIER=https://example.test/a\\,b",
+                ejbcaSan(new GeneralName(GeneralName.uniformResourceIdentifier, "https://example.test/a,b")));
     }
 
     @Test
     void getEjbcaSanExtension_emailWithPlus_escapesThePlus() throws Exception {
-        assertEquals("rfc822name=user\\+tag@example.com", ejbcaSan(
-                new GeneralName(GeneralName.rfc822Name, "user+tag@example.com")));
+        assertEquals("rfc822name=user\\+tag@example.com",
+                ejbcaSan(new GeneralName(GeneralName.rfc822Name, "user+tag@example.com")));
     }
 
     @Test
     void getEjbcaSanExtension_dnsWithSpecialCharacters_escapesThemButNotEquals() throws Exception {
-        assertEquals("dNSName=a\\,b\\+c\\\\d\\\"e\\;f\\<g\\>h=i", ejbcaSan(
-                new GeneralName(GeneralName.dNSName, "a,b+c\\d\"e;f<g>h=i")));
+        assertEquals("dNSName=a\\,b\\+c\\\\d\\\"e\\;f\\<g\\>h=i",
+                ejbcaSan(new GeneralName(GeneralName.dNSName, "a,b+c\\d\"e;f<g>h=i")));
     }
 
     @Test
@@ -333,20 +361,24 @@ class CertificateRequestUtilsTest {
 
     @Test
     void getEjbcaSanExtension_permanentIdentifier_returnsValueAndAssigner() throws Exception {
-        GeneralName gn = new GeneralName(GeneralName.otherName, new DERSequence(new org.bouncycastle.asn1.ASN1Encodable[]{
-                new org.bouncycastle.asn1.ASN1ObjectIdentifier("1.3.6.1.5.5.7.8.3"),
-                new org.bouncycastle.asn1.DERTaggedObject(true, 0, new DERSequence(new org.bouncycastle.asn1.ASN1Encodable[]{
-                        new DERUTF8String("ID-123"), new org.bouncycastle.asn1.ASN1ObjectIdentifier("1.2.3.4")}))}));
+        GeneralName gn = new GeneralName(GeneralName.otherName,
+                new DERSequence(new org.bouncycastle.asn1.ASN1Encodable[]{
+                        new org.bouncycastle.asn1.ASN1ObjectIdentifier("1.3.6.1.5.5.7.8.3"),
+                        new org.bouncycastle.asn1.DERTaggedObject(true, 0,
+                                new DERSequence(new org.bouncycastle.asn1.ASN1Encodable[]{
+                                        new DERUTF8String("ID-123"),
+                                        new org.bouncycastle.asn1.ASN1ObjectIdentifier("1.2.3.4")}))}));
 
         assertEquals("PERMANENTIDENTIFIER=ID-123/1.2.3.4", ejbcaSan(gn));
     }
 
     @Test
     void getEjbcaSanExtension_permanentIdentifierWithoutAssigner_returnsTrailingSlash() throws Exception {
-        GeneralName gn = new GeneralName(GeneralName.otherName, new DERSequence(new org.bouncycastle.asn1.ASN1Encodable[]{
-                new org.bouncycastle.asn1.ASN1ObjectIdentifier("1.3.6.1.5.5.7.8.3"),
-                new org.bouncycastle.asn1.DERTaggedObject(true, 0, new DERSequence(
-                        new org.bouncycastle.asn1.ASN1Encodable[]{new DERUTF8String("ID-123")}))}));
+        GeneralName gn = new GeneralName(GeneralName.otherName,
+                new DERSequence(new org.bouncycastle.asn1.ASN1Encodable[]{
+                        new org.bouncycastle.asn1.ASN1ObjectIdentifier("1.3.6.1.5.5.7.8.3"),
+                        new org.bouncycastle.asn1.DERTaggedObject(true, 0, new DERSequence(
+                                new org.bouncycastle.asn1.ASN1Encodable[]{new DERUTF8String("ID-123")}))}));
 
         assertEquals("PERMANENTIDENTIFIER=ID-123/", ejbcaSan(gn));
     }
@@ -360,25 +392,29 @@ class CertificateRequestUtilsTest {
 
     private String ejbcaSan(GeneralName generalName) throws Exception {
         JcaPKCS10CertificationRequest csr = buildCsrWithSans(generalName);
-        CertificateRequest request = CertificateRequestUtils.createCertificateRequest(csr.getEncoded(), CertificateRequestFormat.PKCS10);
+        CertificateRequest request = CertificateRequestUtils
+                .createCertificateRequest(csr.getEncoded(), CertificateRequestFormat.PKCS10);
         return CertificateRequestUtils.getEjbcaSanExtension(request);
     }
 
     private static GeneralName otherName(String oid, String value) {
-        return new GeneralName(GeneralName.otherName, new DERSequence(new org.bouncycastle.asn1.ASN1Encodable[]{
-                new org.bouncycastle.asn1.ASN1ObjectIdentifier(oid),
-                new org.bouncycastle.asn1.DERTaggedObject(true, 0, new DERUTF8String(value))}));
+        return new GeneralName(GeneralName.otherName,
+                new DERSequence(new org.bouncycastle.asn1.ASN1Encodable[]{
+                        new org.bouncycastle.asn1.ASN1ObjectIdentifier(oid),
+                        new org.bouncycastle.asn1.DERTaggedObject(true, 0, new DERUTF8String(value))}));
     }
 
-    private JcaPKCS10CertificationRequest buildCsrWithSans(GeneralName... generalNames)
-            throws NoSuchAlgorithmException, NoSuchProviderException, InvalidAlgorithmParameterException,
-            IOException, OperatorCreationException {
+    private JcaPKCS10CertificationRequest buildCsrWithSans(GeneralName... generalNames) throws NoSuchAlgorithmException,
+            NoSuchProviderException, InvalidAlgorithmParameterException, IOException, OperatorCreationException {
         X500Name subject = new X500Name("CN=SanTest");
-        PKCS10CertificationRequestBuilder builder = new JcaPKCS10CertificationRequestBuilder(subject, sharedKeyPair.getPublic());
+        PKCS10CertificationRequestBuilder builder = new JcaPKCS10CertificationRequestBuilder(subject,
+                sharedKeyPair.getPublic());
         ExtensionsGenerator extGen = new ExtensionsGenerator();
         extGen.addExtension(Extension.subjectAlternativeName, false, new GeneralNames(generalNames));
         builder.addAttribute(PKCSObjectIdentifiers.pkcs_9_at_extensionRequest, extGen.generate());
-        ContentSigner signer = new JcaContentSignerBuilder("SHA256withRSA").setProvider("BC").build(sharedKeyPair.getPrivate());
+        ContentSigner signer = new JcaContentSignerBuilder("SHA256withRSA")
+                .setProvider("BC")
+                .build(sharedKeyPair.getPrivate());
         return new JcaPKCS10CertificationRequest(builder.build(signer).getEncoded());
     }
 }

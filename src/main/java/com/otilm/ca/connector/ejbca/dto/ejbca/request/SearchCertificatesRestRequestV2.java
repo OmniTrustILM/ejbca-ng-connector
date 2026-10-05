@@ -9,9 +9,11 @@ public class SearchCertificatesRestRequestV2 {
     private SearchCertificateSortRestRequest sort = null;
     private List<SearchCertificateCriteriaRestRequest> criteria = new ArrayList<>();
 
-    public SearchCertificatesRestRequestV2() {}
+    public SearchCertificatesRestRequestV2() {
+    }
 
-    public SearchCertificatesRestRequestV2(Pagination pagination, SearchCertificateSortRestRequest sort, List<SearchCertificateCriteriaRestRequest> criteria) {
+    public SearchCertificatesRestRequestV2(Pagination pagination, SearchCertificateSortRestRequest sort,
+            List<SearchCertificateCriteriaRestRequest> criteria) {
         this.pagination = pagination;
         this.sort = sort;
         this.criteria = criteria;
@@ -24,7 +26,7 @@ public class SearchCertificatesRestRequestV2 {
     public void setPagination(Pagination pagination) {
         this.pagination = pagination;
     }
-    
+
     public SearchCertificateSortRestRequest getSort() {
         return sort;
     }

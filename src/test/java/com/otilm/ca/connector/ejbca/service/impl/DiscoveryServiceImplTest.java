@@ -24,6 +24,10 @@ import com.otilm.ca.connector.ejbca.dto.ejbca.response.SearchCertificatesRestRes
 import com.otilm.ca.connector.ejbca.service.DiscoveryHistoryService;
 import com.otilm.ca.connector.ejbca.service.EjbcaService;
 import com.otilm.ca.connector.ejbca.util.EjbcaVersion;
+import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,16 +38,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.time.OffsetDateTime;
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -140,7 +140,9 @@ class DiscoveryServiceImplTest {
         attrs.add(objectAttr(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_CA, ca));
         attrs.add(objectAttr(DiscoveryAttributeServiceImpl.ATTRIBUTE_END_ENTITY_PROFILE, eeProfile));
         // status attribute — empty list is fine (AttributeDefinitionUtils returns empty list when attribute missing)
-        attrs.add(dateTimeAttr(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_ISSUED_AFTER, ZonedDateTime.now().minusDays(30)));
+        attrs
+                .add(dateTimeAttr(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_ISSUED_AFTER,
+                        ZonedDateTime.now().minusDays(30)));
 
         req.setAttributes(attrs);
         return req;
@@ -177,7 +179,8 @@ class DiscoveryServiceImplTest {
      * Produces a non-empty search response page with one certificate.
      */
     private SearchCertificatesRestResponseV2 pageWithOneCert(int currentPage) {
-        CertificateRestResponseV2 cert = CertificateRestResponseV2.builder()
+        CertificateRestResponseV2 cert = CertificateRestResponseV2
+                .builder()
                 .setCertificateProfileId(1)
                 .setEndEntityProfileId(2)
                 .setUsername("testUser")
@@ -230,8 +233,7 @@ class DiscoveryServiceImplTest {
         DiscoveryRequestDto request = buildEjbcaRequest();
 
         given(ejbcaService.getEjbcaVersion(INSTANCE_UUID)).willReturn(ejbcaVersion("7.11.0"));
-        given(ejbcaService.searchCertificates(eq(INSTANCE_UUID), eq(REST_API_URL), any()))
-                .willReturn(emptyPage(1));
+        given(ejbcaService.searchCertificates(eq(INSTANCE_UUID), eq(REST_API_URL), any())).willReturn(emptyPage(1));
 
         service.discoverCertificate(request, history);
 
@@ -263,7 +265,8 @@ class DiscoveryServiceImplTest {
 
         // For searchVersion 1, the loop terminates when totalCerts != null.
         // Return one page with totalCerts set (non-null) so the do-while exits.
-        CertificateRestResponseV2 cert = CertificateRestResponseV2.builder()
+        CertificateRestResponseV2 cert = CertificateRestResponseV2
+                .builder()
                 .setCertificateProfileId(1)
                 .setEndEntityProfileId(2)
                 .setUsername("testUser")
@@ -277,8 +280,7 @@ class DiscoveryServiceImplTest {
         response.setPaginationSummary(summary);
 
         given(ejbcaService.getEjbcaVersion(INSTANCE_UUID)).willReturn(ejbcaVersion("7.8.0"));
-        given(ejbcaService.searchCertificates(eq(INSTANCE_UUID), eq(REST_API_URL), any()))
-                .willReturn(response);
+        given(ejbcaService.searchCertificates(eq(INSTANCE_UUID), eq(REST_API_URL), any())).willReturn(response);
 
         service.discoverCertificate(request, history);
 
@@ -300,8 +302,7 @@ class DiscoveryServiceImplTest {
         emptyResponse.setPaginationSummary(summary);
 
         given(ejbcaService.getEjbcaVersion(INSTANCE_UUID)).willReturn(ejbcaVersion("7.8.0"));
-        given(ejbcaService.searchCertificates(eq(INSTANCE_UUID), eq(REST_API_URL), any()))
-                .willReturn(emptyResponse);
+        given(ejbcaService.searchCertificates(eq(INSTANCE_UUID), eq(REST_API_URL), any())).willReturn(emptyResponse);
 
         service.discoverCertificate(request, history);
 
@@ -344,8 +345,8 @@ class DiscoveryServiceImplTest {
         DiscoveryHistory history = buildHistory();
         DiscoveryRequestDto request = buildScheduleRequest();
 
-        ArgumentCaptor<SearchCertificatesRestRequestV2> requestCaptor =
-                ArgumentCaptor.forClass(SearchCertificatesRestRequestV2.class);
+        ArgumentCaptor<SearchCertificatesRestRequestV2> requestCaptor = ArgumentCaptor
+                .forClass(SearchCertificatesRestRequestV2.class);
 
         given(ejbcaService.getEjbcaVersion(INSTANCE_UUID)).willReturn(ejbcaVersion("7.11.0"));
         given(ejbcaService.searchCertificates(eq(INSTANCE_UUID), eq(REST_API_URL), requestCaptor.capture()))
@@ -359,8 +360,12 @@ class DiscoveryServiceImplTest {
         // Verify that the issuedDaysBefore=7 computation actually produced a date
         // criterion ~7 days before now (ISSUED_DATE AFTER) in the search request.
         SearchCertificatesRestRequestV2 capturedRequest = requestCaptor.getValue();
-        SearchCertificateCriteriaRestRequest issuedAfterCriterion = capturedRequest.getCriteria().stream()
-                .filter(c -> SearchCertificateCriteriaRestRequest.CriteriaProperty.ISSUED_DATE.name().equals(c.getProperty())
+        SearchCertificateCriteriaRestRequest issuedAfterCriterion = capturedRequest
+                .getCriteria()
+                .stream()
+                .filter(c -> SearchCertificateCriteriaRestRequest.CriteriaProperty.ISSUED_DATE
+                        .name()
+                        .equals(c.getProperty())
                         && SearchCertificateCriteriaRestRequest.CriteriaOperation.AFTER.name().equals(c.getOperation()))
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("No ISSUED_DATE AFTER criterion found in search request"));
@@ -431,8 +436,7 @@ class DiscoveryServiceImplTest {
         dataRequest.setItemsPerPage(10);
 
         given(certificateRepository.findByDiscoveryId(HISTORY_ID)).willReturn(List.of());
-        given(certificateRepository.findAllByDiscoveryId(eq(HISTORY_ID), any(Pageable.class)))
-                .willReturn(List.of());
+        given(certificateRepository.findAllByDiscoveryId(eq(HISTORY_ID), any(Pageable.class))).willReturn(List.of());
 
         DiscoveryProviderDto dto = service.getProviderDtoData(dataRequest, history);
 
@@ -475,9 +479,9 @@ class DiscoveryServiceImplTest {
     // ── prepareSearchRequest: null CA/profile/status paths ───────────────────
 
     /**
-     * When no CA, EE-profile, or status attributes are present in the request,
-     * AttributeDefinitionUtils returns null for those lists, exercising the null-guard
-     * branches in prepareSearchRequest. Uses EJBCA kind with issuedAfter set.
+     * When no CA, EE-profile, or status attributes are present in the request, AttributeDefinitionUtils returns null
+     * for those lists, exercising the null-guard branches in prepareSearchRequest. Uses EJBCA kind with issuedAfter
+     * set.
      */
     @Test
     void discoverCertificate_noOptionalFilters_completes() throws Exception {
@@ -492,12 +496,13 @@ class DiscoveryServiceImplTest {
         List<RequestAttribute> attrs = new ArrayList<>();
         attrs.add(objectAttr(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_INSTANCE, instance));
         attrs.add(stringAttr(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_RESTAPI_URL, REST_API_URL));
-        attrs.add(dateTimeAttr(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_ISSUED_AFTER, ZonedDateTime.now().minusDays(30)));
+        attrs
+                .add(dateTimeAttr(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_ISSUED_AFTER,
+                        ZonedDateTime.now().minusDays(30)));
         req.setAttributes(attrs);
 
         given(ejbcaService.getEjbcaVersion(INSTANCE_UUID)).willReturn(ejbcaVersion("7.11.0"));
-        given(ejbcaService.searchCertificates(eq(INSTANCE_UUID), eq(REST_API_URL), any()))
-                .willReturn(emptyPage(1));
+        given(ejbcaService.searchCertificates(eq(INSTANCE_UUID), eq(REST_API_URL), any())).willReturn(emptyPage(1));
 
         service.discoverCertificate(req, history);
 
@@ -507,8 +512,8 @@ class DiscoveryServiceImplTest {
     // ── runPagedSearch: v1 multi-page loop (totalCerts == null keeps looping) ──
 
     /**
-     * For EJBCA v7.8 (searchVersion 1), the loop continues while totalCerts == null.
-     * This test returns two pages: first with totalCerts null, second with totalCerts set.
+     * For EJBCA v7.8 (searchVersion 1), the loop continues while totalCerts == null. This test returns two pages: first
+     * with totalCerts null, second with totalCerts set.
      */
     @Test
     void discoverCertificate_version78_multiPage_stopsWhenTotalCertsIsSet() throws Exception {
@@ -516,7 +521,8 @@ class DiscoveryServiceImplTest {
         DiscoveryRequestDto request = buildEjbcaRequest();
 
         // Page 1: cert found, totalCerts == null → continue loop
-        CertificateRestResponseV2 cert = CertificateRestResponseV2.builder()
+        CertificateRestResponseV2 cert = CertificateRestResponseV2
+                .builder()
                 .setCertificateProfileId(1)
                 .setEndEntityProfileId(2)
                 .setUsername("user1")

@@ -2,13 +2,12 @@ package com.otilm.ca.connector.ejbca.service.impl;
 
 import com.otilm.ca.connector.ejbca.config.ApplicationConfig;
 import io.netty.channel.ChannelOption;
-import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
-import reactor.netty.http.client.HttpClient;
-
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
+import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
+import reactor.netty.http.client.HttpClient;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

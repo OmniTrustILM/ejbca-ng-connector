@@ -37,7 +37,8 @@ public class SearchCertificateCriteriaRestRequest {
     }
 
     /**
-     * The set of criteria property values that are expected for SearchCertificateCriteriaRestRequest.property attribute.
+     * The set of criteria property values that are expected for SearchCertificateCriteriaRestRequest.property
+     * attribute.
      */
     public enum CriteriaProperty {
         QUERY,
@@ -86,7 +87,8 @@ public class SearchCertificateCriteriaRestRequest {
     }
 
     /**
-     * The set of criteria operation values that are expected for SearchCertificateCriteriaRestRequest.operation attribute.
+     * The set of criteria operation values that are expected for SearchCertificateCriteriaRestRequest.operation
+     * attribute.
      */
     public enum CriteriaOperation {
         EQUAL,
@@ -111,7 +113,8 @@ public class SearchCertificateCriteriaRestRequest {
         }
 
         /**
-         * The subset of criteria operations that are allowed for String input in SearchCertificateCriteriaRestRequest.value.
+         * The subset of criteria operations that are allowed for String input in
+         * SearchCertificateCriteriaRestRequest.value.
          *
          * @return subset of criteria operations.
          */
@@ -120,7 +123,8 @@ public class SearchCertificateCriteriaRestRequest {
         }
 
         /**
-         * The subset of criteria operations that are allowed for Date input in SearchCertificateCriteriaRestRequest.value.
+         * The subset of criteria operations that are allowed for Date input in
+         * SearchCertificateCriteriaRestRequest.value.
          *
          * @return subset of criteria operations.
          */
@@ -130,7 +134,8 @@ public class SearchCertificateCriteriaRestRequest {
     }
 
     /**
-     * The set of certificate status values that are expected for SearchCertificateCriteriaRestRequest.value attribute in case SearchCertificateCriteriaRestRequest.property = 'STATUS'.
+     * The set of certificate status values that are expected for SearchCertificateCriteriaRestRequest.value attribute
+     * in case SearchCertificateCriteriaRestRequest.property = 'STATUS'.
      */
     public enum CertificateStatus {
         CERT_ACTIVE,
@@ -169,18 +174,12 @@ public class SearchCertificateCriteriaRestRequest {
          * @return subset of criteria operations.
          */
         public static Set<CertificateStatus> revocationReasons() {
-            return EnumSet.of(
-                    REVOCATION_REASON_UNSPECIFIED,
-                    REVOCATION_REASON_KEYCOMPROMISE,
-                    REVOCATION_REASON_CACOMPROMISE,
-                    REVOCATION_REASON_AFFILIATIONCHANGED,
-                    REVOCATION_REASON_SUPERSEDED,
-                    REVOCATION_REASON_CESSATIONOFOPERATION,
-                    REVOCATION_REASON_CERTIFICATEHOLD,
-                    REVOCATION_REASON_REMOVEFROMCRL,
-                    REVOCATION_REASON_PRIVILEGESWITHDRAWN,
-                    REVOCATION_REASON_AACOMPROMISE
-            );
+            return EnumSet
+                    .of(REVOCATION_REASON_UNSPECIFIED, REVOCATION_REASON_KEYCOMPROMISE, REVOCATION_REASON_CACOMPROMISE,
+                            REVOCATION_REASON_AFFILIATIONCHANGED, REVOCATION_REASON_SUPERSEDED,
+                            REVOCATION_REASON_CESSATIONOFOPERATION, REVOCATION_REASON_CERTIFICATEHOLD,
+                            REVOCATION_REASON_REMOVEFROMCRL, REVOCATION_REASON_PRIVILEGESWITHDRAWN,
+                            REVOCATION_REASON_AACOMPROMISE);
         }
     }
 

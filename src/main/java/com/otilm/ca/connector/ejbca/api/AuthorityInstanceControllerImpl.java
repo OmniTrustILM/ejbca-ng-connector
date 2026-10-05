@@ -8,32 +8,35 @@ import com.otilm.api.model.client.attribute.RequestAttribute;
 import com.otilm.api.model.common.NameAndIdDto;
 import com.otilm.api.model.common.attribute.common.AttributeType;
 import com.otilm.api.model.common.attribute.common.BaseAttribute;
-import com.otilm.api.model.common.attribute.common.DataAttribute;
 import com.otilm.api.model.common.attribute.common.callback.AttributeCallback;
 import com.otilm.api.model.common.attribute.common.callback.AttributeCallbackMapping;
 import com.otilm.api.model.common.attribute.common.callback.AttributeValueTarget;
 import com.otilm.api.model.common.attribute.common.content.AttributeContentType;
+import com.otilm.api.model.common.attribute.common.properties.DataAttributeProperties;
 import com.otilm.api.model.common.attribute.v2.DataAttributeV2;
 import com.otilm.api.model.common.attribute.v2.content.BaseAttributeContentV2;
 import com.otilm.api.model.common.attribute.v2.content.BooleanAttributeContentV2;
 import com.otilm.api.model.common.attribute.v2.content.ObjectAttributeContentV2;
 import com.otilm.api.model.common.attribute.v2.content.StringAttributeContentV2;
-import com.otilm.api.model.common.attribute.common.properties.DataAttributeProperties;
-import com.otilm.api.model.connector.authority.*;
+import com.otilm.api.model.connector.authority.AuthorityProviderInstanceDto;
+import com.otilm.api.model.connector.authority.AuthorityProviderInstanceRequestDto;
+import com.otilm.api.model.connector.authority.CaCertificatesRequestDto;
+import com.otilm.api.model.connector.authority.CaCertificatesResponseDto;
+import com.otilm.api.model.connector.authority.CertificateRevocationListRequestDto;
+import com.otilm.api.model.connector.authority.CertificateRevocationListResponseDto;
 import com.otilm.ca.connector.ejbca.service.AuthorityInstanceService;
 import com.otilm.ca.connector.ejbca.service.EjbcaService;
 import com.otilm.ca.connector.ejbca.service.EndEntityProfileEjbcaService;
 import com.otilm.ca.connector.ejbca.util.CertificateUtil;
 import com.otilm.core.util.AttributeDefinitionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class AuthorityInstanceControllerImpl implements AuthorityInstanceController {
@@ -85,12 +88,14 @@ public class AuthorityInstanceControllerImpl implements AuthorityInstanceControl
     }
 
     @Override
-    public AuthorityProviderInstanceDto createAuthorityInstance(AuthorityProviderInstanceRequestDto request) throws AlreadyExistException {
+    public AuthorityProviderInstanceDto createAuthorityInstance(AuthorityProviderInstanceRequestDto request)
+            throws AlreadyExistException {
         return authorityInstanceService.createAuthorityInstance(request);
     }
 
     @Override
-    public AuthorityProviderInstanceDto updateAuthorityInstance(String uuid, AuthorityProviderInstanceRequestDto request) throws NotFoundException {
+    public AuthorityProviderInstanceDto updateAuthorityInstance(String uuid,
+            AuthorityProviderInstanceRequestDto request) throws NotFoundException {
         return authorityInstanceService.updateAuthorityInstance(uuid, request);
     }
 
@@ -111,7 +116,8 @@ public class AuthorityInstanceControllerImpl implements AuthorityInstanceControl
 
         // transform objects to Attributes that can be selected
         List<BaseAttributeContentV2<?>> endEntityProfilesContent = new ArrayList<>();
-        ArrayList<NameAndIdDto> endEntityProfiles = new ArrayList<>(endEntityProfileEjbcaService.listEndEntityProfiles(uuid));
+        ArrayList<NameAndIdDto> endEntityProfiles = new ArrayList<>(
+                endEntityProfileEjbcaService.listEndEntityProfiles(uuid));
         for (NameAndIdDto endEntityProfile : endEntityProfiles) {
             ObjectAttributeContentV2 content = new ObjectAttributeContentV2();
             content.setReference(endEntityProfile.getName());
@@ -138,7 +144,9 @@ public class AuthorityInstanceControllerImpl implements AuthorityInstanceControl
 
         Set<AttributeCallbackMapping> mappings = new HashSet<>();
         mappings.add(new AttributeCallbackMapping("authorityId", AttributeValueTarget.PATH_VARIABLE, uuid));
-        mappings.add(new AttributeCallbackMapping(ATTRIBUTE_END_ENTITY_PROFILE + ".data.id", "endEntityProfileId", AttributeValueTarget.PATH_VARIABLE));
+        mappings
+                .add(new AttributeCallbackMapping(ATTRIBUTE_END_ENTITY_PROFILE + ".data.id", "endEntityProfileId",
+                        AttributeValueTarget.PATH_VARIABLE));
 
         DataAttributeV2 certificateProfile = new DataAttributeV2();
         certificateProfile.setUuid("eb57a756-5a11-4d31-866b-e3f066f7a2b9");
@@ -156,7 +164,9 @@ public class AuthorityInstanceControllerImpl implements AuthorityInstanceControl
         certificateProfile.setProperties(certificateProfileProperties);
 
         AttributeCallback listCertificateProfilesCallback = new AttributeCallback();
-        listCertificateProfilesCallback.setCallbackContext("/v1/authorityProvider/authorities/{authorityId}/endEntityProfiles/{endEntityProfileId}/certificateprofiles");
+        listCertificateProfilesCallback
+                .setCallbackContext(
+                        "/v1/authorityProvider/authorities/{authorityId}/endEntityProfiles/{endEntityProfileId}/certificateprofiles");
         listCertificateProfilesCallback.setCallbackMethod("GET");
         listCertificateProfilesCallback.setMappings(mappings);
         certificateProfile.setAttributeCallback(listCertificateProfilesCallback);
@@ -179,7 +189,9 @@ public class AuthorityInstanceControllerImpl implements AuthorityInstanceControl
         certificationAuthority.setProperties(certificationAuthorityProperties);
 
         AttributeCallback listCAsInProfileCallback = new AttributeCallback();
-        listCAsInProfileCallback.setCallbackContext("/v1/authorityProvider/authorities/{authorityId}/endEntityProfiles/{endEntityProfileId}/cas");
+        listCAsInProfileCallback
+                .setCallbackContext(
+                        "/v1/authorityProvider/authorities/{authorityId}/endEntityProfiles/{endEntityProfileId}/cas");
         listCAsInProfileCallback.setCallbackMethod("GET");
         listCAsInProfileCallback.setMappings(mappings);
         certificationAuthority.setAttributeCallback(listCAsInProfileCallback);
@@ -291,31 +303,26 @@ public class AuthorityInstanceControllerImpl implements AuthorityInstanceControl
     }
 
     @Override
-    public void validateRAProfileAttributes(@PathVariable("uuid") String uuid, @RequestBody List<RequestAttribute> attributes) throws ValidationException, NotFoundException {
+    public void validateRAProfileAttributes(@PathVariable("uuid") String uuid,
+            @RequestBody List<RequestAttribute> attributes) throws ValidationException, NotFoundException {
         AttributeDefinitionUtils.validateAttributes(listRAProfileAttributes(uuid), attributes);
     }
 
     @Override
-    public CertificateRevocationListResponseDto getCrl(String uuid, CertificateRevocationListRequestDto request) throws NotFoundException {
-        NameAndIdDto certificationAuthority = AttributeDefinitionUtils.getNameAndIdData(
-                ATTRIBUTE_CERTIFICATION_AUTHORITY,
-                request.getRaProfileAttributes()
-        );
+    public CertificateRevocationListResponseDto getCrl(String uuid, CertificateRevocationListRequestDto request)
+            throws NotFoundException {
+        NameAndIdDto certificationAuthority = AttributeDefinitionUtils
+                .getNameAndIdData(ATTRIBUTE_CERTIFICATION_AUTHORITY, request.getRaProfileAttributes());
         return new CertificateRevocationListResponseDto(
-                ejbcaService.getLatestCRL(uuid, certificationAuthority.getName(), request.isDelta())
-        );
+                ejbcaService.getLatestCRL(uuid, certificationAuthority.getName(), request.isDelta()));
     }
 
     @Override
-    public CaCertificatesResponseDto getCaCertificates(String uuid, CaCertificatesRequestDto raProfileAttributes) throws ValidationException, NotFoundException {
-        NameAndIdDto certificationAuthority = AttributeDefinitionUtils.getNameAndIdData(
-                ATTRIBUTE_CERTIFICATION_AUTHORITY,
-                raProfileAttributes.getRaProfileAttributes()
-        );
-        return new CaCertificatesResponseDto(
-                CertificateUtil.convertWSCertificateDataToDto(
-                        ejbcaService.getLastCAChain(uuid, certificationAuthority.getName())
-                )
-        );
+    public CaCertificatesResponseDto getCaCertificates(String uuid, CaCertificatesRequestDto raProfileAttributes)
+            throws ValidationException, NotFoundException {
+        NameAndIdDto certificationAuthority = AttributeDefinitionUtils
+                .getNameAndIdData(ATTRIBUTE_CERTIFICATION_AUTHORITY, raProfileAttributes.getRaProfileAttributes());
+        return new CaCertificatesResponseDto(CertificateUtil
+                .convertWSCertificateDataToDto(ejbcaService.getLastCAChain(uuid, certificationAuthority.getName())));
     }
 }
