@@ -8,10 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-/**
- * Saves into the schema the Flyway migrations create, which the other tests replace with one generated from the
- * entities, so an entity column the migrations spell differently fails here.
- */
+/** Checks that the entities match the tables the Flyway migrations create. */
 @SpringBootTest(properties = {
         "spring.datasource.url=jdbc:h2:mem:migrated;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE",
         "spring.flyway.enabled=true",
