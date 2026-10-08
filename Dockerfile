@@ -1,9 +1,12 @@
+# --build-context m2=$HOME/.m2/repository replaces this empty stage; without it Maven downloads every dependency
+FROM scratch AS m2
+
 # Build stage
 FROM maven:3.9.16-eclipse-temurin-21 AS build
 COPY src /home/app/src
 COPY pom.xml /home/app
 COPY docker /home/app/docker
-RUN mvn -f /home/app/pom.xml clean package
+RUN --mount=type=bind,from=m2,target=/root/.m2/repository,rw mvn -f /home/app/pom.xml clean package
 
 # Package stage
 FROM eclipse-temurin:21-jre-alpine
