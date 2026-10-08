@@ -1,0 +1,22 @@
+RequestAttributeV2 url STRING
+  BaseAttributeContentV2 reference=null data=String:https://ejbca.example.com/ejbca/ejbcaws/ejbcaws?wsdl
+RequestAttributeV2 credential CREDENTIAL
+  BaseAttributeContentV2 reference=admin data=LinkedHashMap:{uuid=6f1b2c3d-0000-4000-8000-00000000000a, name=admin, kind=SoftKeyStore, attributes=[{version=2, uuid=6f1b2c3d-0000-4000-8000-00000000000b, name=keyStorePassword, type=data, contentType=secret, content=[{reference=pwd}]}]}
+RequestAttributeV2 validFrom DATETIME
+  BaseAttributeContentV2 reference=null data=String:2026-10-08T10:15:30.123+02:00
+RequestAttributeV2 day DATE
+  BaseAttributeContentV2 reference=null data=String:2026-10-08
+RequestAttributeV2 hour TIME
+  BaseAttributeContentV2 reference=null data=String:10:15:30
+RequestAttributeV2 count INTEGER
+  BaseAttributeContentV2 reference=null data=Integer:42
+RequestAttributeV2 flag BOOLEAN
+  BaseAttributeContentV2 reference=null data=Boolean:true
+RequestAttributeV3 v3string STRING
+  StringAttributeContentV3 reference=null data=String:three
+RequestAttributeV3 v3datetime DATETIME
+  DateTimeAttributeContentV3 reference=null data=ZonedDateTime:2026-10-08T10:15:30.123+02:00
+RequestAttributeV3 v3date DATE
+  DateAttributeContentV3 reference=null data=LocalDate:2026-10-08
+RequestAttributeV2 unversioned STRING
+  BaseAttributeContentV2 reference=null data=String:defaults to V2

@@ -1,0 +1,12 @@
+request=MIIBVjCBwAIBADAXMRUwEwYDVQQDDAxpbG0uZXhhbXBsZQ==
+format=PKCS10
+raProfileAttributes:
+RequestAttributeV2 endEntityProfile OBJECT
+  BaseAttributeContentV2 reference=TLS Server data=LinkedHashMap:{id=2, name=TLS Server}
+RequestAttributeV2 sendNotifications BOOLEAN
+  BaseAttributeContentV2 reference=null data=Boolean:false
+attributes:
+RequestAttributeV2 email STRING
+  BaseAttributeContentV2 reference=null data=String:user@example.com
+RequestAttributeV3 san STRING
+  StringAttributeContentV3 reference=null data=String:dNSName=ilm.example

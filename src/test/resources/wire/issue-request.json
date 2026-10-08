@@ -1,0 +1,16 @@
+{
+  "request": "MIIBVjCBwAIBADAXMRUwEwYDVQQDDAxpbG0uZXhhbXBsZQ==",
+  "format": "pkcs10",
+  "raProfileAttributes": [
+    {"version": "v2", "uuid": "baf2d142-f35a-437f-81c7-35c128881fc0", "name": "endEntityProfile", "contentType": "object",
+     "content": [{"reference": "TLS Server", "data": {"id": 2, "name": "TLS Server"}}]},
+    {"version": "v2", "uuid": "6f1b2c3d-0000-4000-8000-000000000014", "name": "sendNotifications", "contentType": "boolean",
+     "content": [{"data": false}]}
+  ],
+  "attributes": [
+    {"version": "v2", "uuid": "0b378474-ebe9-4a17-9d3d-0577eb16aa34", "name": "email", "contentType": "string",
+     "content": [{"data": "user@example.com"}]},
+    {"version": "v3", "uuid": "2cfd8c1a-e867-42f1-ab6c-67fb1964e163", "name": "san", "contentType": "string",
+     "content": [{"contentType": "string", "data": "dNSName=ilm.example"}]}
+  ]
+}
