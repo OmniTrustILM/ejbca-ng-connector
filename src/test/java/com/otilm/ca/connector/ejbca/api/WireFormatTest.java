@@ -54,9 +54,9 @@ import org.mockito.ArgumentCaptor;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.JSONCompareMode;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
@@ -88,19 +88,19 @@ class WireFormatTest {
     @Autowired
     private MockMvc mvc;
 
-    @MockBean
+    @MockitoBean
     private AttributeService attributeService;
 
-    @MockBean
+    @MockitoBean
     private AuthorityInstanceService authorityInstanceService;
 
-    @MockBean
+    @MockitoBean
     private EndEntityProfileEjbcaService endEntityProfileEjbcaService;
 
-    @MockBean
+    @MockitoBean
     private EjbcaService ejbcaService;
 
-    @MockBean
+    @MockitoBean
     private CertificateEjbcaService certificateEjbcaService;
 
     @Test
