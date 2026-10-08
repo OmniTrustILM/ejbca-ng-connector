@@ -28,7 +28,7 @@ public class Certificate implements Serializable {
     @Column(name = "uuid")
     private String uuid;
 
-    @Column(name = "base64Content")
+    @Column(name = "base64content")
     private String base64Content;
 
     @Column(name = "discoveryId")
