@@ -8,12 +8,16 @@ import com.otilm.ca.connector.ejbca.dto.ejbca.request.SearchCertificateCriteriaR
 import com.otilm.ca.connector.ejbca.dto.ejbca.request.SearchCertificatesRestRequestV2;
 import com.otilm.ca.connector.ejbca.dto.ejbca.response.SearchCertificatesRestResponseV2;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
+import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.Exceptions;
+import reactor.netty.http.client.HttpClient;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
@@ -30,6 +34,8 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 class EjbcaRestWireTest {
 
     private static final String SEARCH = "/v2/certificate/search";
+    /** The default of {@code spring.codec.max-in-memory-size} in the shipped application.yml. */
+    private static final int MAX_PAYLOAD_SIZE = 2_000_000;
     /** Renders what the connector decoded, independently of the codec under test. */
     private static final ObjectMapper DECODED = new ObjectMapper();
 
@@ -55,8 +61,7 @@ class EjbcaRestWireTest {
     void searchesAsTheConnectorDoesAndReadsWhatEjbcaAnswers() throws Exception {
         ejbca.stubFor(post(SEARCH).willReturn(okJson(Goldens.read("ejbca-search-response.json"))));
 
-        SearchCertificatesRestResponseV2 response = EjbcaRestApiClient
-                .prepareWebClient()
+        SearchCertificatesRestResponseV2 response = client()
                 .post()
                 .uri(ejbca.baseUrl() + SEARCH)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -81,8 +86,7 @@ class EjbcaRestWireTest {
                                 .withBody("{\"error_code\":400,\"error_message\":\"Wrong search criteria\"}")));
 
         Throwable error = Exceptions
-                .unwrap(catchThrowable(() -> EjbcaRestApiClient
-                        .prepareWebClient()
+                .unwrap(catchThrowable(() -> client()
                         .post()
                         .uri(ejbca.baseUrl() + SEARCH)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -92,6 +96,34 @@ class EjbcaRestWireTest {
                         .block()));
 
         assertThat(error).isInstanceOf(EjbcaRestApiException.class).hasMessage("Wrong search criteria");
+    }
+
+    /** A search page larger than the 256 KB Spring's codecs accept by default still decodes. */
+    @Test
+    void readsASearchPageLargerThanTheDefaultCodecLimit() {
+        String certificate = "{\"serialNumber\":\"%d\",\"base64Cert\":\"" + "A".repeat(600) + "\"}";
+        String page = IntStream
+                .range(0, 700)
+                .mapToObj(certificate::formatted)
+                .collect(Collectors.joining(",", "{\"certificates\":[", "]}"));
+        assertThat(page.length()).isGreaterThan(262_144);
+        ejbca.stubFor(post(SEARCH).willReturn(okJson(page)));
+
+        SearchCertificatesRestResponseV2 response = client()
+                .post()
+                .uri(ejbca.baseUrl() + SEARCH)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(searchBySerialNumber("1"))
+                .retrieve()
+                .bodyToMono(SearchCertificatesRestResponseV2.class)
+                .block();
+
+        assertThat(response.getCertificates()).hasSize(700);
+    }
+
+    /** The client production builds for an authority, over plain HTTP. */
+    private static WebClient client() {
+        return EjbcaRestApiClient.restWebClient(HttpClient.create(), MAX_PAYLOAD_SIZE);
     }
 
     /** The request {@code CertificateEjbcaServiceImpl} sends to identify a certificate by its serial number. */
