@@ -6,14 +6,15 @@ obvious from the code.
 
 ## Dependency resolution and snapshots
 
-- Most dependencies (the `com.otilm:dependencies` parent BOM and its transitives) resolve
-  from **Maven Central**.
-- **`com.otilm:interfaces` is currently consumed as a SNAPSHOT** (`2.18.1-SNAPSHOT`), so the
-  build needs the snapshot `<repositories>` declared in `pom.xml`: GitHub Packages
-  (`maven.pkg.github.com/omnitrustilm/*`) and the public Sonatype Central Portal snapshots
-  (`central.sonatype.com/repository/maven-snapshots`). The snapshot resolves from
+- Most dependencies resolve from **Maven Central**.
+- **The parent `com.otilm:dependencies` and `com.otilm:interfaces` are both consumed as
+  `2.20.0-SNAPSHOT`**, the Spring Boot 4.1 line, so the build needs the snapshot
+  `<repositories>` declared in `pom.xml`: GitHub Packages (`maven.pkg.github.com/omnitrustilm/*`)
+  and the public Sonatype Central Portal snapshots
+  (`central.sonatype.com/repository/maven-snapshots`). The snapshots resolve from
   `central-portal` without auth; the `github` repo is best-effort and needs a token. **Builds
-  are not reproducible** until `com.otilm:interfaces` cuts a release — pin it then.
+  are not reproducible** until both cut 2.20.0 — pin both to the releases before the connector
+  is released.
 - **All dependencies now resolve from public repositories.** Nothing is installed into the local
   repository from a bundled jar, so `mvn verify` works from a clean checkout.
 
