@@ -1,6 +1,10 @@
 package com.otilm.ca.connector.ejbca.api;
 
+import com.otilm.api.exception.ValidationError;
+import com.otilm.api.exception.ValidationException;
 import com.otilm.api.model.client.attribute.RequestAttribute;
+import com.otilm.api.model.common.HealthDto;
+import com.otilm.api.model.common.HealthStatus;
 import com.otilm.api.model.common.NameAndIdDto;
 import com.otilm.api.model.common.attribute.common.AttributeContent;
 import com.otilm.api.model.common.attribute.common.AttributeType;
@@ -31,14 +35,24 @@ import com.otilm.api.model.common.attribute.v3.InfoAttributeV3;
 import com.otilm.api.model.common.attribute.v3.content.DateAttributeContentV3;
 import com.otilm.api.model.common.attribute.v3.content.DateTimeAttributeContentV3;
 import com.otilm.api.model.common.attribute.v3.content.StringAttributeContentV3;
+import com.otilm.api.model.connector.discovery.DiscoveryDataRequestDto;
+import com.otilm.api.model.connector.discovery.DiscoveryProviderCertificateDataDto;
+import com.otilm.api.model.connector.discovery.DiscoveryProviderDto;
 import com.otilm.api.model.connector.v2.CertificateDataResponseDto;
 import com.otilm.api.model.connector.v2.CertificateSignRequestDto;
+import com.otilm.api.model.core.discovery.DiscoveryStatus;
+import com.otilm.ca.connector.ejbca.EndpointsListener;
 import com.otilm.ca.connector.ejbca.Goldens;
+import com.otilm.ca.connector.ejbca.dao.entity.DiscoveryHistory;
 import com.otilm.ca.connector.ejbca.service.AttributeService;
 import com.otilm.ca.connector.ejbca.service.AuthorityInstanceService;
 import com.otilm.ca.connector.ejbca.service.CertificateEjbcaService;
+import com.otilm.ca.connector.ejbca.service.DiscoveryAttributeService;
+import com.otilm.ca.connector.ejbca.service.DiscoveryHistoryService;
+import com.otilm.ca.connector.ejbca.service.DiscoveryService;
 import com.otilm.ca.connector.ejbca.service.EjbcaService;
 import com.otilm.ca.connector.ejbca.service.EndEntityProfileEjbcaService;
+import com.otilm.ca.connector.ejbca.service.HealthCheckService;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -46,35 +60,48 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Pins the JSON that core and the connector exchange, as the REST layer reads and writes it. {@link Goldens} says how
- * its golden files are recorded.
+ * Pins the JSON that core and the connector exchange, as the REST layer reads and writes it. Every controller is
+ * loaded, so the connector info lists the endpoints core reads at registration. {@link Goldens} says how its golden
+ * files are recorded.
  */
 @WebMvcTest(controllers = {
         AttributesControllerImpl.class,
         AuthorityInstanceControllerImpl.class,
-        CertificateControllerImpl.class})
+        CertificateControllerImpl.class,
+        DiscoveryAttributesControllerImpl.class,
+        DiscoveryControllerImpl.class,
+        DiscoverySupportController.class,
+        EndEntityProfilesControllerImpl.class,
+        HealthControllerImpl.class,
+        InfoControllerImpl.class})
+@Import(EndpointsListener.class)
 class WireFormatTest {
 
     private static final String AUTHORITY_UUID = "dde2cccc-616f-11ec-90d6-0242ac120003";
+    private static final String DISCOVERY_UUID = "6f1b2c3d-0000-4000-8000-000000000010";
     private static final ZonedDateTime PRAGUE_DATE_TIME = ZonedDateTime
             .of(2026, 10, 8, 10, 15, 30, 123_000_000, ZoneId.of("Europe/Prague"));
 
@@ -95,6 +122,18 @@ class WireFormatTest {
 
     @MockitoBean
     private CertificateEjbcaService certificateEjbcaService;
+
+    @MockitoBean
+    private DiscoveryAttributeService discoveryAttributeService;
+
+    @MockitoBean
+    private DiscoveryHistoryService discoveryHistoryService;
+
+    @MockitoBean
+    private DiscoveryService discoveryService;
+
+    @MockitoBean
+    private HealthCheckService healthCheckService;
 
     @Test
     void issueAttributeDefinitions() throws Exception {
@@ -147,6 +186,69 @@ class WireFormatTest {
         ArgumentCaptor<List<RequestAttribute>> attributes = ArgumentCaptor.forClass(List.class);
         then(attributeService).should().validateAttributes(eq("EJBCA"), attributes.capture());
         Goldens.assertMatches("request-attributes.txt", describe(attributes.getValue()));
+    }
+
+    /** The status and the page of results core polls for until a discovery has finished. */
+    @Test
+    void discoveryStatusAndResults() throws Exception {
+        DiscoveryHistory history = new DiscoveryHistory();
+        given(discoveryHistoryService.getHistoryByUuid(DISCOVERY_UUID)).willReturn(history);
+        given(discoveryService.getProviderDtoData(any(), eq(history))).willReturn(completedDiscovery());
+
+        String json = exchange(post("/v1/discoveryProvider/discover/{uuid}", DISCOVERY_UUID)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"ejbca-discovery\",\"kind\":\"EJBCA\",\"pageNumber\":1,\"itemsPerPage\":100}"));
+
+        Goldens.assertMatches("discovery-status.json", json);
+        ArgumentCaptor<DiscoveryDataRequestDto> page = ArgumentCaptor.forClass(DiscoveryDataRequestDto.class);
+        then(discoveryService).should().getProviderDtoData(page.capture(), eq(history));
+        assertThat(page.getValue())
+                .extracting(DiscoveryDataRequestDto::getName, DiscoveryDataRequestDto::getKind,
+                        DiscoveryDataRequestDto::getPageNumber, DiscoveryDataRequestDto::getItemsPerPage)
+                .containsExactly("ejbca-discovery", "EJBCA", 1, 100);
+    }
+
+    @Test
+    void validationErrorsAnswerUnprocessableContent() throws Exception {
+        willThrow(new ValidationException("Invalid attributes",
+                List
+                        .of(ValidationError.create("Attribute email is required"),
+                                ValidationError.create("Attribute san must name a DNS host"))))
+                .given(attributeService)
+                .validateAttributes(eq("EJBCA"), any());
+
+        String json = mvc
+                .perform(post("/v1/authorityProvider/EJBCA/attributes/validate")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("[]"))
+                .andExpect(status().is(422))
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
+
+        Goldens.assertMatches("validation-errors.json", json);
+    }
+
+    @Test
+    void connectorInfo() throws Exception {
+        String json = exchange(get("/v1"));
+
+        Goldens.assertMatches("connector-info.json", json);
+    }
+
+    @Test
+    void health() throws Exception {
+        HealthDto database = new HealthDto();
+        database.setStatus(HealthStatus.OK);
+        database.setDescription("Database connection ok");
+        HealthDto health = new HealthDto();
+        health.setStatus(HealthStatus.OK);
+        health.setParts(Map.of("database", database));
+        given(healthCheckService.checkHealth()).willReturn(health);
+
+        String json = exchange(get("/v1/health"));
+
+        Goldens.assertMatches("health.json", json);
     }
 
     private String exchange(MockHttpServletRequestBuilder request) throws Exception {
@@ -271,6 +373,44 @@ class WireFormatTest {
         response.setUuid("6f1b2c3d-0000-4000-8000-000000000009");
         response.setMeta(meta);
         return response;
+    }
+
+    private static DiscoveryProviderDto completedDiscovery() {
+        DiscoveryProviderCertificateDataDto certificate = new DiscoveryProviderCertificateDataDto();
+        certificate.setUuid("6f1b2c3d-0000-4000-8000-000000000011");
+        certificate.setBase64Content("MIIBszCCAVmgAwIBAgIUQ==");
+        certificate
+                .setMeta(List
+                        .of(metadata("df2fbaa2-60fd-11ed-9b6a-0242ac120002", "username", "Username",
+                                AttributeContentType.STRING, new StringAttributeContentV2("ilm-user"))));
+
+        DiscoveryProviderDto discovery = new DiscoveryProviderDto();
+        discovery.setUuid(DISCOVERY_UUID);
+        discovery.setName("ejbca-discovery");
+        discovery.setStatus(DiscoveryStatus.COMPLETED);
+        discovery.setTotalCertificatesDiscovered(1);
+        discovery.setCertificateData(List.of(certificate));
+        discovery
+                .setMeta(List
+                        .of(metadata("20add2d6-60f7-11ed-9b6a-0242ac120002", "totalCertificates",
+                                "Total Certificates Discovered", AttributeContentType.INTEGER,
+                                new IntegerAttributeContentV2("1", 1))));
+        return discovery;
+    }
+
+    private static MetadataAttribute metadata(String uuid, String name, String label, AttributeContentType contentType,
+            AttributeContent content) {
+        MetadataAttributeProperties properties = new MetadataAttributeProperties();
+        properties.setLabel(label);
+        properties.setVisible(true);
+        MetadataAttributeV2 attribute = new MetadataAttributeV2();
+        attribute.setUuid(uuid);
+        attribute.setName(name);
+        attribute.setType(AttributeType.META);
+        attribute.setContentType(contentType);
+        attribute.setProperties(properties);
+        attribute.setContent(List.of(content));
+        return attribute;
     }
 
     private static String describe(CertificateSignRequestDto request) {
