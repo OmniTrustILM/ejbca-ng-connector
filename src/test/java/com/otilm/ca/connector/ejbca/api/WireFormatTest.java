@@ -33,15 +33,13 @@ import com.otilm.api.model.common.attribute.v3.content.DateTimeAttributeContentV
 import com.otilm.api.model.common.attribute.v3.content.StringAttributeContentV3;
 import com.otilm.api.model.connector.v2.CertificateDataResponseDto;
 import com.otilm.api.model.connector.v2.CertificateSignRequestDto;
+import com.otilm.ca.connector.ejbca.Goldens;
 import com.otilm.ca.connector.ejbca.service.AttributeService;
 import com.otilm.ca.connector.ejbca.service.AuthorityInstanceService;
 import com.otilm.ca.connector.ejbca.service.CertificateEjbcaService;
 import com.otilm.ca.connector.ejbca.service.EjbcaService;
 import com.otilm.ca.connector.ejbca.service.EndEntityProfileEjbcaService;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -51,8 +49,6 @@ import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.skyscreamer.jsonassert.JSONAssert;
-import org.skyscreamer.jsonassert.JSONCompareMode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
@@ -60,7 +56,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -70,8 +65,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Pins the JSON that core and the connector exchange, as the REST layer reads and writes it. The golden files under
- * {@code wire/} were recorded on Spring Boot 3.5; {@code -Dwire.record=true} re-records them.
+ * Pins the JSON that core and the connector exchange, as the REST layer reads and writes it. {@link Goldens} says how
+ * its golden files are recorded.
  */
 @WebMvcTest(controllers = {
         AttributesControllerImpl.class,
@@ -79,8 +74,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         CertificateControllerImpl.class})
 class WireFormatTest {
 
-    private static final Path GOLDEN_DIR = Path.of("src/test/resources/wire");
-    private static final boolean RECORD = Boolean.getBoolean("wire.record");
     private static final String AUTHORITY_UUID = "dde2cccc-616f-11ec-90d6-0242ac120003";
     private static final ZonedDateTime PRAGUE_DATE_TIME = ZonedDateTime
             .of(2026, 10, 8, 10, 15, 30, 123_000_000, ZoneId.of("Europe/Prague"));
@@ -108,7 +101,7 @@ class WireFormatTest {
         String json = exchange(
                 get("/v2/authorityProvider/authorities/{uuid}/certificates/issue/attributes", AUTHORITY_UUID));
 
-        assertMatchesGolden("issue-attributes.json", json);
+        Goldens.assertMatches("issue-attributes.json", json);
     }
 
     @Test
@@ -118,7 +111,7 @@ class WireFormatTest {
 
         String json = exchange(get("/v1/authorityProvider/authorities/{uuid}/raProfile/attributes", AUTHORITY_UUID));
 
-        assertMatchesGolden("ra-profile-attributes.json", json);
+        Goldens.assertMatches("ra-profile-attributes.json", json);
     }
 
     @Test
@@ -127,7 +120,7 @@ class WireFormatTest {
 
         String json = exchange(get("/v1/authorityProvider/EJBCA/attributes"));
 
-        assertMatchesGolden("every-attribute-type.json", json);
+        Goldens.assertMatches("every-attribute-type.json", json);
     }
 
     @Test
@@ -136,24 +129,24 @@ class WireFormatTest {
 
         String json = exchange(post("/v2/authorityProvider/authorities/{uuid}/certificates/issue", AUTHORITY_UUID)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(readGolden("issue-request.json")));
+                .content(Goldens.read("issue-request.json")));
 
-        assertMatchesGolden("issue-response.json", json);
+        Goldens.assertMatches("issue-response.json", json);
         ArgumentCaptor<CertificateSignRequestDto> request = ArgumentCaptor.forClass(CertificateSignRequestDto.class);
         then(certificateEjbcaService).should().issueCertificate(eq(AUTHORITY_UUID), request.capture());
-        assertMatchesGolden("issue-request.txt", describe(request.getValue()));
+        Goldens.assertMatches("issue-request.txt", describe(request.getValue()));
     }
 
     @Test
     void requestAttributesOfEveryContentType() throws Exception {
         exchange(post("/v1/authorityProvider/EJBCA/attributes/validate")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(readGolden("request-attributes.json")));
+                .content(Goldens.read("request-attributes.json")));
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<RequestAttribute>> attributes = ArgumentCaptor.forClass(List.class);
         then(attributeService).should().validateAttributes(eq("EJBCA"), attributes.capture());
-        assertMatchesGolden("request-attributes.txt", describe(attributes.getValue()));
+        Goldens.assertMatches("request-attributes.txt", describe(attributes.getValue()));
     }
 
     private String exchange(MockHttpServletRequestBuilder request) throws Exception {
@@ -312,21 +305,4 @@ class WireFormatTest {
         return text.toString();
     }
 
-    private static String readGolden(String name) throws IOException {
-        return Files.readString(GOLDEN_DIR.resolve(name));
-    }
-
-    private static void assertMatchesGolden(String name, String actual) throws Exception {
-        if (RECORD) {
-            Files.createDirectories(GOLDEN_DIR);
-            Files.writeString(GOLDEN_DIR.resolve(name), actual);
-            return;
-        }
-        String expected = readGolden(name);
-        if (name.endsWith(".json")) {
-            JSONAssert.assertEquals(expected, actual, JSONCompareMode.NON_EXTENSIBLE);
-        } else {
-            assertThat(actual).isEqualTo(expected);
-        }
-    }
 }

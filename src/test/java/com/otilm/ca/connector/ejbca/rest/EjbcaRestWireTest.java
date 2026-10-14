@@ -2,19 +2,16 @@ package com.otilm.ca.connector.ejbca.rest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
+import com.otilm.ca.connector.ejbca.Goldens;
 import com.otilm.ca.connector.ejbca.dto.ejbca.request.Pagination;
 import com.otilm.ca.connector.ejbca.dto.ejbca.request.SearchCertificateCriteriaRestRequest;
 import com.otilm.ca.connector.ejbca.dto.ejbca.request.SearchCertificatesRestRequestV2;
 import com.otilm.ca.connector.ejbca.dto.ejbca.response.SearchCertificatesRestResponseV2;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.skyscreamer.jsonassert.JSONAssert;
-import org.skyscreamer.jsonassert.JSONCompareMode;
 import org.springframework.http.MediaType;
 import reactor.core.Exceptions;
 
@@ -27,13 +24,11 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 
 /**
  * Pins the JSON the connector exchanges with EJBCA's REST API. Its WebClient takes Spring's default codecs rather than
- * the application's JSON mapper, so a change of JSON library reaches this wire on its own. The golden files under
- * {@code wire/} were recorded on Spring Boot 3.5; {@code -Dwire.record=true} re-records them.
+ * the application's JSON mapper, so a change of JSON library reaches this wire on its own. {@link Goldens} says how its
+ * golden files are recorded.
  */
 class EjbcaRestWireTest {
 
-    private static final Path GOLDEN_DIR = Path.of("src/test/resources/wire");
-    private static final boolean RECORD = Boolean.getBoolean("wire.record");
     private static final String SEARCH = "/v2/certificate/search";
     /** Renders what the connector decoded, independently of the codec under test. */
     private static final ObjectMapper DECODED = new ObjectMapper();
@@ -58,9 +53,7 @@ class EjbcaRestWireTest {
 
     @Test
     void searchesAsTheConnectorDoesAndReadsWhatEjbcaAnswers() throws Exception {
-        ejbca
-                .stubFor(post(SEARCH)
-                        .willReturn(okJson(Files.readString(GOLDEN_DIR.resolve("ejbca-search-response.json")))));
+        ejbca.stubFor(post(SEARCH).willReturn(okJson(Goldens.read("ejbca-search-response.json"))));
 
         SearchCertificatesRestResponseV2 response = EjbcaRestApiClient
                 .prepareWebClient()
@@ -72,9 +65,10 @@ class EjbcaRestWireTest {
                 .bodyToMono(SearchCertificatesRestResponseV2.class)
                 .block();
 
-        assertMatchesGolden("ejbca-search-request.json",
-                ejbca.getAllServeEvents().get(0).getRequest().getBodyAsString());
-        assertMatchesGolden("ejbca-search-decoded.json", DECODED.writeValueAsString(response));
+        Goldens
+                .assertMatches("ejbca-search-request.json",
+                        ejbca.getAllServeEvents().get(0).getRequest().getBodyAsString());
+        Goldens.assertMatches("ejbca-search-decoded.json", DECODED.writeValueAsString(response));
     }
 
     @Test
@@ -113,11 +107,4 @@ class EjbcaRestWireTest {
         return request;
     }
 
-    private static void assertMatchesGolden(String name, String actual) throws Exception {
-        if (RECORD) {
-            Files.writeString(GOLDEN_DIR.resolve(name), actual);
-            return;
-        }
-        JSONAssert.assertEquals(Files.readString(GOLDEN_DIR.resolve(name)), actual, JSONCompareMode.NON_EXTENSIBLE);
-    }
 }
