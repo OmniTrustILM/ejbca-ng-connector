@@ -1,0 +1,14 @@
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <ns2:getAvailableCAsResponse xmlns:ns2="http://ws.protocol.core.ejbca.org/">
+      <return>
+        <id>-1688117755</id>
+        <name>ManagementCA</name>
+      </return>
+      <return>
+        <id>1652389506</id>
+        <name>Issuing CA &amp; TLS</name>
+      </return>
+    </ns2:getAvailableCAsResponse>
+  </soap:Body>
+</soap:Envelope>

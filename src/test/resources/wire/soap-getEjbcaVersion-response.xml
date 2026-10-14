@@ -1,0 +1,7 @@
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <ns2:getEjbcaVersionResponse xmlns:ns2="http://ws.protocol.core.ejbca.org/">
+      <return>EJBCA 9.1.1 Community (5045c834d0c99315db96d88d32cc449ff334b07f)</return>
+    </ns2:getEjbcaVersionResponse>
+  </soap:Body>
+</soap:Envelope>
