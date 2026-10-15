@@ -1,0 +1,48 @@
+{
+  "certificateData" : [ {
+    "base64Content" : "MIIBszCCAVmgAwIBAgIUQ==",
+    "meta" : [ {
+      "content" : [ {
+        "data" : "ilm-user",
+        "reference" : "ilm-user"
+      } ],
+      "contentType" : "string",
+      "name" : "username",
+      "properties" : {
+        "global" : false,
+        "group" : null,
+        "label" : "Username",
+        "overwrite" : false,
+        "protectionLevel" : "none",
+        "visible" : true
+      },
+      "type" : "meta",
+      "uuid" : "df2fbaa2-60fd-11ed-9b6a-0242ac120002",
+      "version" : 2
+    } ],
+    "uuid" : "6f1b2c3d-0000-4000-8000-000000000011"
+  } ],
+  "meta" : [ {
+    "content" : [ {
+      "data" : 1,
+      "reference" : "1"
+    } ],
+    "contentType" : "integer",
+    "name" : "totalCertificates",
+    "properties" : {
+      "global" : false,
+      "group" : null,
+      "label" : "Total Certificates Discovered",
+      "overwrite" : false,
+      "protectionLevel" : "none",
+      "visible" : true
+    },
+    "type" : "meta",
+    "uuid" : "20add2d6-60f7-11ed-9b6a-0242ac120002",
+    "version" : 2
+  } ],
+  "name" : "ejbca-discovery",
+  "status" : "completed",
+  "totalCertificatesDiscovered" : 1,
+  "uuid" : "6f1b2c3d-0000-4000-8000-000000000010"
+}

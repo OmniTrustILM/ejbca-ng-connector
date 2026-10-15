@@ -8,7 +8,6 @@ spring:
     username: ${JDBC_USERNAME}
     password: ${JDBC_PASSWORD}
     driver-class-name: 'org.postgresql.Driver'
-    auto-commit: false
   flyway:
     out-of-order: true
     table: "ejbca_schema_history"

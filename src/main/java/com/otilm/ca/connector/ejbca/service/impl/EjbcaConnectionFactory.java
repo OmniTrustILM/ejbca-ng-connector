@@ -31,10 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
-import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
 
@@ -220,21 +217,11 @@ public class EjbcaConnectionFactory {
         List<BaseAttribute> attributes = AttributeDefinitionUtils
                 .deserialize(instance.getCredentialData(), BaseAttribute.class);
 
-        final ExchangeStrategies strategies = ExchangeStrategies
-                .builder()
-                .codecs(codecs -> codecs.defaultCodecs().maxInMemorySize(maxPayloadSize))
-                .build();
-
         SslContext sslContext = EjbcaRestApiClient
                 .createSslContext(attributes, trustedCertificatesConfig.getDefaultTrustManagers());
 
         HttpClient httpClient = withTimeouts(HttpClient.create()).secure(t -> t.sslContext(sslContext));
 
-        return WebClient
-                .builder()
-                .filter(ExchangeFilterFunction.ofResponseProcessor(EjbcaRestApiClient::handleHttpExceptions))
-                .exchangeStrategies(strategies)
-                .clientConnector(new ReactorClientHttpConnector(httpClient))
-                .build();
+        return EjbcaRestApiClient.restWebClient(httpClient, maxPayloadSize);
     }
 }

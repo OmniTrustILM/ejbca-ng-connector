@@ -31,6 +31,7 @@ import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
+import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
@@ -118,10 +119,20 @@ public abstract class EjbcaRestApiClient {
         }
     }
 
-    public static WebClient prepareWebClient() {
+    /**
+     * The client every EJBCA REST call goes through: EJBCA's error bodies become {@link EjbcaRestApiException}s, and a
+     * response may carry up to {@code maxPayloadSize} bytes, against the 256 KB Spring's codecs allow by default.
+     */
+    public static WebClient restWebClient(HttpClient httpClient, int maxPayloadSize) {
+        ExchangeStrategies strategies = ExchangeStrategies
+                .builder()
+                .codecs(codecs -> codecs.defaultCodecs().maxInMemorySize(maxPayloadSize))
+                .build();
         return WebClient
                 .builder()
                 .filter(ExchangeFilterFunction.ofResponseProcessor(EjbcaRestApiClient::handleHttpExceptions))
+                .exchangeStrategies(strategies)
+                .clientConnector(new ReactorClientHttpConnector(httpClient))
                 .build();
     }
 

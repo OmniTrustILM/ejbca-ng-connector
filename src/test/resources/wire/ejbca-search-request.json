@@ -1,0 +1,12 @@
+{
+  "criteria" : [ {
+    "operation" : "EQUAL",
+    "property" : "QUERY",
+    "value" : "1A2B3C4D5E6F"
+  } ],
+  "pagination" : {
+    "current_page" : 1,
+    "page_size" : 10
+  },
+  "sort" : null
+}

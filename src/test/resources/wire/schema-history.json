@@ -1,0 +1,26 @@
+[ {
+  "checksum" : -1426805262,
+  "script" : "V202206090840__discovery.sql",
+  "type" : "SQL",
+  "version" : "202206090840"
+}, {
+  "checksum" : -44253029,
+  "script" : "db.migration.V202211031300__AttributeV2Changes",
+  "type" : "JDBC",
+  "version" : "202211031300"
+}, {
+  "checksum" : -956354720,
+  "script" : "V202203280920__init.sql",
+  "type" : "SQL",
+  "version" : "202203280920"
+}, {
+  "checksum" : 1236550637,
+  "script" : "db.migration.V202206231700__AttributeChanges",
+  "type" : "JDBC",
+  "version" : "202206231700"
+}, {
+  "checksum" : 37094549,
+  "script" : "db.migration.V202211112000__MetadataToInfoAttributeMigration",
+  "type" : "JDBC",
+  "version" : "202211112000"
+} ]

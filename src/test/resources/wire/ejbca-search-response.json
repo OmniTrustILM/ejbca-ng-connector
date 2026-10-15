@@ -1,0 +1,33 @@
+{
+  "certificates": [
+    {
+      "fingerprint": "6e4a1c0b5d2f8a9e3c7b1d0f2a4e6c8b9d1f3a5e",
+      "cAFingerprint": "1f3a5e6e4a1c0b5d2f8a9e3c7b1d0f2a4e6c8b9d",
+      "issuerDN": "CN=Wire Golden CA,O=OTILM",
+      "subjectDN": "CN=wire.example.com",
+      "subjectAltName": "dNSName=wire.example.com",
+      "subjectKeyId": "0a1b2c3d4e5f",
+      "certificateProfileId": 1,
+      "endEntityProfileId": 2,
+      "notBefore": 1767225600000,
+      "expireDate": 1798761600000,
+      "revocationDate": -1,
+      "revocationReason": -1,
+      "serialNumber": "1A2B3C4D5E6F",
+      "status": 20,
+      "tag": null,
+      "type": 1,
+      "udpateTime": 1767225600000,
+      "username": "wire",
+      "base64Cert": "AQIDBA==",
+      "certificateRequest": null,
+      "crlPartitionIndex": 0,
+      "invalidityDate": -1
+    }
+  ],
+  "pagination_summary": {
+    "page_size": 10,
+    "current_page": 1,
+    "total_certs": 1
+  }
+}

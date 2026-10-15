@@ -180,11 +180,11 @@ class EjbcaRestApiClientTest {
         assertNull(result);
     }
 
-    // ── prepareWebClient ──────────────────────────────────────────────────────
+    // ── restWebClient ─────────────────────────────────────────────────────────
 
     @Test
-    void prepareWebClient_returnsNonNullWebClient() {
-        WebClient wc = EjbcaRestApiClient.prepareWebClient();
+    void restWebClient_returnsNonNullWebClient() {
+        WebClient wc = EjbcaRestApiClient.restWebClient(HttpClient.create(), 2_000_000);
 
         assertNotNull(wc);
     }
