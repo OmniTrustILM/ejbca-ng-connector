@@ -98,7 +98,6 @@ class EjbcaRestWireTest {
         assertThat(error).isInstanceOf(EjbcaRestApiException.class).hasMessage("Wrong search criteria");
     }
 
-    /** A search page larger than the 256 KB Spring's codecs accept by default still decodes. */
     @Test
     void readsASearchPageLargerThanTheDefaultCodecLimit() {
         String certificate = "{\"serialNumber\":\"%d\",\"base64Cert\":\"" + "A".repeat(600) + "\"}";
