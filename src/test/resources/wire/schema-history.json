@@ -1,26 +1,26 @@
 [ {
-  "version" : "202203280920",
-  "type" : "SQL",
-  "script" : "V202203280920__init.sql",
-  "checksum" : -956354720
-}, {
-  "version" : "202206090840",
-  "type" : "SQL",
+  "checksum" : -1426805262,
   "script" : "V202206090840__discovery.sql",
-  "checksum" : -1426805262
+  "type" : "SQL",
+  "version" : "202206090840"
 }, {
-  "version" : "202206231700",
-  "type" : "JDBC",
-  "script" : "db.migration.V202206231700__AttributeChanges",
-  "checksum" : 1236550637
-}, {
-  "version" : "202211031300",
-  "type" : "JDBC",
+  "checksum" : -44253029,
   "script" : "db.migration.V202211031300__AttributeV2Changes",
-  "checksum" : -44253029
-}, {
-  "version" : "202211112000",
   "type" : "JDBC",
+  "version" : "202211031300"
+}, {
+  "checksum" : -956354720,
+  "script" : "V202203280920__init.sql",
+  "type" : "SQL",
+  "version" : "202203280920"
+}, {
+  "checksum" : 1236550637,
+  "script" : "db.migration.V202206231700__AttributeChanges",
+  "type" : "JDBC",
+  "version" : "202206231700"
+}, {
+  "checksum" : 37094549,
   "script" : "db.migration.V202211112000__MetadataToInfoAttributeMigration",
-  "checksum" : 37094549
+  "type" : "JDBC",
+  "version" : "202211112000"
 } ]

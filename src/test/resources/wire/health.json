@@ -1,1 +1,11 @@
-{"status":"ok","description":null,"parts":{"database":{"status":"ok","description":"Database connection ok","parts":null}}}
+{
+  "description" : null,
+  "parts" : {
+    "database" : {
+      "description" : "Database connection ok",
+      "parts" : null,
+      "status" : "ok"
+    }
+  },
+  "status" : "ok"
+}

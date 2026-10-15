@@ -1,1 +1,217 @@
-[{"uuid":"baf2d142-f35a-437f-81c7-35c128881fc0","name":"endEntityProfile","description":"Available end entity profiles","version":2,"type":"data","content":[{"reference":"EMPTY","data":{"id":1,"name":"EMPTY"}},{"reference":"TLS Server","data":{"id":2,"name":"TLS Server"}}],"contentType":"object","properties":{"label":"End Entity Profile","visible":true,"group":null,"required":true,"readOnly":false,"list":true,"multiSelect":false,"protectionLevel":"none","resource":null,"extensibleList":false}},{"uuid":"eb57a756-5a11-4d31-866b-e3f066f7a2b9","name":"certificateProfile","description":"Available certificate profiles for selected end entity profile","version":2,"type":"data","contentType":"object","properties":{"label":"Certificate Profile","visible":true,"group":null,"required":true,"readOnly":false,"list":true,"multiSelect":false,"protectionLevel":"none","resource":null,"extensibleList":false},"attributeCallback":{"callbackContext":"/v1/authorityProvider/authorities/{authorityId}/endEntityProfiles/{endEntityProfileId}/certificateprofiles","callbackMethod":"GET","mappings":[{"to":"authorityId","targets":["pathVariable"],"value":"dde2cccc-616f-11ec-90d6-0242ac120003"},{"from":"endEntityProfile.data.id","to":"endEntityProfileId","targets":["pathVariable"]}],"dependsOn":null}},{"uuid":"edfd318a-8428-4fd1-b546-fd5238674f78","name":"certificationAuthority","description":"Available CAs for selected end entity profile","version":2,"type":"data","contentType":"object","properties":{"label":"Certification Authority","visible":true,"group":null,"required":true,"readOnly":false,"list":true,"multiSelect":false,"protectionLevel":"none","resource":null,"extensibleList":false},"attributeCallback":{"callbackContext":"/v1/authorityProvider/authorities/{authorityId}/endEntityProfiles/{endEntityProfileId}/cas","callbackMethod":"GET","mappings":[{"to":"authorityId","targets":["pathVariable"],"value":"dde2cccc-616f-11ec-90d6-0242ac120003"},{"from":"endEntityProfile.data.id","to":"endEntityProfileId","targets":["pathVariable"]}],"dependsOn":null}},{"uuid":"e0ab3b4e-7681-4a9f-aec5-e025eb1a56a4","name":"sendNotifications","description":"Notifications to be send fot the end entity","version":2,"type":"data","content":[{"reference":null,"data":false}],"contentType":"boolean","properties":{"label":"Send Notifications","visible":true,"group":null,"required":false,"readOnly":false,"list":false,"multiSelect":false,"protectionLevel":"none","resource":null,"extensibleList":false}},{"uuid":"417077da-bb2b-4f35-a0f7-abf824e345ec","name":"keyRecoverable","description":"Recovery option for the private key","version":2,"type":"data","content":[{"reference":null,"data":false}],"contentType":"boolean","properties":{"label":"Key Recoverable","visible":true,"group":null,"required":false,"readOnly":false,"list":false,"multiSelect":false,"protectionLevel":"none","resource":null,"extensibleList":false}},{"uuid":"3655e4f5-61d8-49c9-b116-f466a9f8c6b4","name":"usernameGenMethod","description":"Method to generate username of the end entity","version":2,"type":"data","content":[{"reference":null,"data":"RANDOM"},{"reference":null,"data":"CN"}],"contentType":"string","properties":{"label":"Username Generation Method","visible":true,"group":null,"required":true,"readOnly":false,"list":true,"multiSelect":false,"protectionLevel":"none","resource":null,"extensibleList":false}},{"uuid":"c0c14dee-9319-4b03-af01-6a21bf30c1e3","name":"usernamePrefix","description":"Optional prefix to be used when generating username","version":2,"type":"data","content":[{"reference":"ee-","data":"ee-"}],"contentType":"string","properties":{"label":"Username Prefix","visible":true,"group":null,"required":false,"readOnly":false,"list":false,"multiSelect":false,"protectionLevel":"none","resource":null,"extensibleList":false}},{"uuid":"5c94731f-621e-4851-b40d-b4f4897f0240","name":"usernamePostfix","description":"Optional postfix to be used when generating username","version":2,"type":"data","content":[{"reference":"-generated","data":"-generated"}],"contentType":"string","properties":{"label":"Username Postfix","visible":true,"group":null,"required":false,"readOnly":false,"list":false,"multiSelect":false,"protectionLevel":"none","resource":null,"extensibleList":false}}]
+[ {
+  "attributeCallback" : {
+    "callbackContext" : "/v1/authorityProvider/authorities/{authorityId}/endEntityProfiles/{endEntityProfileId}/cas",
+    "callbackMethod" : "GET",
+    "dependsOn" : null,
+    "mappings" : [ {
+      "from" : "endEntityProfile.data.id",
+      "targets" : [ "pathVariable" ],
+      "to" : "endEntityProfileId"
+    }, {
+      "targets" : [ "pathVariable" ],
+      "to" : "authorityId",
+      "value" : "dde2cccc-616f-11ec-90d6-0242ac120003"
+    } ]
+  },
+  "contentType" : "object",
+  "description" : "Available CAs for selected end entity profile",
+  "name" : "certificationAuthority",
+  "properties" : {
+    "extensibleList" : false,
+    "group" : null,
+    "label" : "Certification Authority",
+    "list" : true,
+    "multiSelect" : false,
+    "protectionLevel" : "none",
+    "readOnly" : false,
+    "required" : true,
+    "resource" : null,
+    "visible" : true
+  },
+  "type" : "data",
+  "uuid" : "edfd318a-8428-4fd1-b546-fd5238674f78",
+  "version" : 2
+}, {
+  "attributeCallback" : {
+    "callbackContext" : "/v1/authorityProvider/authorities/{authorityId}/endEntityProfiles/{endEntityProfileId}/certificateprofiles",
+    "callbackMethod" : "GET",
+    "dependsOn" : null,
+    "mappings" : [ {
+      "from" : "endEntityProfile.data.id",
+      "targets" : [ "pathVariable" ],
+      "to" : "endEntityProfileId"
+    }, {
+      "targets" : [ "pathVariable" ],
+      "to" : "authorityId",
+      "value" : "dde2cccc-616f-11ec-90d6-0242ac120003"
+    } ]
+  },
+  "contentType" : "object",
+  "description" : "Available certificate profiles for selected end entity profile",
+  "name" : "certificateProfile",
+  "properties" : {
+    "extensibleList" : false,
+    "group" : null,
+    "label" : "Certificate Profile",
+    "list" : true,
+    "multiSelect" : false,
+    "protectionLevel" : "none",
+    "readOnly" : false,
+    "required" : true,
+    "resource" : null,
+    "visible" : true
+  },
+  "type" : "data",
+  "uuid" : "eb57a756-5a11-4d31-866b-e3f066f7a2b9",
+  "version" : 2
+}, {
+  "content" : [ {
+    "data" : "-generated",
+    "reference" : "-generated"
+  } ],
+  "contentType" : "string",
+  "description" : "Optional postfix to be used when generating username",
+  "name" : "usernamePostfix",
+  "properties" : {
+    "extensibleList" : false,
+    "group" : null,
+    "label" : "Username Postfix",
+    "list" : false,
+    "multiSelect" : false,
+    "protectionLevel" : "none",
+    "readOnly" : false,
+    "required" : false,
+    "resource" : null,
+    "visible" : true
+  },
+  "type" : "data",
+  "uuid" : "5c94731f-621e-4851-b40d-b4f4897f0240",
+  "version" : 2
+}, {
+  "content" : [ {
+    "data" : "CN",
+    "reference" : null
+  }, {
+    "data" : "RANDOM",
+    "reference" : null
+  } ],
+  "contentType" : "string",
+  "description" : "Method to generate username of the end entity",
+  "name" : "usernameGenMethod",
+  "properties" : {
+    "extensibleList" : false,
+    "group" : null,
+    "label" : "Username Generation Method",
+    "list" : true,
+    "multiSelect" : false,
+    "protectionLevel" : "none",
+    "readOnly" : false,
+    "required" : true,
+    "resource" : null,
+    "visible" : true
+  },
+  "type" : "data",
+  "uuid" : "3655e4f5-61d8-49c9-b116-f466a9f8c6b4",
+  "version" : 2
+}, {
+  "content" : [ {
+    "data" : "ee-",
+    "reference" : "ee-"
+  } ],
+  "contentType" : "string",
+  "description" : "Optional prefix to be used when generating username",
+  "name" : "usernamePrefix",
+  "properties" : {
+    "extensibleList" : false,
+    "group" : null,
+    "label" : "Username Prefix",
+    "list" : false,
+    "multiSelect" : false,
+    "protectionLevel" : "none",
+    "readOnly" : false,
+    "required" : false,
+    "resource" : null,
+    "visible" : true
+  },
+  "type" : "data",
+  "uuid" : "c0c14dee-9319-4b03-af01-6a21bf30c1e3",
+  "version" : 2
+}, {
+  "content" : [ {
+    "data" : false,
+    "reference" : null
+  } ],
+  "contentType" : "boolean",
+  "description" : "Notifications to be send fot the end entity",
+  "name" : "sendNotifications",
+  "properties" : {
+    "extensibleList" : false,
+    "group" : null,
+    "label" : "Send Notifications",
+    "list" : false,
+    "multiSelect" : false,
+    "protectionLevel" : "none",
+    "readOnly" : false,
+    "required" : false,
+    "resource" : null,
+    "visible" : true
+  },
+  "type" : "data",
+  "uuid" : "e0ab3b4e-7681-4a9f-aec5-e025eb1a56a4",
+  "version" : 2
+}, {
+  "content" : [ {
+    "data" : false,
+    "reference" : null
+  } ],
+  "contentType" : "boolean",
+  "description" : "Recovery option for the private key",
+  "name" : "keyRecoverable",
+  "properties" : {
+    "extensibleList" : false,
+    "group" : null,
+    "label" : "Key Recoverable",
+    "list" : false,
+    "multiSelect" : false,
+    "protectionLevel" : "none",
+    "readOnly" : false,
+    "required" : false,
+    "resource" : null,
+    "visible" : true
+  },
+  "type" : "data",
+  "uuid" : "417077da-bb2b-4f35-a0f7-abf824e345ec",
+  "version" : 2
+}, {
+  "content" : [ {
+    "data" : {
+      "id" : 1,
+      "name" : "EMPTY"
+    },
+    "reference" : "EMPTY"
+  }, {
+    "data" : {
+      "id" : 2,
+      "name" : "TLS Server"
+    },
+    "reference" : "TLS Server"
+  } ],
+  "contentType" : "object",
+  "description" : "Available end entity profiles",
+  "name" : "endEntityProfile",
+  "properties" : {
+    "extensibleList" : false,
+    "group" : null,
+    "label" : "End Entity Profile",
+    "list" : true,
+    "multiSelect" : false,
+    "protectionLevel" : "none",
+    "readOnly" : false,
+    "required" : true,
+    "resource" : null,
+    "visible" : true
+  },
+  "type" : "data",
+  "uuid" : "baf2d142-f35a-437f-81c7-35c128881fc0",
+  "version" : 2
+} ]

@@ -1,1 +1,25 @@
-{"certificateData":"MIIBszCCAVmgAwIBAgIUQ==","uuid":"6f1b2c3d-0000-4000-8000-000000000009","meta":[{"uuid":"6f1b2c3d-0000-4000-8000-000000000008","name":"ejbcaUsername","description":"End entity the certificate was issued to","version":2,"type":"meta","content":[{"reference":"ilm-user","data":"ilm-user"}],"contentType":"string","properties":{"label":"EJBCA Username","visible":true,"group":null,"global":false,"overwrite":false,"protectionLevel":"none"}}],"certificateType":null}
+{
+  "certificateData" : "MIIBszCCAVmgAwIBAgIUQ==",
+  "certificateType" : null,
+  "meta" : [ {
+    "content" : [ {
+      "data" : "ilm-user",
+      "reference" : "ilm-user"
+    } ],
+    "contentType" : "string",
+    "description" : "End entity the certificate was issued to",
+    "name" : "ejbcaUsername",
+    "properties" : {
+      "global" : false,
+      "group" : null,
+      "label" : "EJBCA Username",
+      "overwrite" : false,
+      "protectionLevel" : "none",
+      "visible" : true
+    },
+    "type" : "meta",
+    "uuid" : "6f1b2c3d-0000-4000-8000-000000000008",
+    "version" : 2
+  } ],
+  "uuid" : "6f1b2c3d-0000-4000-8000-000000000009"
+}

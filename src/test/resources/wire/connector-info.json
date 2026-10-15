@@ -1,1 +1,231 @@
-[{"functionGroupCode":"authorityProvider","kinds":["EJBCA"],"endPoints":[{"uuid":null,"name":"identifyCertificate","context":"/v2/authorityProvider/authorities/{uuid}/certificates/identify","method":"POST","required":false},{"uuid":null,"name":"listCertificateProfiles","context":"/v1/authorityProvider/authorities/{uuid}/endEntityProfiles/{endEntityProfileId}/certificateprofiles","method":"GET","required":false},{"uuid":null,"name":"listRAProfileAttributes","context":"/v1/authorityProvider/authorities/{uuid}/raProfile/attributes","method":"GET","required":false},{"uuid":null,"name":"cancelIssueCertificate","context":"/v2/authorityProvider/authorities/{uuid}/certificates/issue/cancel","method":"POST","required":false},{"uuid":null,"name":"removeAuthorityInstance","context":"/v1/authorityProvider/authorities/{uuid}","method":"DELETE","required":false},{"uuid":null,"name":"renewCertificate","context":"/v2/authorityProvider/authorities/{uuid}/certificates/renew","method":"POST","required":false},{"uuid":null,"name":"listEntityProfiles","context":"/v1/authorityProvider/authorities/{uuid}/endEntityProfiles","method":"GET","required":false},{"uuid":null,"name":"listCAsInProfile","context":"/v1/authorityProvider/authorities/{uuid}/endEntityProfiles/{endEntityProfileId}/cas","method":"GET","required":false},{"uuid":null,"name":"revokeCertificate","context":"/v2/authorityProvider/authorities/{uuid}/certificates/revoke","method":"POST","required":false},{"uuid":null,"name":"getCaCertificates","context":"/v1/authorityProvider/authorities/{uuid}/caCertificates","method":"POST","required":false},{"uuid":null,"name":"listIssueCertificateAttributes","context":"/v2/authorityProvider/authorities/{uuid}/certificates/issue/attributes","method":"GET","required":false},{"uuid":null,"name":"getConnection","context":"/v1/authorityProvider/authorities/{uuid}/connect","method":"GET","required":false},{"uuid":null,"name":"getCrl","context":"/v1/authorityProvider/authorities/{uuid}/crl","method":"POST","required":false},{"uuid":null,"name":"getRevokeCertificateStatus","context":"/v2/authorityProvider/authorities/{uuid}/certificates/revoke/status","method":"POST","required":false},{"uuid":null,"name":"getAuthorityInstance","context":"/v1/authorityProvider/authorities/{uuid}","method":"GET","required":false},{"uuid":null,"name":"validateIssueCertificateAttributes","context":"/v2/authorityProvider/authorities/{uuid}/certificates/issue/attributes/validate","method":"POST","required":false},{"uuid":null,"name":"listAuthorityInstances","context":"/v1/authorityProvider/authorities","method":"GET","required":false},{"uuid":null,"name":"validateRAProfileAttributes","context":"/v1/authorityProvider/authorities/{uuid}/raProfile/attributes/validate","method":"POST","required":false},{"uuid":null,"name":"getIssueCertificateStatus","context":"/v2/authorityProvider/authorities/{uuid}/certificates/issue/status","method":"POST","required":false},{"uuid":null,"name":"listRevokeCertificateAttributes","context":"/v2/authorityProvider/authorities/{uuid}/certificates/revoke/attributes","method":"GET","required":false},{"uuid":null,"name":"updateAuthorityInstance","context":"/v1/authorityProvider/authorities/{uuid}","method":"POST","required":false},{"uuid":null,"name":"validateAttributes","context":"/v1/authorityProvider/{kind}/attributes/validate","method":"POST","required":false},{"uuid":null,"name":"cancelRevokeCertificate","context":"/v2/authorityProvider/authorities/{uuid}/certificates/revoke/cancel","method":"POST","required":false},{"uuid":null,"name":"listAttributeDefinitions","context":"/v1/authorityProvider/{kind}/attributes","method":"GET","required":false},{"uuid":null,"name":"validateRevokeCertificateAttributes","context":"/v2/authorityProvider/authorities/{uuid}/certificates/revoke/attributes/validate","method":"POST","required":false},{"uuid":null,"name":"createAuthorityInstance","context":"/v1/authorityProvider/authorities","method":"POST","required":false},{"uuid":null,"name":"issueCertificate","context":"/v2/authorityProvider/authorities/{uuid}/certificates/issue","method":"POST","required":false}]},{"functionGroupCode":"discoveryProvider","kinds":["EJBCA","EJBCA_SCHEDULE"],"endPoints":[{"uuid":null,"name":"listEndEntityProfiles","context":"/v1/discoveryProvider/{ejbcaInstanceUuid}/listEndEntityProfiles","method":"GET","required":false},{"uuid":null,"name":"ejbcaRestApi","context":"/v1/discoveryProvider/{ejbcaInstanceUuid}/ejbcaRestApi","method":"GET","required":false},{"uuid":null,"name":"listCas","context":"/v1/discoveryProvider/{ejbcaInstanceUuid}/listCas","method":"GET","required":false},{"uuid":null,"name":"discoverCertificate","context":"/v1/discoveryProvider/discover","method":"POST","required":false},{"uuid":null,"name":"getEjbcaVersion","context":"/v1/discoveryProvider/{ejbcaInstanceName}/ejbcaVersion","method":"GET","required":false},{"uuid":null,"name":"validateAttributes","context":"/v1/discoveryProvider/{kind}/attributes/validate","method":"POST","required":false},{"uuid":null,"name":"getDiscovery","context":"/v1/discoveryProvider/discover/{uuid}","method":"POST","required":false},{"uuid":null,"name":"configuration","context":"/v1/discoveryProvider/{ejbcaInstanceUuid}/{kind}/configuration","method":"GET","required":false},{"uuid":null,"name":"listAttributeDefinitions","context":"/v1/discoveryProvider/{kind}/attributes","method":"GET","required":false},{"uuid":null,"name":"deleteDiscovery","context":"/v1/discoveryProvider/discover/{uuid}","method":"DELETE","required":false}]}]
+[ {
+  "endPoints" : [ {
+    "context" : "/v1/authorityProvider/authorities",
+    "method" : "GET",
+    "name" : "listAuthorityInstances",
+    "required" : false,
+    "uuid" : null
+  }, {
+    "context" : "/v1/authorityProvider/authorities",
+    "method" : "POST",
+    "name" : "createAuthorityInstance",
+    "required" : false,
+    "uuid" : null
+  }, {
+    "context" : "/v1/authorityProvider/authorities/{uuid}",
+    "method" : "DELETE",
+    "name" : "removeAuthorityInstance",
+    "required" : false,
+    "uuid" : null
+  }, {
+    "context" : "/v1/authorityProvider/authorities/{uuid}",
+    "method" : "GET",
+    "name" : "getAuthorityInstance",
+    "required" : false,
+    "uuid" : null
+  }, {
+    "context" : "/v1/authorityProvider/authorities/{uuid}",
+    "method" : "POST",
+    "name" : "updateAuthorityInstance",
+    "required" : false,
+    "uuid" : null
+  }, {
+    "context" : "/v1/authorityProvider/authorities/{uuid}/caCertificates",
+    "method" : "POST",
+    "name" : "getCaCertificates",
+    "required" : false,
+    "uuid" : null
+  }, {
+    "context" : "/v1/authorityProvider/authorities/{uuid}/connect",
+    "method" : "GET",
+    "name" : "getConnection",
+    "required" : false,
+    "uuid" : null
+  }, {
+    "context" : "/v1/authorityProvider/authorities/{uuid}/crl",
+    "method" : "POST",
+    "name" : "getCrl",
+    "required" : false,
+    "uuid" : null
+  }, {
+    "context" : "/v1/authorityProvider/authorities/{uuid}/endEntityProfiles",
+    "method" : "GET",
+    "name" : "listEntityProfiles",
+    "required" : false,
+    "uuid" : null
+  }, {
+    "context" : "/v1/authorityProvider/authorities/{uuid}/endEntityProfiles/{endEntityProfileId}/cas",
+    "method" : "GET",
+    "name" : "listCAsInProfile",
+    "required" : false,
+    "uuid" : null
+  }, {
+    "context" : "/v1/authorityProvider/authorities/{uuid}/endEntityProfiles/{endEntityProfileId}/certificateprofiles",
+    "method" : "GET",
+    "name" : "listCertificateProfiles",
+    "required" : false,
+    "uuid" : null
+  }, {
+    "context" : "/v1/authorityProvider/authorities/{uuid}/raProfile/attributes",
+    "method" : "GET",
+    "name" : "listRAProfileAttributes",
+    "required" : false,
+    "uuid" : null
+  }, {
+    "context" : "/v1/authorityProvider/authorities/{uuid}/raProfile/attributes/validate",
+    "method" : "POST",
+    "name" : "validateRAProfileAttributes",
+    "required" : false,
+    "uuid" : null
+  }, {
+    "context" : "/v1/authorityProvider/{kind}/attributes",
+    "method" : "GET",
+    "name" : "listAttributeDefinitions",
+    "required" : false,
+    "uuid" : null
+  }, {
+    "context" : "/v1/authorityProvider/{kind}/attributes/validate",
+    "method" : "POST",
+    "name" : "validateAttributes",
+    "required" : false,
+    "uuid" : null
+  }, {
+    "context" : "/v2/authorityProvider/authorities/{uuid}/certificates/identify",
+    "method" : "POST",
+    "name" : "identifyCertificate",
+    "required" : false,
+    "uuid" : null
+  }, {
+    "context" : "/v2/authorityProvider/authorities/{uuid}/certificates/issue",
+    "method" : "POST",
+    "name" : "issueCertificate",
+    "required" : false,
+    "uuid" : null
+  }, {
+    "context" : "/v2/authorityProvider/authorities/{uuid}/certificates/issue/attributes",
+    "method" : "GET",
+    "name" : "listIssueCertificateAttributes",
+    "required" : false,
+    "uuid" : null
+  }, {
+    "context" : "/v2/authorityProvider/authorities/{uuid}/certificates/issue/attributes/validate",
+    "method" : "POST",
+    "name" : "validateIssueCertificateAttributes",
+    "required" : false,
+    "uuid" : null
+  }, {
+    "context" : "/v2/authorityProvider/authorities/{uuid}/certificates/issue/cancel",
+    "method" : "POST",
+    "name" : "cancelIssueCertificate",
+    "required" : false,
+    "uuid" : null
+  }, {
+    "context" : "/v2/authorityProvider/authorities/{uuid}/certificates/issue/status",
+    "method" : "POST",
+    "name" : "getIssueCertificateStatus",
+    "required" : false,
+    "uuid" : null
+  }, {
+    "context" : "/v2/authorityProvider/authorities/{uuid}/certificates/renew",
+    "method" : "POST",
+    "name" : "renewCertificate",
+    "required" : false,
+    "uuid" : null
+  }, {
+    "context" : "/v2/authorityProvider/authorities/{uuid}/certificates/revoke",
+    "method" : "POST",
+    "name" : "revokeCertificate",
+    "required" : false,
+    "uuid" : null
+  }, {
+    "context" : "/v2/authorityProvider/authorities/{uuid}/certificates/revoke/attributes",
+    "method" : "GET",
+    "name" : "listRevokeCertificateAttributes",
+    "required" : false,
+    "uuid" : null
+  }, {
+    "context" : "/v2/authorityProvider/authorities/{uuid}/certificates/revoke/attributes/validate",
+    "method" : "POST",
+    "name" : "validateRevokeCertificateAttributes",
+    "required" : false,
+    "uuid" : null
+  }, {
+    "context" : "/v2/authorityProvider/authorities/{uuid}/certificates/revoke/cancel",
+    "method" : "POST",
+    "name" : "cancelRevokeCertificate",
+    "required" : false,
+    "uuid" : null
+  }, {
+    "context" : "/v2/authorityProvider/authorities/{uuid}/certificates/revoke/status",
+    "method" : "POST",
+    "name" : "getRevokeCertificateStatus",
+    "required" : false,
+    "uuid" : null
+  } ],
+  "functionGroupCode" : "authorityProvider",
+  "kinds" : [ "EJBCA" ]
+}, {
+  "endPoints" : [ {
+    "context" : "/v1/discoveryProvider/discover",
+    "method" : "POST",
+    "name" : "discoverCertificate",
+    "required" : false,
+    "uuid" : null
+  }, {
+    "context" : "/v1/discoveryProvider/discover/{uuid}",
+    "method" : "DELETE",
+    "name" : "deleteDiscovery",
+    "required" : false,
+    "uuid" : null
+  }, {
+    "context" : "/v1/discoveryProvider/discover/{uuid}",
+    "method" : "POST",
+    "name" : "getDiscovery",
+    "required" : false,
+    "uuid" : null
+  }, {
+    "context" : "/v1/discoveryProvider/{ejbcaInstanceName}/ejbcaVersion",
+    "method" : "GET",
+    "name" : "getEjbcaVersion",
+    "required" : false,
+    "uuid" : null
+  }, {
+    "context" : "/v1/discoveryProvider/{ejbcaInstanceUuid}/ejbcaRestApi",
+    "method" : "GET",
+    "name" : "ejbcaRestApi",
+    "required" : false,
+    "uuid" : null
+  }, {
+    "context" : "/v1/discoveryProvider/{ejbcaInstanceUuid}/listCas",
+    "method" : "GET",
+    "name" : "listCas",
+    "required" : false,
+    "uuid" : null
+  }, {
+    "context" : "/v1/discoveryProvider/{ejbcaInstanceUuid}/listEndEntityProfiles",
+    "method" : "GET",
+    "name" : "listEndEntityProfiles",
+    "required" : false,
+    "uuid" : null
+  }, {
+    "context" : "/v1/discoveryProvider/{ejbcaInstanceUuid}/{kind}/configuration",
+    "method" : "GET",
+    "name" : "configuration",
+    "required" : false,
+    "uuid" : null
+  }, {
+    "context" : "/v1/discoveryProvider/{kind}/attributes",
+    "method" : "GET",
+    "name" : "listAttributeDefinitions",
+    "required" : false,
+    "uuid" : null
+  }, {
+    "context" : "/v1/discoveryProvider/{kind}/attributes/validate",
+    "method" : "POST",
+    "name" : "validateAttributes",
+    "required" : false,
+    "uuid" : null
+  } ],
+  "functionGroupCode" : "discoveryProvider",
+  "kinds" : [ "EJBCA", "EJBCA_SCHEDULE" ]
+} ]

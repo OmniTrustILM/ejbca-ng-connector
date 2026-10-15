@@ -1,1 +1,160 @@
-[{"uuid":"6f1b2c3d-0000-4000-8000-000000000001","name":"validFrom","description":"Data attribute with every V2 temporal content","version":2,"type":"data","content":[{"reference":"prague","data":"2026-10-08T10:15:30.123+02:00"},{"reference":null,"data":"2026-10-08"},{"reference":null,"data":"10:15:30"}],"contentType":"datetime","properties":{"label":"Valid From","visible":true,"group":null,"required":true,"readOnly":false,"list":false,"multiSelect":false,"protectionLevel":"none","resource":null,"extensibleList":false},"attributeCallback":{"callbackContext":"core/getCredentials","callbackMethod":"GET","mappings":[{"to":"credentialKind","targets":["pathVariable"],"value":"SoftKeyStore"}],"dependsOn":null}},{"uuid":"6f1b2c3d-0000-4000-8000-000000000002","name":"notice","description":"Info attribute","version":2,"content":[{"reference":null,"data":"**Read me**"}],"type":"info","contentType":"text","properties":{"label":"Notice","visible":true,"group":null}},{"uuid":"6f1b2c3d-0000-4000-8000-000000000003","name":"profileGroup","description":"Group attribute","version":2,"type":"group","attributeCallback":{"callbackContext":"core/getCredentials","callbackMethod":"GET","mappings":[{"to":"credentialKind","targets":["pathVariable"],"value":"SoftKeyStore"}],"dependsOn":null}},{"uuid":"6f1b2c3d-0000-4000-8000-000000000004","name":"retries","description":"Metadata attribute","version":2,"type":"meta","content":[{"reference":null,"data":3}],"contentType":"integer","properties":{"label":"Retries","visible":true,"group":null,"global":false,"overwrite":false,"protectionLevel":"none"}},{"uuid":"6f1b2c3d-0000-4000-8000-000000000005","name":"approved","description":"Custom attribute","version":2,"type":"custom","content":[{"reference":null,"data":true}],"contentType":"boolean","properties":{"label":"Approved","visible":true,"group":null,"required":false,"readOnly":false,"list":false,"multiSelect":false,"extensibleList":false,"protectionLevel":"none"}},{"uuid":"6f1b2c3d-0000-4000-8000-000000000006","name":"expiresAt","description":"Data attribute with V3 content","version":3,"type":"data","content":[{"reference":null,"data":"2026-10-08T10:15:30.123+02:00","contentType":"datetime"},{"reference":null,"data":"2026-10-08","contentType":"date"}],"contentType":"datetime","properties":{"label":"Valid From","visible":true,"group":null,"required":true,"readOnly":false,"list":false,"multiSelect":false,"protectionLevel":"none","resource":null,"extensibleList":false},"schemaVersion":"v3"},{"schemaVersion":"v3","uuid":"6f1b2c3d-0000-4000-8000-000000000007","name":"noticeV3","description":"Info attribute with V3 content","content":[{"reference":"three","data":"three","contentType":"string"}],"version":3,"type":"info","contentType":"string","properties":{"label":"Notice","visible":true,"group":null}}]
+[ {
+  "attributeCallback" : {
+    "callbackContext" : "core/getCredentials",
+    "callbackMethod" : "GET",
+    "dependsOn" : null,
+    "mappings" : [ {
+      "targets" : [ "pathVariable" ],
+      "to" : "credentialKind",
+      "value" : "SoftKeyStore"
+    } ]
+  },
+  "content" : [ {
+    "data" : "10:15:30",
+    "reference" : null
+  }, {
+    "data" : "2026-10-08",
+    "reference" : null
+  }, {
+    "data" : "2026-10-08T10:15:30.123+02:00",
+    "reference" : "prague"
+  } ],
+  "contentType" : "datetime",
+  "description" : "Data attribute with every V2 temporal content",
+  "name" : "validFrom",
+  "properties" : {
+    "extensibleList" : false,
+    "group" : null,
+    "label" : "Valid From",
+    "list" : false,
+    "multiSelect" : false,
+    "protectionLevel" : "none",
+    "readOnly" : false,
+    "required" : true,
+    "resource" : null,
+    "visible" : true
+  },
+  "type" : "data",
+  "uuid" : "6f1b2c3d-0000-4000-8000-000000000001",
+  "version" : 2
+}, {
+  "attributeCallback" : {
+    "callbackContext" : "core/getCredentials",
+    "callbackMethod" : "GET",
+    "dependsOn" : null,
+    "mappings" : [ {
+      "targets" : [ "pathVariable" ],
+      "to" : "credentialKind",
+      "value" : "SoftKeyStore"
+    } ]
+  },
+  "description" : "Group attribute",
+  "name" : "profileGroup",
+  "type" : "group",
+  "uuid" : "6f1b2c3d-0000-4000-8000-000000000003",
+  "version" : 2
+}, {
+  "content" : [ {
+    "contentType" : "date",
+    "data" : "2026-10-08",
+    "reference" : null
+  }, {
+    "contentType" : "datetime",
+    "data" : "2026-10-08T10:15:30.123+02:00",
+    "reference" : null
+  } ],
+  "contentType" : "datetime",
+  "description" : "Data attribute with V3 content",
+  "name" : "expiresAt",
+  "properties" : {
+    "extensibleList" : false,
+    "group" : null,
+    "label" : "Valid From",
+    "list" : false,
+    "multiSelect" : false,
+    "protectionLevel" : "none",
+    "readOnly" : false,
+    "required" : true,
+    "resource" : null,
+    "visible" : true
+  },
+  "schemaVersion" : "v3",
+  "type" : "data",
+  "uuid" : "6f1b2c3d-0000-4000-8000-000000000006",
+  "version" : 3
+}, {
+  "content" : [ {
+    "contentType" : "string",
+    "data" : "three",
+    "reference" : "three"
+  } ],
+  "contentType" : "string",
+  "description" : "Info attribute with V3 content",
+  "name" : "noticeV3",
+  "properties" : {
+    "group" : null,
+    "label" : "Notice",
+    "visible" : true
+  },
+  "schemaVersion" : "v3",
+  "type" : "info",
+  "uuid" : "6f1b2c3d-0000-4000-8000-000000000007",
+  "version" : 3
+}, {
+  "content" : [ {
+    "data" : "**Read me**",
+    "reference" : null
+  } ],
+  "contentType" : "text",
+  "description" : "Info attribute",
+  "name" : "notice",
+  "properties" : {
+    "group" : null,
+    "label" : "Notice",
+    "visible" : true
+  },
+  "type" : "info",
+  "uuid" : "6f1b2c3d-0000-4000-8000-000000000002",
+  "version" : 2
+}, {
+  "content" : [ {
+    "data" : 3,
+    "reference" : null
+  } ],
+  "contentType" : "integer",
+  "description" : "Metadata attribute",
+  "name" : "retries",
+  "properties" : {
+    "global" : false,
+    "group" : null,
+    "label" : "Retries",
+    "overwrite" : false,
+    "protectionLevel" : "none",
+    "visible" : true
+  },
+  "type" : "meta",
+  "uuid" : "6f1b2c3d-0000-4000-8000-000000000004",
+  "version" : 2
+}, {
+  "content" : [ {
+    "data" : true,
+    "reference" : null
+  } ],
+  "contentType" : "boolean",
+  "description" : "Custom attribute",
+  "name" : "approved",
+  "properties" : {
+    "extensibleList" : false,
+    "group" : null,
+    "label" : "Approved",
+    "list" : false,
+    "multiSelect" : false,
+    "protectionLevel" : "none",
+    "readOnly" : false,
+    "required" : false,
+    "visible" : true
+  },
+  "type" : "custom",
+  "uuid" : "6f1b2c3d-0000-4000-8000-000000000005",
+  "version" : 2
+} ]
