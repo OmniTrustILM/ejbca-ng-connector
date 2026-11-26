@@ -1,13 +1,13 @@
 [ {
-  "checksum" : -1353640872,
-  "script" : "V202611260901__drop_hand_made_discovery_certificate_index.sql",
-  "type" : "SQL",
-  "version" : "202611260901"
-}, {
   "checksum" : -1426805262,
   "script" : "V202206090840__discovery.sql",
   "type" : "SQL",
   "version" : "202206090840"
+}, {
+  "checksum" : -1886997351,
+  "script" : "V202611260901__drop_hand_made_discovery_certificate_index.sql",
+  "type" : "SQL",
+  "version" : "202611260901"
 }, {
   "checksum" : -389725928,
   "script" : "V202611260900__discovery_certificate_discovery_id_id_index.sql",
