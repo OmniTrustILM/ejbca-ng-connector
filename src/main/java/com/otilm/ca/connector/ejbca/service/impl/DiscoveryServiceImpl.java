@@ -1,6 +1,7 @@
 package com.otilm.ca.connector.ejbca.service.impl;
 
 import com.otilm.api.exception.NotFoundException;
+import com.otilm.api.exception.ValidationException;
 import com.otilm.api.model.common.NameAndIdDto;
 import com.otilm.api.model.common.attribute.common.AttributeType;
 import com.otilm.api.model.common.attribute.common.MetadataAttribute;
@@ -202,6 +203,10 @@ public class DiscoveryServiceImpl implements DiscoveryService {
                     .getSingleItemAttributeContentValue(DiscoveryAttributeServiceImpl.ATTRIBUTE_ISSUED_DAYS_BEFORE,
                             request.getAttributes(), IntegerAttributeContentV2.class)
                     .getData();
+            if (issuedDaysBefore == null || issuedDaysBefore < 1) {
+                throw new ValidationException(DiscoveryAttributeServiceImpl.ATTRIBUTE_ISSUED_DAYS_BEFORE_LABEL
+                        + " must be a positive whole number");
+            }
             return ZonedDateTime.now(ZoneOffset.UTC).minusDays(issuedDaysBefore);
         }
         return null;

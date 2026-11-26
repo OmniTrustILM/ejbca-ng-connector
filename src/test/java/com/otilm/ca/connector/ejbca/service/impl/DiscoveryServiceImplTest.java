@@ -33,6 +33,8 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -579,6 +581,41 @@ class DiscoveryServiceImplTest {
 
         assertEquals(DiscoveryStatus.COMPLETED, history.getStatus());
         assertEquals("2026-01-15T10:20:30Z", issuedAfterCriterion(requestCaptor.getValue()));
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, -3})
+    void discoverCertificate_scheduleKind_nonPositiveDays_failsWithoutSearching(int days) throws Exception {
+        DiscoveryHistory history = buildHistory();
+        DiscoveryRequestDto request = buildScheduleRequest();
+        request
+                .getAttributes()
+                .removeIf(a -> DiscoveryAttributeServiceImpl.ATTRIBUTE_ISSUED_DAYS_BEFORE.equals(a.getName()));
+        request.getAttributes().add(integerAttr(DiscoveryAttributeServiceImpl.ATTRIBUTE_ISSUED_DAYS_BEFORE, days));
+
+        service.discoverCertificate(request, history);
+
+        assertFailedOnNumberOfDays(history);
+    }
+
+    @Test
+    void discoverCertificate_scheduleKind_missingDays_failsWithoutSearching() throws Exception {
+        DiscoveryHistory history = buildHistory();
+        DiscoveryRequestDto request = buildScheduleRequest();
+        request
+                .getAttributes()
+                .removeIf(a -> DiscoveryAttributeServiceImpl.ATTRIBUTE_ISSUED_DAYS_BEFORE.equals(a.getName()));
+
+        service.discoverCertificate(request, history);
+
+        assertFailedOnNumberOfDays(history);
+    }
+
+    private void assertFailedOnNumberOfDays(DiscoveryHistory history) throws Exception {
+        assertEquals(DiscoveryStatus.FAILED, history.getStatus());
+        assertTrue(history.getMeta().contains("Number of days must be a positive whole number"),
+                "the failure reason should name Number of days, got: " + history.getMeta());
+        verify(ejbcaService, never()).searchCertificates(any(), any(), any());
     }
 
     private static String issuedAfterCriterion(SearchCertificatesRestRequestV2 searchRequest) {
