@@ -3,6 +3,8 @@ package com.otilm.ca.connector.ejbca.service.impl;
 import com.otilm.api.model.client.attribute.RequestAttribute;
 import com.otilm.api.model.client.attribute.RequestAttributeV2;
 import com.otilm.api.model.common.NameAndIdDto;
+import com.otilm.api.model.common.attribute.common.AttributeContent;
+import com.otilm.api.model.common.attribute.common.MetadataAttribute;
 import com.otilm.api.model.common.attribute.common.content.AttributeContentType;
 import com.otilm.api.model.common.attribute.v2.content.DateTimeAttributeContentV2;
 import com.otilm.api.model.common.attribute.v2.content.IntegerAttributeContentV2;
@@ -51,6 +53,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
 class DiscoveryServiceImplTest {
@@ -232,6 +235,31 @@ class DiscoveryServiceImplTest {
     }
 
     @Test
+    void discoverCertificate_marksDiscoveryNameToReplaceTheValueOfAnEarlierRun() throws Exception {
+        given(ejbcaService.getEjbcaVersion(INSTANCE_UUID)).willReturn(ejbcaVersion("7.11.0"));
+        given(ejbcaService.searchCertificates(eq(INSTANCE_UUID), eq(REST_API_URL), any()))
+                .willReturn(pageWithOneCert(1))
+                .willReturn(emptyPage(2));
+
+        service.discoverCertificate(buildEjbcaRequest(), buildHistory());
+
+        ArgumentCaptor<Certificate> saved = ArgumentCaptor.forClass(Certificate.class);
+        verify(certificateRepository).save(saved.capture());
+        MetadataAttribute discoveryName = saved
+                .getValue()
+                .mapToDto()
+                .getMeta()
+                .stream()
+                .filter(attribute -> "discoveryName".equals(attribute.getName()))
+                .findFirst()
+                .orElseThrow();
+        List<AttributeContent> content = discoveryName.getContent();
+        String value = content.getFirst().getData();
+        assertEquals(DISCOVERY_NAME, value);
+        assertTrue(discoveryName.getProperties().isOverwrite());
+    }
+
+    @Test
     void discoverCertificate_version711_emptyFirstPage_completesWithZeroCerts() throws Exception {
         DiscoveryHistory history = buildHistory();
         DiscoveryRequestDto request = buildEjbcaRequest();
@@ -392,8 +420,6 @@ class DiscoveryServiceImplTest {
         dataRequest.setPageNumber(1);
         dataRequest.setItemsPerPage(10);
 
-        given(certificateRepository.findByDiscoveryId(HISTORY_ID)).willReturn(List.of(new Certificate()));
-
         DiscoveryProviderDto dto = service.getProviderDtoData(dataRequest, history);
 
         assertNotNull(dto);
@@ -402,6 +428,7 @@ class DiscoveryServiceImplTest {
         assertEquals(DiscoveryStatus.IN_PROGRESS, dto.getStatus());
         assertTrue(dto.getCertificateData().isEmpty());
         assertEquals(0, dto.getTotalCertificatesDiscovered());
+        verifyNoInteractions(certificateRepository);
     }
 
     @Test
@@ -418,7 +445,7 @@ class DiscoveryServiceImplTest {
         cert.setDiscoveryId(HISTORY_ID);
         cert.setBase64Content("certContent");
 
-        given(certificateRepository.findByDiscoveryId(HISTORY_ID)).willReturn(List.of(cert));
+        given(certificateRepository.countByDiscoveryId(HISTORY_ID)).willReturn(1L);
         given(certificateRepository.findAllByDiscoveryId(eq(HISTORY_ID), any(Pageable.class)))
                 .willReturn(List.of(cert));
 
@@ -439,7 +466,7 @@ class DiscoveryServiceImplTest {
         dataRequest.setPageNumber(0);
         dataRequest.setItemsPerPage(10);
 
-        given(certificateRepository.findByDiscoveryId(HISTORY_ID)).willReturn(List.of());
+        given(certificateRepository.countByDiscoveryId(HISTORY_ID)).willReturn(0L);
         given(certificateRepository.findAllByDiscoveryId(eq(HISTORY_ID), any(Pageable.class))).willReturn(List.of());
 
         DiscoveryProviderDto dto = service.getProviderDtoData(dataRequest, history);
@@ -452,31 +479,14 @@ class DiscoveryServiceImplTest {
     // ── deleteDiscovery ───────────────────────────────────────────────────────
 
     @Test
-    void deleteDiscovery_deletesAllCertificatesAndHistory() throws Exception {
-        DiscoveryHistory history = buildHistory();
-        Certificate cert = new Certificate();
-        cert.setId(10L);
-        cert.setDiscoveryId(HISTORY_ID);
-
-        given(discoveryHistoryService.getHistoryByUuid(DISCOVERY_UUID)).willReturn(history);
-        given(certificateRepository.findByDiscoveryId(HISTORY_ID)).willReturn(List.of(cert));
-
-        service.deleteDiscovery(DISCOVERY_UUID);
-
-        verify(certificateRepository).deleteAll(List.of(cert));
-        verify(discoveryHistoryService).deleteHistory(history);
-    }
-
-    @Test
-    void deleteDiscovery_noCertificates_stillDeletesHistory() throws Exception {
+    void deleteDiscovery_deletesTheRunsCertificatesAndHistory() throws Exception {
         DiscoveryHistory history = buildHistory();
 
         given(discoveryHistoryService.getHistoryByUuid(DISCOVERY_UUID)).willReturn(history);
-        given(certificateRepository.findByDiscoveryId(HISTORY_ID)).willReturn(List.of());
 
         service.deleteDiscovery(DISCOVERY_UUID);
 
-        verify(certificateRepository).deleteAll(List.of());
+        verify(certificateRepository).deleteByDiscoveryId(HISTORY_ID);
         verify(discoveryHistoryService).deleteHistory(history);
     }
 
