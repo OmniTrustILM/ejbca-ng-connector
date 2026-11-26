@@ -26,6 +26,7 @@ import com.otilm.ca.connector.ejbca.service.DiscoveryHistoryService;
 import com.otilm.ca.connector.ejbca.service.EjbcaService;
 import com.otilm.ca.connector.ejbca.util.EjbcaVersion;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -554,5 +555,42 @@ class DiscoveryServiceImplTest {
         // Two certs saved across two pages
         verify(certificateRepository, org.mockito.Mockito.times(2)).save(any(Certificate.class));
         assertEquals(DiscoveryStatus.COMPLETED, history.getStatus());
+    }
+
+    @Test
+    void discoverCertificate_ejbcaKind_sendsIssuedAfterFromAttribute() throws Exception {
+        DiscoveryHistory history = buildHistory();
+        DiscoveryRequestDto request = buildEjbcaRequest();
+        ZonedDateTime issuedAfter = ZonedDateTime.of(2026, 1, 15, 11, 20, 30, 0, ZoneOffset.ofHours(1));
+        request
+                .getAttributes()
+                .removeIf(a -> DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_ISSUED_AFTER.equals(a.getName()));
+        request
+                .getAttributes()
+                .add(dateTimeAttr(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_ISSUED_AFTER, issuedAfter));
+
+        ArgumentCaptor<SearchCertificatesRestRequestV2> requestCaptor = ArgumentCaptor
+                .forClass(SearchCertificatesRestRequestV2.class);
+        given(ejbcaService.getEjbcaVersion(INSTANCE_UUID)).willReturn(ejbcaVersion("7.11.0"));
+        given(ejbcaService.searchCertificates(eq(INSTANCE_UUID), eq(REST_API_URL), requestCaptor.capture()))
+                .willReturn(emptyPage(1));
+
+        service.discoverCertificate(request, history);
+
+        assertEquals(DiscoveryStatus.COMPLETED, history.getStatus());
+        assertEquals("2026-01-15T10:20:30Z", issuedAfterCriterion(requestCaptor.getValue()));
+    }
+
+    private static String issuedAfterCriterion(SearchCertificatesRestRequestV2 searchRequest) {
+        return searchRequest
+                .getCriteria()
+                .stream()
+                .filter(c -> SearchCertificateCriteriaRestRequest.CriteriaProperty.ISSUED_DATE
+                        .name()
+                        .equals(c.getProperty())
+                        && SearchCertificateCriteriaRestRequest.CriteriaOperation.AFTER.name().equals(c.getOperation()))
+                .map(SearchCertificateCriteriaRestRequest::getValue)
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("No ISSUED_DATE AFTER criterion in the search request"));
     }
 }
