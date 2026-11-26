@@ -343,7 +343,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
     }
 
     private void parseAndCreateCertificateEntry(SearchCertificatesRestResponseV2 searchResponse,
-            DiscoveryHistory discoveryHistory) throws NullPointerException {
+            DiscoveryHistory discoveryHistory) {
         logger
                 .info("Parsing {} certificates from page {} in discovery {}", searchResponse.getCertificates().size(),
                         searchResponse.getPaginationSummary().getCurrentPage(), discoveryHistory.getName());
