@@ -14,9 +14,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
  * database switches Flyway off, which this test undoes on a database of its own. The suite's application.yml replaces
  * the shipped one, so the shipped history table and schema are restated here.
  * <p>
- * The history the migrations leave is pinned in a golden recorded on Spring Boot 3.5, checksums included: a database
- * migrated by an earlier release validates only while the checksums Flyway computes stay the same. {@link Goldens} says
- * how the golden is recorded.
+ * The history the migrations leave is pinned in a golden, checksums included: a database migrated by an earlier release
+ * validates only while the checksums Flyway computes stay the same. {@link Goldens} says how the golden is recorded.
  */
 @SpringBootTest(properties = {
         "spring.flyway.enabled=true",

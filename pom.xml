@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>ejbca-ng-connector</artifactId>
-    <version>1.13.0</version>
+    <version>1.13.1-SNAPSHOT</version>
     <name>ejbca-ng-connector</name>
 
     <properties>

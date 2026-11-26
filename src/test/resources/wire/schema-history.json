@@ -4,6 +4,16 @@
   "type" : "SQL",
   "version" : "202206090840"
 }, {
+  "checksum" : -1886997351,
+  "script" : "V202611260901__drop_hand_made_discovery_certificate_index.sql",
+  "type" : "SQL",
+  "version" : "202611260901"
+}, {
+  "checksum" : -389725928,
+  "script" : "V202611260900__discovery_certificate_discovery_id_id_index.sql",
+  "type" : "SQL",
+  "version" : "202611260900"
+}, {
   "checksum" : -44253029,
   "script" : "db.migration.V202211031300__AttributeV2Changes",
   "type" : "JDBC",
