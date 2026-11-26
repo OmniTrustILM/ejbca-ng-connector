@@ -26,37 +26,47 @@ class DiscoveryCertificateIndexMigrationTest {
     @Test
     void indexesEachRunInIdOrder() throws SQLException {
         String url = database("fresh");
+        try (Connection connection = open(url)) {
+            migrate(url, MigrationVersion.LATEST);
 
-        migrate(url, MigrationVersion.LATEST);
-
-        assertEquals(Map.of(RUN_INDEX, List.of("discovery_id", "id")), indexesOnDiscoveryId(url));
+            assertEquals(Map.of(RUN_INDEX, List.of("discovery_id", "id")), indexesOnDiscoveryId(connection));
+        }
     }
 
     @Test
     void replacesTheSingleColumnIndexCreatedByHand() throws SQLException {
         String url = database("indexed-by-hand");
-        migrate(url, MigrationVersion.fromVersion(LAST_VERSION_WITHOUT_THE_INDEX));
-        execute(url, "CREATE INDEX " + HAND_MADE_INDEX + " ON discovery_certificate (discovery_id)");
+        try (Connection connection = open(url)) {
+            migrate(url, MigrationVersion.fromVersion(LAST_VERSION_WITHOUT_THE_INDEX));
+            execute(connection, "CREATE INDEX " + HAND_MADE_INDEX + " ON discovery_certificate (discovery_id)");
 
-        migrate(url, MigrationVersion.LATEST);
+            migrate(url, MigrationVersion.LATEST);
 
-        assertEquals(Map.of(RUN_INDEX, List.of("discovery_id", "id")), indexesOnDiscoveryId(url));
+            assertEquals(Map.of(RUN_INDEX, List.of("discovery_id", "id")), indexesOnDiscoveryId(connection));
+        }
     }
 
     @Test
     void dropsTheHandMadeIndexInAMigrationOfItsOwn() throws SQLException {
         String url = database("dropped-separately");
-        migrate(url, MigrationVersion.fromVersion(LAST_VERSION_WITHOUT_THE_INDEX));
-        execute(url, "CREATE INDEX " + HAND_MADE_INDEX + " ON discovery_certificate (discovery_id)");
+        try (Connection connection = open(url)) {
+            migrate(url, MigrationVersion.fromVersion(LAST_VERSION_WITHOUT_THE_INDEX));
+            execute(connection, "CREATE INDEX " + HAND_MADE_INDEX + " ON discovery_certificate (discovery_id)");
 
-        migrate(url, MigrationVersion.fromVersion(RUN_INDEX_VERSION));
+            migrate(url, MigrationVersion.fromVersion(RUN_INDEX_VERSION));
 
-        assertEquals(Map.of(HAND_MADE_INDEX, List.of("discovery_id"), RUN_INDEX, List.of("discovery_id", "id")),
-                indexesOnDiscoveryId(url));
+            assertEquals(Map.of(HAND_MADE_INDEX, List.of("discovery_id"), RUN_INDEX, List.of("discovery_id", "id")),
+                    indexesOnDiscoveryId(connection));
+        }
     }
 
+    /** An in-memory database lives while a connection to it is open, so each test's own connection scopes it. */
     private static String database(String name) {
-        return "jdbc:h2:mem:" + name + ";MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1";
+        return "jdbc:h2:mem:" + name + ";MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE";
+    }
+
+    private static Connection open(String url) throws SQLException {
+        return DriverManager.getConnection(url, "sa", "");
     }
 
     private static void migrate(String url, MigrationVersion target) {
@@ -69,22 +79,20 @@ class DiscoveryCertificateIndexMigrationTest {
                 .migrate();
     }
 
-    private static void execute(String url, String sql) throws SQLException {
-        try (Connection connection = DriverManager.getConnection(url, "sa", "");
-                Statement statement = connection.createStatement()) {
+    private static void execute(Connection connection, String sql) throws SQLException {
+        try (Statement statement = connection.createStatement()) {
             statement.execute(sql);
         }
     }
 
     /** Each index that covers {@code discovery_id}, with its columns in index order. */
-    private static Map<String, List<String>> indexesOnDiscoveryId(String url) throws SQLException {
+    private static Map<String, List<String>> indexesOnDiscoveryId(Connection connection) throws SQLException {
         String sql = "SELECT index_name, column_name FROM information_schema.index_columns"
                 + " WHERE table_name = 'discovery_certificate' AND index_name IN"
                 + " (SELECT index_name FROM information_schema.index_columns"
                 + " WHERE table_name = 'discovery_certificate' AND column_name = 'discovery_id')"
                 + " ORDER BY index_name, ordinal_position";
-        try (Connection connection = DriverManager.getConnection(url, "sa", "");
-                PreparedStatement statement = connection.prepareStatement(sql);
+        try (PreparedStatement statement = connection.prepareStatement(sql);
                 ResultSet rows = statement.executeQuery()) {
             Map<String, List<String>> indexes = new LinkedHashMap<>();
             while (rows.next()) {
