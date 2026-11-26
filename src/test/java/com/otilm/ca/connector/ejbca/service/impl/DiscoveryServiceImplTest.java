@@ -23,16 +23,20 @@ import com.otilm.ca.connector.ejbca.dto.ejbca.request.SearchCertificatesRestRequ
 import com.otilm.ca.connector.ejbca.dto.ejbca.response.CertificateRestResponseV2;
 import com.otilm.ca.connector.ejbca.dto.ejbca.response.PaginationSummary;
 import com.otilm.ca.connector.ejbca.dto.ejbca.response.SearchCertificatesRestResponseV2;
+import com.otilm.ca.connector.ejbca.enums.DiscoveryKind;
 import com.otilm.ca.connector.ejbca.service.DiscoveryHistoryService;
 import com.otilm.ca.connector.ejbca.service.EjbcaService;
 import com.otilm.ca.connector.ejbca.util.EjbcaVersion;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -131,7 +135,7 @@ class DiscoveryServiceImplTest {
     private DiscoveryRequestDto buildEjbcaRequest() {
         DiscoveryRequestDto req = new DiscoveryRequestDto();
         req.setName(DISCOVERY_NAME);
-        req.setKind("EJBCA");
+        req.setKind(DiscoveryKind.EJBCA.name());
 
         AuthorityInstanceNameAndUuidDto instance = new AuthorityInstanceNameAndUuidDto("test-instance", INSTANCE_UUID);
         NameAndIdDto ca = new NameAndIdDto(1, "ManagementCA");
@@ -152,12 +156,12 @@ class DiscoveryServiceImplTest {
     }
 
     /**
-     * Builds a minimal EJBCA-SCHEDULE-kind DiscoveryRequestDto.
+     * Builds a minimal EJBCA_SCHEDULE-kind DiscoveryRequestDto.
      */
     private DiscoveryRequestDto buildScheduleRequest() {
         DiscoveryRequestDto req = new DiscoveryRequestDto();
         req.setName(DISCOVERY_NAME);
-        req.setKind("EJBCA-SCHEDULE");
+        req.setKind(DiscoveryKind.EJBCA_SCHEDULE.name());
 
         AuthorityInstanceNameAndUuidDto instance = new AuthorityInstanceNameAndUuidDto("test-instance", INSTANCE_UUID);
         NameAndIdDto ca = new NameAndIdDto(1, "ManagementCA");
@@ -366,7 +370,7 @@ class DiscoveryServiceImplTest {
         verify(discoveryHistoryService).setHistory(history);
     }
 
-    // ── discoverCertificate (EJBCA-SCHEDULE kind) ─────────────────────────────
+    // ── discoverCertificate (EJBCA_SCHEDULE kind) ─────────────────────────────
 
     @Test
     void discoverCertificate_scheduleKind_computesIssuedAfterFromDaysBefore() throws Exception {
@@ -500,7 +504,7 @@ class DiscoveryServiceImplTest {
         // Build request with only mandatory attributes (no ca/eeProfile/status)
         DiscoveryRequestDto req = new DiscoveryRequestDto();
         req.setName(DISCOVERY_NAME);
-        req.setKind("EJBCA");
+        req.setKind(DiscoveryKind.EJBCA.name());
 
         AuthorityInstanceNameAndUuidDto instance = new AuthorityInstanceNameAndUuidDto("test-instance", INSTANCE_UUID);
         List<RequestAttribute> attrs = new ArrayList<>();
@@ -563,5 +567,77 @@ class DiscoveryServiceImplTest {
         // Two certs saved across two pages
         verify(certificateRepository, org.mockito.Mockito.times(2)).save(any(Certificate.class));
         assertEquals(DiscoveryStatus.COMPLETED, history.getStatus());
+    }
+
+    @Test
+    void discoverCertificate_ejbcaKind_sendsIssuedAfterFromAttribute() throws Exception {
+        DiscoveryHistory history = buildHistory();
+        DiscoveryRequestDto request = buildEjbcaRequest();
+        ZonedDateTime issuedAfter = ZonedDateTime.of(2026, 1, 15, 11, 20, 30, 0, ZoneOffset.ofHours(1));
+        request
+                .getAttributes()
+                .removeIf(a -> DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_ISSUED_AFTER.equals(a.getName()));
+        request
+                .getAttributes()
+                .add(dateTimeAttr(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_ISSUED_AFTER, issuedAfter));
+
+        ArgumentCaptor<SearchCertificatesRestRequestV2> requestCaptor = ArgumentCaptor
+                .forClass(SearchCertificatesRestRequestV2.class);
+        given(ejbcaService.getEjbcaVersion(INSTANCE_UUID)).willReturn(ejbcaVersion("7.11.0"));
+        given(ejbcaService.searchCertificates(eq(INSTANCE_UUID), eq(REST_API_URL), requestCaptor.capture()))
+                .willReturn(emptyPage(1));
+
+        service.discoverCertificate(request, history);
+
+        assertEquals(DiscoveryStatus.COMPLETED, history.getStatus());
+        assertEquals("2026-01-15T10:20:30Z", issuedAfterCriterion(requestCaptor.getValue()));
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, -3})
+    void discoverCertificate_scheduleKind_nonPositiveDays_failsWithoutSearching(int days) throws Exception {
+        DiscoveryHistory history = buildHistory();
+        DiscoveryRequestDto request = buildScheduleRequest();
+        request
+                .getAttributes()
+                .removeIf(a -> DiscoveryAttributeServiceImpl.ATTRIBUTE_ISSUED_DAYS_BEFORE.equals(a.getName()));
+        request.getAttributes().add(integerAttr(DiscoveryAttributeServiceImpl.ATTRIBUTE_ISSUED_DAYS_BEFORE, days));
+
+        service.discoverCertificate(request, history);
+
+        assertFailedOnNumberOfDays(history);
+    }
+
+    @Test
+    void discoverCertificate_scheduleKind_missingDays_failsWithoutSearching() throws Exception {
+        DiscoveryHistory history = buildHistory();
+        DiscoveryRequestDto request = buildScheduleRequest();
+        request
+                .getAttributes()
+                .removeIf(a -> DiscoveryAttributeServiceImpl.ATTRIBUTE_ISSUED_DAYS_BEFORE.equals(a.getName()));
+
+        service.discoverCertificate(request, history);
+
+        assertFailedOnNumberOfDays(history);
+    }
+
+    private void assertFailedOnNumberOfDays(DiscoveryHistory history) throws Exception {
+        assertEquals(DiscoveryStatus.FAILED, history.getStatus());
+        assertTrue(history.getMeta().contains("Number of days must be a positive whole number"),
+                "the failure reason should name Number of days, got: " + history.getMeta());
+        verify(ejbcaService, never()).searchCertificates(any(), any(), any());
+    }
+
+    private static String issuedAfterCriterion(SearchCertificatesRestRequestV2 searchRequest) {
+        return searchRequest
+                .getCriteria()
+                .stream()
+                .filter(c -> SearchCertificateCriteriaRestRequest.CriteriaProperty.ISSUED_DATE
+                        .name()
+                        .equals(c.getProperty())
+                        && SearchCertificateCriteriaRestRequest.CriteriaOperation.AFTER.name().equals(c.getOperation()))
+                .map(SearchCertificateCriteriaRestRequest::getValue)
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("No ISSUED_DATE AFTER criterion in the search request"));
     }
 }
