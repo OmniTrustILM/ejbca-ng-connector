@@ -96,12 +96,12 @@ public class DiscoveryServiceImpl implements DiscoveryService {
         dto.setName(history.getName());
         dto.setStatus(history.getStatus());
         dto.setMeta(AttributeDefinitionUtils.deserialize(history.getMeta(), MetadataAttribute.class));
-        int totalCertificateSize = certificateRepository.findByDiscoveryId(history.getId()).size();
-        dto.setTotalCertificatesDiscovered(totalCertificateSize);
         if (history.getStatus() == DiscoveryStatus.IN_PROGRESS) {
             dto.setCertificateData(new ArrayList<>());
             dto.setTotalCertificatesDiscovered(0);
         } else {
+            long totalCertificates = certificateRepository.countByDiscoveryId(history.getId());
+            dto.setTotalCertificatesDiscovered(Math.toIntExact(totalCertificates));
             Pageable page = PageRequest
                     .of(request.getPageNumber() <= 0 ? 0 : request.getPageNumber() - 1, request.getItemsPerPage(),
                             Sort.by(Sort.Direction.ASC, "id"));
@@ -118,8 +118,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
     @Override
     public void deleteDiscovery(String uuid) throws NotFoundException {
         DiscoveryHistory discoveryHistory = discoveryHistoryService.getHistoryByUuid(uuid);
-        List<Certificate> certificates = certificateRepository.findByDiscoveryId(discoveryHistory.getId());
-        certificateRepository.deleteAll(certificates);
+        certificateRepository.deleteByDiscoveryId(discoveryHistory.getId());
         discoveryHistoryService.deleteHistory(discoveryHistory);
     }
 
@@ -446,6 +445,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
         MetadataAttributeProperties discoveryNameAttributeProperties = new MetadataAttributeProperties();
         discoveryNameAttributeProperties.setLabel("Discovery Name");
         discoveryNameAttributeProperties.setVisible(true);
+        discoveryNameAttributeProperties.setOverwrite(true);
 
         discoveryNameAttribute.setProperties(discoveryNameAttributeProperties);
         discoveryNameAttribute.setContent(List.of(new StringAttributeContentV2(discoveryName)));

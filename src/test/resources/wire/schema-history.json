@@ -19,6 +19,11 @@
   "type" : "JDBC",
   "version" : "202206231700"
 }, {
+  "checksum" : 1456480897,
+  "script" : "V202611260900__discovery_certificate_discovery_id_id_index.sql",
+  "type" : "SQL",
+  "version" : "202611260900"
+}, {
   "checksum" : 37094549,
   "script" : "db.migration.V202211112000__MetadataToInfoAttributeMigration",
   "type" : "JDBC",
