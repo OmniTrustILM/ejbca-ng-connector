@@ -314,9 +314,9 @@ public class DiscoveryAttributeServiceImpl implements DiscoveryAttributeService 
         attribute.setUuid("4a92a6c5-38c0-4ebf-8297-594d39572c9c");
         attribute.setName(ATTRIBUTE_ISSUED_DAYS_BEFORE);
         attribute
-                .setDescription("Discover certificates issued within this many days before each run. Set it to at"
-                        + " least the interval between scheduled runs, or certificates issued in between are not"
-                        + " discovered.");
+                .setDescription("Discover certificates whose validity starts within this many days before each run."
+                        + " Set it to more than the interval between scheduled runs, for example the interval plus"
+                        + " one day, because EJBCA backdates the validity start and a run can start late.");
         attribute.setType(AttributeType.DATA);
         attribute.setContentType(AttributeContentType.INTEGER);
         DataAttributeProperties attributeProperties = new DataAttributeProperties();
