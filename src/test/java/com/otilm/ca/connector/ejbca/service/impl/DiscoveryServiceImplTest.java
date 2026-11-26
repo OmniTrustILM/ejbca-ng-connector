@@ -21,6 +21,7 @@ import com.otilm.ca.connector.ejbca.dto.ejbca.request.SearchCertificatesRestRequ
 import com.otilm.ca.connector.ejbca.dto.ejbca.response.CertificateRestResponseV2;
 import com.otilm.ca.connector.ejbca.dto.ejbca.response.PaginationSummary;
 import com.otilm.ca.connector.ejbca.dto.ejbca.response.SearchCertificatesRestResponseV2;
+import com.otilm.ca.connector.ejbca.enums.DiscoveryKind;
 import com.otilm.ca.connector.ejbca.service.DiscoveryHistoryService;
 import com.otilm.ca.connector.ejbca.service.EjbcaService;
 import com.otilm.ca.connector.ejbca.util.EjbcaVersion;
@@ -128,7 +129,7 @@ class DiscoveryServiceImplTest {
     private DiscoveryRequestDto buildEjbcaRequest() {
         DiscoveryRequestDto req = new DiscoveryRequestDto();
         req.setName(DISCOVERY_NAME);
-        req.setKind("EJBCA");
+        req.setKind(DiscoveryKind.EJBCA.name());
 
         AuthorityInstanceNameAndUuidDto instance = new AuthorityInstanceNameAndUuidDto("test-instance", INSTANCE_UUID);
         NameAndIdDto ca = new NameAndIdDto(1, "ManagementCA");
@@ -149,12 +150,12 @@ class DiscoveryServiceImplTest {
     }
 
     /**
-     * Builds a minimal EJBCA-SCHEDULE-kind DiscoveryRequestDto.
+     * Builds a minimal EJBCA_SCHEDULE-kind DiscoveryRequestDto.
      */
     private DiscoveryRequestDto buildScheduleRequest() {
         DiscoveryRequestDto req = new DiscoveryRequestDto();
         req.setName(DISCOVERY_NAME);
-        req.setKind("EJBCA-SCHEDULE");
+        req.setKind(DiscoveryKind.EJBCA_SCHEDULE.name());
 
         AuthorityInstanceNameAndUuidDto instance = new AuthorityInstanceNameAndUuidDto("test-instance", INSTANCE_UUID);
         NameAndIdDto ca = new NameAndIdDto(1, "ManagementCA");
@@ -338,7 +339,7 @@ class DiscoveryServiceImplTest {
         verify(discoveryHistoryService).setHistory(history);
     }
 
-    // ── discoverCertificate (EJBCA-SCHEDULE kind) ─────────────────────────────
+    // ── discoverCertificate (EJBCA_SCHEDULE kind) ─────────────────────────────
 
     @Test
     void discoverCertificate_scheduleKind_computesIssuedAfterFromDaysBefore() throws Exception {
@@ -490,7 +491,7 @@ class DiscoveryServiceImplTest {
         // Build request with only mandatory attributes (no ca/eeProfile/status)
         DiscoveryRequestDto req = new DiscoveryRequestDto();
         req.setName(DISCOVERY_NAME);
-        req.setKind("EJBCA");
+        req.setKind(DiscoveryKind.EJBCA.name());
 
         AuthorityInstanceNameAndUuidDto instance = new AuthorityInstanceNameAndUuidDto("test-instance", INSTANCE_UUID);
         List<RequestAttribute> attrs = new ArrayList<>();

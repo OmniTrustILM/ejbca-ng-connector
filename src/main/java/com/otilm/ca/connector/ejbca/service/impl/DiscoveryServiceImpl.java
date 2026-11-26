@@ -25,6 +25,7 @@ import com.otilm.ca.connector.ejbca.dto.ejbca.request.SearchCertificateSortRestR
 import com.otilm.ca.connector.ejbca.dto.ejbca.request.SearchCertificatesRestRequestV2;
 import com.otilm.ca.connector.ejbca.dto.ejbca.response.CertificateRestResponseV2;
 import com.otilm.ca.connector.ejbca.dto.ejbca.response.SearchCertificatesRestResponseV2;
+import com.otilm.ca.connector.ejbca.enums.DiscoveryKind;
 import com.otilm.ca.connector.ejbca.service.DiscoveryHistoryService;
 import com.otilm.ca.connector.ejbca.service.DiscoveryService;
 import com.otilm.ca.connector.ejbca.service.EjbcaService;
@@ -190,13 +191,13 @@ public class DiscoveryServiceImpl implements DiscoveryService {
     }
 
     private ZonedDateTime resolveIssuedAfter(DiscoveryRequestDto request) {
-        if (request.getKind().equals("EJBCA")) {
+        if (request.getKind().equals(DiscoveryKind.EJBCA.name())) {
             return AttributeDefinitionUtils
                     .getSingleItemAttributeContentValue(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_ISSUED_AFTER,
                             request.getAttributes(), DateTimeAttributeContentV2.class)
                     .getData();
         }
-        if (request.getKind().equals("EJBCA-SCHEDULE")) {
+        if (request.getKind().equals(DiscoveryKind.EJBCA_SCHEDULE.name())) {
             Integer issuedDaysBefore = AttributeDefinitionUtils
                     .getSingleItemAttributeContentValue(DiscoveryAttributeServiceImpl.ATTRIBUTE_ISSUED_DAYS_BEFORE,
                             request.getAttributes(), IntegerAttributeContentV2.class)
