@@ -21,6 +21,7 @@ class DiscoveryCertificateIndexMigrationTest {
     private static final String RUN_INDEX = "discovery_certificate_discovery_id_id_idx";
     private static final String HAND_MADE_INDEX = "discovery_certificate_discovery_id_idx";
     private static final String LAST_VERSION_WITHOUT_THE_INDEX = "202211112000";
+    private static final String RUN_INDEX_VERSION = "202611260900";
 
     @Test
     void indexesEachRunInIdOrder() throws SQLException {
@@ -40,6 +41,18 @@ class DiscoveryCertificateIndexMigrationTest {
         migrate(url, MigrationVersion.LATEST);
 
         assertEquals(Map.of(RUN_INDEX, List.of("discovery_id", "id")), indexesOnDiscoveryId(url));
+    }
+
+    @Test
+    void dropsTheHandMadeIndexInAMigrationOfItsOwn() throws SQLException {
+        String url = database("dropped-separately");
+        migrate(url, MigrationVersion.fromVersion(LAST_VERSION_WITHOUT_THE_INDEX));
+        execute(url, "CREATE INDEX " + HAND_MADE_INDEX + " ON discovery_certificate (discovery_id)");
+
+        migrate(url, MigrationVersion.fromVersion(RUN_INDEX_VERSION));
+
+        assertEquals(Map.of(HAND_MADE_INDEX, List.of("discovery_id"), RUN_INDEX, List.of("discovery_id", "id")),
+                indexesOnDiscoveryId(url));
     }
 
     private static String database(String name) {
