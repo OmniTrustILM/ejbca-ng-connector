@@ -227,24 +227,15 @@ public class DiscoveryServiceImpl implements DiscoveryService {
      * CERT_NOTIFIEDABOUTEXPIRATION to every CERT_ACTIVE search and ignores it on its own.
      */
     private static List<List<String>> toStatusSearches(List<String> selected) {
-        boolean active = false;
-        boolean revoked = false;
-        Set<CertificateStatus> reasons = EnumSet.noneOf(CertificateStatus.class);
-        for (String value : selected == null ? List.<String>of() : selected) {
-            CertificateStatus status = CertificateStatus.resolveCertificateStatusByName(value);
-            if (status == null) {
-                throw new ValidationException("Unknown certificate status " + value);
-            }
-            switch (status) {
-                case CERT_ACTIVE, CERT_NOTIFIEDABOUTEXPIRATION -> active = true;
-                case CERT_REVOKED -> revoked = true;
-                default -> reasons.add(status);
-            }
-        }
+        Set<CertificateStatus> statuses = resolveStatuses(selected);
+        boolean active = statuses.contains(CertificateStatus.CERT_ACTIVE)
+                || statuses.contains(CertificateStatus.CERT_NOTIFIEDABOUTEXPIRATION);
+        Set<CertificateStatus> reasons = EnumSet.copyOf(CertificateStatus.revocationReasons());
+        reasons.retainAll(statuses);
 
         String activeStatus = CertificateStatus.CERT_ACTIVE.name();
         String revokedStatus = CertificateStatus.CERT_REVOKED.name();
-        boolean anyRevoked = revoked || !reasons.isEmpty();
+        boolean anyRevoked = statuses.contains(CertificateStatus.CERT_REVOKED) || !reasons.isEmpty();
         boolean narrowedByReason = !reasons.isEmpty() && !reasons.containsAll(CertificateStatus.revocationReasons());
         if (narrowedByReason) {
             List<String> revokedByReason = new ArrayList<>(List.of(revokedStatus));
@@ -258,6 +249,21 @@ public class DiscoveryServiceImpl implements DiscoveryService {
             return List.of(List.of(revokedStatus));
         }
         return List.of(List.of());
+    }
+
+    private static Set<CertificateStatus> resolveStatuses(List<String> selected) {
+        Set<CertificateStatus> statuses = EnumSet.noneOf(CertificateStatus.class);
+        if (selected == null) {
+            return statuses;
+        }
+        for (String value : selected) {
+            CertificateStatus status = CertificateStatus.resolveCertificateStatusByName(value);
+            if (status == null) {
+                throw new ValidationException("Unknown certificate status " + value);
+            }
+            statuses.add(status);
+        }
+        return statuses;
     }
 
     private int resolveSearchVersion(EjbcaVersion ejbcaVersion) {
