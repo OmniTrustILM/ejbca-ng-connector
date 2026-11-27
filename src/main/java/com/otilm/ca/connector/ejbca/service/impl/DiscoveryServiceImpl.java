@@ -22,6 +22,7 @@ import com.otilm.ca.connector.ejbca.dao.entity.DiscoveryHistory;
 import com.otilm.ca.connector.ejbca.dto.AuthorityInstanceNameAndUuidDto;
 import com.otilm.ca.connector.ejbca.dto.ejbca.request.Pagination;
 import com.otilm.ca.connector.ejbca.dto.ejbca.request.SearchCertificateCriteriaRestRequest;
+import com.otilm.ca.connector.ejbca.dto.ejbca.request.SearchCertificateCriteriaRestRequest.CertificateStatus;
 import com.otilm.ca.connector.ejbca.dto.ejbca.request.SearchCertificateSortRestRequest;
 import com.otilm.ca.connector.ejbca.dto.ejbca.request.SearchCertificatesRestRequestV2;
 import com.otilm.ca.connector.ejbca.dto.ejbca.response.CertificateRestResponseV2;
@@ -39,7 +40,9 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -164,8 +167,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
                 .getAttributeContentValueList(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_STATUS,
                         request.getAttributes(), BaseAttributeContentV2.class);
         final ZonedDateTime issuedAfter = resolveIssuedAfter(request);
-
-        SearchCertificatesRestRequestV2 searchRequest = prepareSearchRequest(cas, eeProfiles, statuses, issuedAfter);
+        final List<List<String>> statusSearches = toStatusSearches(statuses);
 
         // behaviour of the EJBCA REST API for searching certificates differs between versions
         // we need to check the version and decide on the implementation
@@ -175,7 +177,12 @@ public class DiscoveryServiceImpl implements DiscoveryService {
                         ejbcaSearchPageSize);
 
         int searchVersion = resolveSearchVersion(ejbcaVersion);
-        int certificatesFound = runPagedSearch(instance.getUuid(), restApiUrl, searchRequest, history, searchVersion);
+        int certificatesFound = 0;
+        for (List<String> statusCriteria : statusSearches) {
+            SearchCertificatesRestRequestV2 searchRequest = prepareSearchRequest(cas, eeProfiles, statusCriteria,
+                    issuedAfter);
+            certificatesFound += runPagedSearch(instance.getUuid(), restApiUrl, searchRequest, history, searchVersion);
+        }
 
         history.setStatus(DiscoveryStatus.COMPLETED);
         history.setMeta(AttributeDefinitionUtils.serialize(getDiscoveryMeta(certificatesFound)));
@@ -209,6 +216,48 @@ public class DiscoveryServiceImpl implements DiscoveryService {
             return ZonedDateTime.now(ZoneOffset.UTC).minusDays(issuedDaysBefore);
         }
         return null;
+    }
+
+    /**
+     * Turns the selected certificate statuses into the STATUS criteria of one or two searches. EJBCA applies the
+     * selected revocation reasons only alongside CERT_REVOKED, and then to every certificate the search returns,
+     * including active ones, which have no revocation reason. Active certificates are therefore searched apart from
+     * revoked ones narrowed by reason. Selecting both active and revoked certificates sends no STATUS criteria, so
+     * certificates in statuses the search cannot name, such as archived ones, are found too. EJBCA adds
+     * CERT_NOTIFIEDABOUTEXPIRATION to every CERT_ACTIVE search and ignores it on its own.
+     */
+    private static List<List<String>> toStatusSearches(List<String> selected) {
+        boolean active = false;
+        boolean revoked = false;
+        Set<CertificateStatus> reasons = EnumSet.noneOf(CertificateStatus.class);
+        for (String value : selected == null ? List.<String>of() : selected) {
+            CertificateStatus status = CertificateStatus.resolveCertificateStatusByName(value);
+            if (status == null) {
+                throw new ValidationException("Unknown certificate status " + value);
+            }
+            switch (status) {
+                case CERT_ACTIVE, CERT_NOTIFIEDABOUTEXPIRATION -> active = true;
+                case CERT_REVOKED -> revoked = true;
+                default -> reasons.add(status);
+            }
+        }
+
+        String activeStatus = CertificateStatus.CERT_ACTIVE.name();
+        String revokedStatus = CertificateStatus.CERT_REVOKED.name();
+        boolean anyRevoked = revoked || !reasons.isEmpty();
+        boolean narrowedByReason = !reasons.isEmpty() && !reasons.containsAll(CertificateStatus.revocationReasons());
+        if (narrowedByReason) {
+            List<String> revokedByReason = new ArrayList<>(List.of(revokedStatus));
+            reasons.forEach(reason -> revokedByReason.add(reason.name()));
+            return active ? List.of(List.of(activeStatus), revokedByReason) : List.of(revokedByReason);
+        }
+        if (active && !anyRevoked) {
+            return List.of(List.of(activeStatus));
+        }
+        if (anyRevoked && !active) {
+            return List.of(List.of(revokedStatus));
+        }
+        return List.of(List.of());
     }
 
     private int resolveSearchVersion(EjbcaVersion ejbcaVersion) {
@@ -317,14 +366,12 @@ public class DiscoveryServiceImpl implements DiscoveryService {
             }
         }
 
-        if (statuses != null) {
-            for (String status : statuses) {
-                SearchCertificateCriteriaRestRequest c = new SearchCertificateCriteriaRestRequest();
-                c.setOperation(SearchCertificateCriteriaRestRequest.CriteriaOperation.EQUAL.name());
-                c.setProperty(SearchCertificateCriteriaRestRequest.CriteriaProperty.STATUS.name());
-                c.setValue(status);
-                criteria.add(c);
-            }
+        for (String status : statuses) {
+            SearchCertificateCriteriaRestRequest c = new SearchCertificateCriteriaRestRequest();
+            c.setOperation(SearchCertificateCriteriaRestRequest.CriteriaOperation.EQUAL.name());
+            c.setProperty(SearchCertificateCriteriaRestRequest.CriteriaProperty.STATUS.name());
+            c.setValue(status);
+            criteria.add(c);
         }
 
         SearchCertificateCriteriaRestRequest c = new SearchCertificateCriteriaRestRequest();
