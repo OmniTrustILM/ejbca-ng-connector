@@ -6,6 +6,8 @@ import com.otilm.api.model.common.NameAndIdDto;
 import com.otilm.api.model.common.attribute.common.AttributeContent;
 import com.otilm.api.model.common.attribute.common.MetadataAttribute;
 import com.otilm.api.model.common.attribute.common.content.AttributeContentType;
+import com.otilm.api.model.common.attribute.v2.MetadataAttributeV2;
+import com.otilm.api.model.common.attribute.v2.content.BaseAttributeContentV2;
 import com.otilm.api.model.common.attribute.v2.content.DateTimeAttributeContentV2;
 import com.otilm.api.model.common.attribute.v2.content.IntegerAttributeContentV2;
 import com.otilm.api.model.common.attribute.v2.content.ObjectAttributeContentV2;
@@ -19,6 +21,7 @@ import com.otilm.ca.connector.ejbca.dao.entity.Certificate;
 import com.otilm.ca.connector.ejbca.dao.entity.DiscoveryHistory;
 import com.otilm.ca.connector.ejbca.dto.AuthorityInstanceNameAndUuidDto;
 import com.otilm.ca.connector.ejbca.dto.ejbca.request.SearchCertificateCriteriaRestRequest;
+import com.otilm.ca.connector.ejbca.dto.ejbca.request.SearchCertificateCriteriaRestRequest.CertificateStatus;
 import com.otilm.ca.connector.ejbca.dto.ejbca.request.SearchCertificatesRestRequestV2;
 import com.otilm.ca.connector.ejbca.dto.ejbca.response.CertificateRestResponseV2;
 import com.otilm.ca.connector.ejbca.dto.ejbca.response.PaginationSummary;
@@ -27,15 +30,20 @@ import com.otilm.ca.connector.ejbca.enums.DiscoveryKind;
 import com.otilm.ca.connector.ejbca.service.DiscoveryHistoryService;
 import com.otilm.ca.connector.ejbca.service.EjbcaService;
 import com.otilm.ca.connector.ejbca.util.EjbcaVersion;
+import com.otilm.core.util.AttributeDefinitionUtils;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -75,6 +83,12 @@ class DiscoveryServiceImplTest {
     private static final String DISCOVERY_NAME = "test-discovery";
     private static final String DISCOVERY_UUID = "dddddddd-0000-0000-0000-000000000001";
     private static final long HISTORY_ID = 42L;
+
+    private static final String ACTIVE = CertificateStatus.CERT_ACTIVE.name();
+    private static final String NOTIFIED = CertificateStatus.CERT_NOTIFIEDABOUTEXPIRATION.name();
+    private static final String REVOKED = CertificateStatus.CERT_REVOKED.name();
+    private static final String KEY_COMPROMISE = CertificateStatus.REVOCATION_REASON_KEYCOMPROMISE.name();
+    private static final String SUPERSEDED = CertificateStatus.REVOCATION_REASON_SUPERSEDED.name();
 
     @BeforeEach
     void setUp() {
@@ -494,8 +508,8 @@ class DiscoveryServiceImplTest {
 
     /**
      * When no CA, EE-profile, or status attributes are present in the request, AttributeDefinitionUtils returns null
-     * for those lists, exercising the null-guard branches in prepareSearchRequest. Uses EJBCA kind with issuedAfter
-     * set.
+     * for those lists: prepareSearchRequest skips the missing CA and EE-profile lists, and a missing status list means
+     * no status filter. Uses EJBCA kind with issuedAfter set.
      */
     @Test
     void discoverCertificate_noOptionalFilters_completes() throws Exception {
@@ -619,6 +633,117 @@ class DiscoveryServiceImplTest {
         service.discoverCertificate(request, history);
 
         assertFailedOnNumberOfDays(history);
+    }
+
+    // ── Certificate status → EJBCA STATUS criteria ────────────────────────────
+
+    /**
+     * CERT_ACTIVE and revocation reasons never share one search, and selecting both active and revoked certificates
+     * sends no status filter.
+     */
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("statusSelections")
+    void discoverCertificate_statusSelection_sendsStatusCriteriaEjbcaCanCombine(String selection, List<String> selected,
+            List<List<String>> expectedStatusCriteriaPerSearch) throws Exception {
+        DiscoveryHistory history = buildHistory();
+        DiscoveryRequestDto request = buildEjbcaRequest();
+        request.getAttributes().add(statusAttr(selected));
+
+        ArgumentCaptor<SearchCertificatesRestRequestV2> requestCaptor = ArgumentCaptor
+                .forClass(SearchCertificatesRestRequestV2.class);
+        given(ejbcaService.getEjbcaVersion(INSTANCE_UUID)).willReturn(ejbcaVersion("7.11.0"));
+        given(ejbcaService.searchCertificates(eq(INSTANCE_UUID), eq(REST_API_URL), requestCaptor.capture()))
+                .willReturn(emptyPage(1));
+
+        service.discoverCertificate(request, history);
+
+        assertEquals(DiscoveryStatus.COMPLETED, history.getStatus());
+        assertEquals(expectedStatusCriteriaPerSearch,
+                requestCaptor.getAllValues().stream().map(DiscoveryServiceImplTest::statusCriteria).toList());
+    }
+
+    static Stream<Arguments> statusSelections() {
+        List<String> everyOption = Arrays.stream(CertificateStatus.values()).map(Enum::name).toList();
+        List<String> everyReason = CertificateStatus.revocationReasons().stream().map(Enum::name).toList();
+
+        return Stream
+                .of(Arguments.of("every option, the default", everyOption, List.of(List.of())),
+                        Arguments.of("active and revoked", List.of(ACTIVE, REVOKED), List.of(List.of())),
+                        Arguments.of("active and every reason", with(ACTIVE, everyReason), List.of(List.of())),
+                        Arguments
+                                .of("active, revoked and one reason", List.of(ACTIVE, REVOKED, KEY_COMPROMISE),
+                                        List.of(List.of(ACTIVE), List.of(REVOKED, KEY_COMPROMISE))),
+                        Arguments
+                                .of("reasons only", List.of(SUPERSEDED, KEY_COMPROMISE),
+                                        List.of(List.of(REVOKED, KEY_COMPROMISE, SUPERSEDED))),
+                        Arguments.of("every reason, no status", everyReason, List.of(List.of(REVOKED))),
+                        Arguments.of("revoked only", List.of(REVOKED), List.of(List.of(REVOKED))),
+                        Arguments
+                                .of("revoked with every reason", with(REVOKED, everyReason), List.of(List.of(REVOKED))),
+                        Arguments.of("notified about expiration only", List.of(NOTIFIED), List.of(List.of(ACTIVE))),
+                        Arguments.of("active only", List.of(ACTIVE), List.of(List.of(ACTIVE))),
+                        Arguments.of("nothing selected", List.of(), List.of(List.of())));
+    }
+
+    private static List<String> with(String status, List<String> others) {
+        List<String> selection = new ArrayList<>(List.of(status));
+        selection.addAll(others);
+        return selection;
+    }
+
+    @Test
+    void discoverCertificate_activeAndSomeReasons_countsCertificatesFromBothSearches() throws Exception {
+        DiscoveryHistory history = buildHistory();
+        DiscoveryRequestDto request = buildEjbcaRequest();
+        request.getAttributes().add(statusAttr(List.of(ACTIVE, KEY_COMPROMISE)));
+
+        given(ejbcaService.getEjbcaVersion(INSTANCE_UUID)).willReturn(ejbcaVersion("7.11.0"));
+        given(ejbcaService.searchCertificates(eq(INSTANCE_UUID), eq(REST_API_URL), any()))
+                .willReturn(pageWithOneCert(1))
+                .willReturn(emptyPage(2))
+                .willReturn(pageWithOneCert(1))
+                .willReturn(emptyPage(2));
+
+        service.discoverCertificate(request, history);
+
+        assertEquals(DiscoveryStatus.COMPLETED, history.getStatus());
+        verify(certificateRepository, times(2)).save(any(Certificate.class));
+        List<MetadataAttributeV2> meta = AttributeDefinitionUtils
+                .deserialize(history.getMeta(), MetadataAttributeV2.class);
+        assertEquals(2, meta.get(0).getContent().get(0).getData());
+    }
+
+    @Test
+    void discoverCertificate_unknownStatus_failsWithoutSearching() throws Exception {
+        DiscoveryHistory history = buildHistory();
+        DiscoveryRequestDto request = buildEjbcaRequest();
+        request.getAttributes().add(statusAttr(List.of(ACTIVE, "CERT_EXPIRED")));
+
+        service.discoverCertificate(request, history);
+
+        assertEquals(DiscoveryStatus.FAILED, history.getStatus());
+        assertTrue(history.getMeta().contains("CERT_EXPIRED"),
+                "the failure reason should name the unknown status, got: " + history.getMeta());
+        verify(ejbcaService, never()).searchCertificates(any(), any(), any());
+    }
+
+    private RequestAttributeV2 statusAttr(List<String> statuses) {
+        RequestAttributeV2 attr = new RequestAttributeV2();
+        attr.setName(DiscoveryAttributeServiceImpl.ATTRIBUTE_EJBCA_STATUS);
+        attr.setContentType(AttributeContentType.STRING);
+        attr.setContent(statuses.stream().<BaseAttributeContentV2<?>>map(StringAttributeContentV2::new).toList());
+        return attr;
+    }
+
+    private static List<String> statusCriteria(SearchCertificatesRestRequestV2 searchRequest) {
+        return searchRequest
+                .getCriteria()
+                .stream()
+                .filter(c -> SearchCertificateCriteriaRestRequest.CriteriaProperty.STATUS
+                        .name()
+                        .equals(c.getProperty()))
+                .map(SearchCertificateCriteriaRestRequest::getValue)
+                .toList();
     }
 
     private void assertFailedOnNumberOfDays(DiscoveryHistory history) throws Exception {
